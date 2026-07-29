@@ -1,110 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Home - Website</title>
-    <link rel="stylesheet" href="../stylle.css" />
-</head>
-<body>
-    <nav class="site-nav">
-        <div class="nav-inner">
-            <div class="logo">Logo Here.</div>
-            <ul class="nav-links" role="menu" aria-label="Main navigation">
-                <li><a href="../index.html">Home</a></li>
-                <li><a href="#">Catagory</a></li>
-                <li><a href="#">Collections</a></li>
-                <li><a href="#">Contact Us</a></li>
-            </ul>
-            <div class="nav-icons">
-                <button class="icon-btn" aria-label="favorites">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                        <path d="M12 21s-7-4.35-9-6.6A5.5 5.5 0 0 1 6 4.5 6 6 0 0 1 12 8a6 6 0 0 1 6-3.5c2.5 0 3.9 2.9 3 6.1C19 16.6 12 21 12 21z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
-                <button class="icon-btn cart" aria-label="cart">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                        <path d="M6 6h15l-1.5 9h-12L4 2H2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                        <circle cx="10" cy="20" r="1" fill="currentColor" />
-                        <circle cx="18" cy="20" r="1" fill="currentColor" />
-                    </svg>
-                </button>
-                <button class="icon-btn" aria-label="account">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                        <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </nav>
+<section class="hero">
+  <div class="hero-content">
+    <h1>Discover Amazing Products</h1>
+    <p>Quality products with the best prices.</p>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Discover Amazing Products</h1>
-            <p>Quality products with the best prices.</p>
-            <button>Shop Now</button>
-        </div>
-    </section>
+    <button>Shop Now</button>
+  </div>
+</section>
 
-    <section class="search-section">
-        <input type="text" placeholder="Search for products..." />
-    </section>
+<section class="search-section">
+  <input type="text" placeholder="Search for products..." />
+</section>
 
-    <section class="categories">
-        <h2>Categories</h2>
-        <div class="category-list">
-            <div class="category-card">Electronics</div>
-            <div class="category-card">Clothes</div>
-            <div class="category-card">Shoes</div>
-            <div class="category-card">Watches</div>
-            <div class="category-card">Accessories</div>
-        </div>
-    </section>
+<section class="categories">
+  <h2>Categories</h2>
 
-    <section class="products">
-        <div class="section-title">
-            <h2>Featured Products</h2>
-        </div>
-        <div id="product-container">
-            <div class="product-card">
-                <img src="https://picsum.photos/300/250?1" alt="" />
-                <h3>Wireless Headphone</h3>
-                <p class="price">$79.99</p>
-                <button>Add To Cart</button>
-            </div>
-            <div class="product-card">
-                <img src="https://picsum.photos/300/250?2" alt="" />
-                <h3>Smart Watch</h3>
-                <p class="price">$129.99</p>
-                <button>Add To Cart</button>
-            </div>
-            <div class="product-card">
-                <img src="https://picsum.photos/300/250?3" alt="" />
-                <h3>Running Shoes</h3>
-                <p class="price">$59.99</p>
-                <button>Add To Cart</button>
-            </div>
-            <div class="product-card">
-                <img src="https://picsum.photos/300/250?4" alt="" />
-                <h3>Gaming Mouse</h3>
-                <p class="price">$39.99</p>
-                <button>Add To Cart</button>
-            </div>
-        </div>
-    </section>
+  <div class="category-list">
+    <div class="category-card">Electronics</div>
 
-    <section class="newsletter">
-        <h2>Subscribe</h2>
-        <p>Get our latest offers directly to your email.</p>
-        <div class="newsletter-box">
-            <input type="email" placeholder="Your Email" />
-            <button>Subscribe</button>
-        </div>
-    </section>
+    <div class="category-card">Clothes</div>
 
+    <div class="category-card">Shoes</div>
 
-    <script src="../script.js"></script>
-</body>
-</html>
+    <div class="category-card">Watches</div>
 
+    <div class="category-card">Accessories</div>
+  </div>
+</section>
+
+<section class="products">
+  <div class="section-title">
+    <h2>Featured Products</h2>
+  </div>
+
+  <div id="product-container">
+    <!-- Temporary Products -->
+
+    <div class="product-card">
+      <img src="https://picsum.photos/300/250?1" alt="" />
+
+      <h3>Wireless Headphone</h3>
+
+      <p class="price">$79.99</p>
+
+      <button>Add To Cart</button>
+    </div>
+
+    <div class="product-card">
+      <img src="https://picsum.photos/300/250?2" alt="" />
+
+      <h3>Smart Watch</h3>
+
+      <p class="price">$129.99</p>
+
+      <button>Add To Cart</button>
+    </div>
+
+    <div class="product-card">
+      <img src="https://picsum.photos/300/250?3" alt="" />
+
+      <h3>Running Shoes</h3>
+
+      <p class="price">$59.99</p>
+
+      <button>Add To Cart</button>
+    </div>
+
+    <div class="product-card">
+      <img src="https://picsum.photos/300/250?4" alt="" />
+
+      <h3>Gaming Mouse</h3>
+
+      <p class="price">$39.99</p>
+
+      <button>Add To Cart</button>
+    </div>
+  </div>
+</section>
+
+<section class="newsletter">
+  <h2>Subscribe</h2>
+
+  <p>Get our latest offers directly to your email.</p>
+
+  <div class="newsletter-box">
+    <input type="email" placeholder="Your Email" />
+
+    <button>Subscribe</button>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Your Shop. All Rights Reserved.</p>
+</footer>
