@@ -1083,3 +1083,509 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 })();
+(function () {
+  'use strict';
+
+  // ===== Image Upload =====
+  const uploadArea = document.getElementById('uploadArea');
+  const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+  const imageInput = document.getElementById('imageInput');
+  const previewGrid = document.getElementById('previewGrid');
+  const MAX_IMAGES = 5;
+  let uploadedImages = [];
+
+  if (uploadArea) {
+    uploadArea.addEventListener('click', (e) => {
+      if (e.target.closest('.preview-remove') || e.target.closest('.preview-add-more')) return;
+      if (uploadedImages.length >= MAX_IMAGES) return;
+      imageInput.click();
+    });
+
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      handleFiles(files);
+    });
+
+    imageInput.addEventListener('change', () => {
+      const files = Array.from(imageInput.files);
+      handleFiles(files);
+      imageInput.value = '';
+    });
+  }
+
+  function handleFiles(files) {
+    const remaining = MAX_IMAGES - uploadedImages.length;
+    const toAdd = files.slice(0, remaining);
+
+    toAdd.forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('File "' + file.name + '" exceeds 5MB limit.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedImages.push(e.target.result);
+        renderPreviews();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderPreviews() {
+    if (uploadedImages.length === 0) {
+      uploadPlaceholder.style.display = '';
+      previewGrid.style.display = 'none';
+      return;
+    }
+
+    uploadPlaceholder.style.display = 'none';
+    previewGrid.style.display = 'grid';
+    previewGrid.innerHTML = '';
+
+    uploadedImages.forEach((src, i) => {
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+      item.innerHTML =
+        '<img src="' + src + '" alt="Preview ' + (i + 1) + '" />' +
+        (i === 0 ? '<span class="preview-badge">Main</span>' : '') +
+        '<button type="button" class="preview-remove" data-index="' + i + '" aria-label="Remove image">&times;</button>';
+      previewGrid.appendChild(item);
+    });
+
+    if (uploadedImages.length < MAX_IMAGES) {
+      const addMore = document.createElement('div');
+      addMore.className = 'preview-add-more';
+      addMore.innerHTML =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+        '<span>Add More</span>';
+      addMore.addEventListener('click', (e) => {
+        e.stopPropagation();
+        imageInput.click();
+      });
+      previewGrid.appendChild(addMore);
+    }
+
+    previewGrid.querySelectorAll('.preview-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.index);
+        uploadedImages.splice(idx, 1);
+        renderPreviews();
+      });
+    });
+  }
+
+  // ===== Character Counts =====
+  const prodDesc = document.getElementById('prodDesc');
+  const descCount = document.getElementById('descCount');
+  const seoTitle = document.getElementById('seoTitle');
+  const seoTitleCount = document.getElementById('seoTitleCount');
+  const seoDesc = document.getElementById('seoDesc');
+  const seoDescCount = document.getElementById('seoDescCount');
+
+  function updateCount(input, counter, max) {
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = len;
+    counter.parentElement.className = 'ap-field-bottom';
+    if (len > max * 0.9) counter.parentElement.classList.add('warning');
+    if (len > max) counter.parentElement.classList.add('over');
+  }
+
+  if (prodDesc) prodDesc.addEventListener('input', () => updateCount(prodDesc, descCount, 2000));
+  if (seoTitle) seoTitle.addEventListener('input', () => updateCount(seoTitle, seoTitleCount, 60));
+  if (seoDesc) seoDesc.addEventListener('input', () => updateCount(seoDesc, seoDescCount, 160));
+
+  // ===== Auto-generate slug from name =====
+  const prodName = document.getElementById('prodName');
+  const seoSlug = document.getElementById('seoSlug');
+
+  if (prodName && seoSlug) {
+    prodName.addEventListener('input', () => {
+      if (seoSlug.dataset.manual === 'true') return;
+      seoSlug.value = prodName.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    });
+    seoSlug.addEventListener('input', () => {
+      seoSlug.dataset.manual = 'true';
+    });
+  }
+
+  // ===== Profit Calculator =====
+  const prodPrice = document.getElementById('prodPrice');
+  const prodCost = document.getElementById('prodCost');
+  const profitCalc = document.getElementById('profitCalc');
+  const profitValue = document.getElementById('profitValue');
+  const marginValue = document.getElementById('marginValue');
+
+  function calcProfit() {
+    if (!profitCalc) return;
+    const price = parseFloat(prodPrice.value) || 0;
+    const cost = parseFloat(prodCost.value) || 0;
+
+    if (price > 0 && cost > 0) {
+      profitCalc.style.display = '';
+      const profit = price - cost;
+      profitValue.textContent = '$' + profit.toFixed(2);
+      const margin = ((profit / price) * 100).toFixed(1);
+      marginValue.textContent = margin + '%';
+      profitValue.style.color = profit >= 0 ? '#16a34a' : '#ef4444';
+      marginValue.style.color = profit >= 0 ? '#16a34a' : '#ef4444';
+    } else {
+      profitCalc.style.display = 'none';
+    }
+  }
+
+  if (prodPrice) prodPrice.addEventListener('input', () => { calcProfit(); updateDiscountPreview(); });
+  if (prodCost) prodCost.addEventListener('input', calcProfit);
+
+  // ===== Publish Status =====
+  const scheduledDate = document.getElementById('scheduledDate');
+  document.querySelectorAll('input[name="publishStatus"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (scheduledDate) {
+        scheduledDate.style.display = radio.value === 'scheduled' ? '' : 'none';
+      }
+    });
+  });
+
+  // ===== Stock Status Chips =====
+  document.querySelectorAll('.ap-stock-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.ap-stock-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      chip.querySelector('input').checked = true;
+    });
+  });
+
+  // ===== Tags =====
+  const tagInput = document.getElementById('tagInput');
+  const tagsList = document.getElementById('tagsList');
+  const tagsWrap = document.getElementById('tagsWrap');
+  let tags = [];
+
+  if (tagInput && tagsList) {
+    tagsWrap.addEventListener('click', () => tagInput.focus());
+
+    tagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        addTag(tagInput.value.replace(',', '').trim());
+        tagInput.value = '';
+      }
+      if (e.key === 'Backspace' && tagInput.value === '' && tags.length > 0) {
+        removeTag(tags.length - 1);
+      }
+    });
+  }
+
+  function addTag(text) {
+    if (!text || tags.includes(text.toLowerCase())) return;
+    tags.push(text.toLowerCase());
+    renderTags();
+  }
+
+  function removeTag(index) {
+    tags.splice(index, 1);
+    renderTags();
+  }
+
+  function renderTags() {
+    if (!tagsList) return;
+    tagsList.innerHTML = '';
+    tags.forEach((tag, i) => {
+      const el = document.createElement('span');
+      el.className = 'ap-tag';
+      el.innerHTML = tag + ' <button type="button" data-idx="' + i + '">&times;</button>';
+      el.querySelector('button').addEventListener('click', () => removeTag(i));
+      tagsList.appendChild(el);
+    });
+  }
+
+  document.querySelectorAll('.suggested-tag').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addTag(btn.dataset.tag);
+      btn.style.display = 'none';
+    });
+  });
+
+  // ===== Variants =====
+  const addVariantBtn = document.getElementById('addVariantBtn');
+  const variantsList = document.getElementById('variantsList');
+
+  function bindVariantRemove() {
+    variantsList.querySelectorAll('.variant-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (variantsList.children.length > 1) {
+          const row = btn.closest('.ap-variant-row');
+          row.style.opacity = '0';
+          row.style.transform = 'translateY(-8px)';
+          row.style.transition = 'all 0.2s';
+          setTimeout(() => row.remove(), 200);
+        }
+      });
+    });
+  }
+
+  if (addVariantBtn && variantsList) {
+    addVariantBtn.addEventListener('click', () => {
+      const row = document.createElement('div');
+      row.className = 'ap-variant-row';
+      row.innerHTML =
+        '<div class="variant-field"><label>Size</label><select class="variant-select"><option value="xs">XS</option><option value="s">S</option><option value="m" selected>M</option><option value="l">L</option><option value="xl">XL</option><option value="xxl">XXL</option></select></div>' +
+        '<div class="variant-field"><label>Color</label><input type="text" class="variant-input" placeholder="e.g. White" /></div>' +
+        '<div class="variant-field"><label>Stock</label><input type="number" class="variant-input" placeholder="0" min="0" value="0" /></div>' +
+        '<div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-input" placeholder="0.00" step="0.01" min="0" /></div></div>' +
+        '<button type="button" class="variant-remove" aria-label="Remove variant"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+      variantsList.appendChild(row);
+      bindVariantRemove();
+    });
+
+    bindVariantRemove();
+  }
+
+  // ===== Sale & Discount =====
+  const saleToggle = document.getElementById('saleToggle');
+  const saleFields = document.getElementById('saleFields');
+  const saleOverlay = document.getElementById('saleOverlay');
+  const salePriceField = document.getElementById('salePriceField');
+  const discountPreview = document.getElementById('discountPreview');
+  const discountPct = document.getElementById('discountPct');
+  const discRegular = document.getElementById('discRegular');
+  const discSale = document.getElementById('discSale');
+  const discSave = document.getElementById('discSave');
+  const saleBadge = document.getElementById('saleBadge');
+  const badgeCount = document.getElementById('badgeCount');
+  const saleBadgePreview = document.getElementById('saleBadgePreview');
+  const mockBadge = document.getElementById('mockBadge');
+  const mockRegular = document.getElementById('mockRegular');
+  const mockSalePrice = document.getElementById('mockSalePrice');
+  const saleColorOptions = document.getElementById('saleColorOptions');
+  let selectedSaleColor = '#ef4444';
+
+  if (saleToggle) {
+    saleToggle.addEventListener('change', () => {
+      const on = saleToggle.checked;
+      saleFields.style.display = on ? '' : 'none';
+      saleOverlay.style.display = on ? 'none' : '';
+      if (on) {
+        updateDiscountPreview();
+        updateBadgePreview();
+        const startDate = document.getElementById('saleStartDate');
+        if (startDate && !startDate.value) {
+          const now = new Date();
+          now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+          startDate.value = now.toISOString().slice(0, 16);
+        }
+      }
+    });
+  }
+
+  function updateDiscountPreview() {
+    if (!salePriceField || !discountPreview) return;
+    const regular = parseFloat(prodPrice ? prodPrice.value : 0) || 0;
+    const sale = parseFloat(salePriceField.value) || 0;
+
+    if (sale > 0 && regular > 0 && sale < regular) {
+      const pct = Math.round(((regular - sale) / regular) * 100);
+      const save = regular - sale;
+
+      discountPct.textContent = pct + '%';
+      discRegular.textContent = '$' + regular.toFixed(2);
+      discSale.textContent = '$' + sale.toFixed(2);
+      discSave.textContent = '$' + save.toFixed(2);
+
+      const circle = discountPreview.querySelector('.discount-circle');
+      if (pct >= 50) {
+        circle.style.background = '#dc2626';
+        circle.style.boxShadow = '0 4px 14px rgba(220, 38, 38, 0.3)';
+      } else if (pct >= 25) {
+        circle.style.background = '#ef4444';
+        circle.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.3)';
+      } else {
+        circle.style.background = '#f97316';
+        circle.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.3)';
+      }
+
+      discountPreview.style.display = '';
+    } else {
+      discountPreview.style.display = 'none';
+    }
+
+    if (mockRegular && mockSalePrice) {
+      mockRegular.textContent = '$' + regular.toFixed(2);
+      if (sale > 0 && sale < regular) {
+        mockSalePrice.textContent = '$' + sale.toFixed(2);
+        mockSalePrice.style.display = '';
+        mockRegular.classList.add('struck');
+      } else {
+        mockSalePrice.style.display = 'none';
+        mockRegular.classList.remove('struck');
+      }
+    }
+  }
+
+  if (salePriceField) {
+    salePriceField.addEventListener('input', () => {
+      salePriceField.classList.remove('error');
+      updateDiscountPreview();
+    });
+  }
+
+  if (saleBadge && badgeCount) {
+    saleBadge.addEventListener('input', () => {
+      badgeCount.textContent = saleBadge.value.length;
+      updateBadgePreview();
+    });
+  }
+
+  if (saleColorOptions) {
+    saleColorOptions.querySelectorAll('.sale-color-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        saleColorOptions.querySelectorAll('.sale-color-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedSaleColor = btn.dataset.color;
+        updateBadgePreview();
+      });
+    });
+  }
+
+  function updateBadgePreview() {
+    if (!saleBadgePreview || !mockBadge) return;
+    const text = saleBadge ? saleBadge.value.trim().toUpperCase() : '';
+    const sale = salePriceField ? parseFloat(salePriceField.value) || 0 : 0;
+    if (text || sale > 0) {
+      saleBadgePreview.style.display = '';
+      mockBadge.textContent = text || 'SALE';
+      mockBadge.style.background = selectedSaleColor;
+    } else {
+      saleBadgePreview.style.display = 'none';
+    }
+    updateDiscountPreview();
+  }
+
+  const saleEndDate = document.getElementById('saleEndDate');
+  if (saleEndDate) {
+    saleEndDate.addEventListener('input', () => {
+      saleEndDate.classList.remove('error');
+    });
+  }
+
+  // ===== Form Submission =====
+  const addProductForm = document.getElementById('addProductForm');
+  const saveDraftBtn = document.getElementById('saveDraftBtn');
+
+  function validateForm() {
+    let valid = true;
+    const required = [
+      { id: 'prodName', label: 'Product name' },
+      { id: 'prodCategory', label: 'Category' },
+      { id: 'prodPrice', label: 'Regular price' },
+      { id: 'prodStock', label: 'Stock quantity' },
+      { id: 'prodDesc', label: 'Description' }
+    ];
+
+    document.querySelectorAll('.ap-field input.error, .ap-field select.error, .ap-field textarea.error').forEach(el => {
+      el.classList.remove('error');
+    });
+
+    for (let i = 0; i < required.length; i++) {
+      const el = document.getElementById(required[i].id);
+      if (el && !el.value.trim()) {
+        el.classList.add('error');
+        el.focus();
+        valid = false;
+        break;
+      }
+    }
+
+    const price = document.getElementById('prodPrice');
+    if (price && parseFloat(price.value) <= 0) {
+      price.classList.add('error');
+      price.focus();
+      valid = false;
+    }
+
+    if (!valid) {
+      const firstError = document.querySelector('.ap-field input.error, .ap-field select.error, .ap-field textarea.error');
+      if (firstError) {
+        firstError.closest('.ap-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    return valid;
+  }
+
+  function validateSale() {
+    if (saleToggle && saleToggle.checked) {
+      const regular = parseFloat(prodPrice ? prodPrice.value : 0) || 0;
+      const sale = parseFloat(salePriceField ? salePriceField.value : 0) || 0;
+
+      if (sale <= 0) {
+        salePriceField.classList.add('error');
+        salePriceField.focus();
+        salePriceField.closest('.ap-field').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+      }
+
+      if (sale >= regular) {
+        salePriceField.classList.add('error');
+        salePriceField.focus();
+        salePriceField.closest('.ap-field').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Sale price must be lower than the regular price.');
+        return false;
+      }
+
+      const startEl = document.getElementById('saleStartDate');
+      const endEl = document.getElementById('saleEndDate');
+      if (startEl && endEl && startEl.value && endEl.value) {
+        if (new Date(endEl.value) <= new Date(startEl.value)) {
+          endEl.classList.add('error');
+          endEl.focus();
+          endEl.closest('.ap-field').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showToast('Sale end date must be after the start date.');
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  if (addProductForm) {
+    addProductForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (validateForm() && validateSale()) {
+        showToast('Product published successfully!');
+      }
+    });
+  }
+
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', () => {
+      showToast('Draft saved successfully!');
+    });
+  }
+
+  // ===== Toast =====
+  function showToast(msg) {
+    const toast = document.getElementById('apToast');
+    const toastMsg = document.getElementById('apToastMsg');
+    if (!toast || !toastMsg) return;
+    toastMsg.textContent = msg;
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 3000);
+  }
+})();
