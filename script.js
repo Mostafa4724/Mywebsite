@@ -551,6 +551,42 @@ function initHomePage() {
       alert(`"${name}" has been added to your cart!`);
     });
   });
+
+  // Shop Now button - smooth scroll to products section with animation
+  const shopNowBtn = document.getElementById('shop-now-btn');
+  if (shopNowBtn) {
+    shopNowBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      const productsSection = document.querySelector('.products');
+      if (!productsSection) return;
+
+      // Animate the button
+      this.style.transform = 'scale(0.9)';
+      this.textContent = '↓ Scrolling...';
+
+      // Smooth scroll to products
+      productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Staggered fade-in animation for product cards
+      const cards = document.querySelectorAll('.product-card');
+      cards.forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        setTimeout(() => {
+          card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, 200 + i * 120);
+      });
+
+      // Reset button after scroll
+      setTimeout(() => {
+        this.style.transform = 'scale(1)';
+        this.textContent = 'Shop Now';
+      }, 800);
+    });
+  }
 }
 
 // ===== Buy Now =====
