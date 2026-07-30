@@ -239,7 +239,7 @@ function checkEmptyCart() {
         </svg>
         <h3>Your cart is empty</h3>
         <p>Looks like you haven't added anything yet.</p>
-        <a href="../index.html" class="shop-btn">Continue Shopping</a>
+        <a href="home.html" class="shop-btn">Continue Shopping</a>
       `;
       const cartPage = document.querySelector('.cart-page');
       if (cartPage) cartPage.appendChild(emptyState);
