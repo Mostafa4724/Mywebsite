@@ -5945,7 +5945,7 @@ footer {
   border: 2.5px solid transparent;
   background: none;
   cursor: pointer;
-  display: inline-flex;
+  display: inline-flex; 
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
