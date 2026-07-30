@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login - Your Shop</title>
+    <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="../stylle.css" />
+  </head>
+  <body>
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div class="admin-login-screen" id="loginScreen">
+      <div class="admin-login-card">
+        <div class="admin-login-header">
+          <div class="admin-shield">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h1>Admin Portal</h1>
+          <p>Enter your credentials to access the dashboard.</p>
+        </div>
+
+        <form class="admin-form" id="adminForm" novalidate>
+          <div class="admin-field">
+            <label for="adminUser">Username</label>
+            <div class="admin-input-wrap">
+              <svg class="admin-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input type="text" id="adminUser" placeholder="Enter username" autocomplete="username" autofocus />
+            </div>
+            <span class="admin-error" id="userError"></span>
+          </div>
+
+          <div class="admin-field">
+            <label for="adminPass">Password</label>
+            <div class="admin-input-wrap">
+              <svg class="admin-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input type="password" id="adminPass" placeholder="Enter password" autocomplete="current-password" />
+              <button type="button" class="admin-eye" id="adminEye" aria-label="Toggle password">
+                <svg class="eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="eye-hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <span class="admin-error" id="passError"></span>
+          </div>
+
+          <div id="loginFailMsg" class="login-fail-msg">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <span>Invalid username or password.</span>
+          </div>
+
+          <button type="submit" class="admin-login-btn" id="adminLoginBtn">
+            <span class="btn-label">Sign In to Dashboard</span>
+            <span class="btn-spinner" style="display:none">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+            </span>
+          </button>
+        </form>
+
+        <p class="admin-lock-text">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Authorized access only
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD SCREEN ===== -->
+    <div class="admin-dashboard-screen" id="dashboardScreen" style="display:none">
+      <!-- Sidebar -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-logo-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+          <span>Admin Panel</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button class="sidebar-link active" data-section="overview">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Overview
+          </button>
+          <button class="sidebar-link" data-section="orders">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+            </svg>
+            Orders
+            <span class="sidebar-badge">24</span>
+          </button>
+          <button class="sidebar-link" data-section="products">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+            Products
+          </button>
+          <button class="sidebar-link" data-section="customers">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Customers
+          </button>
+          <button class="sidebar-link" data-section="analytics">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            Analytics
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="sidebar-logout" id="adminLogout">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Log Out
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="admin-main">
+        <!-- Top Bar -->
+        <header class="admin-topbar">
+          <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <div class="topbar-title">
+            <h2 id="pageTitle">Overview</h2>
+          </div>
+          <div class="topbar-right">
+            <div class="admin-user-chip">
+              <div class="admin-user-avatar">A</div>
+              <span>Admin</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="admin-content">
+
+          <!-- Overview Section -->
+          <section class="dash-section active" id="sec-overview">
+            <!-- Stats Cards -->
+            <div class="dash-stats">
+              <div class="dash-stat-card blue">
+                <div class="dash-stat-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </div>
+                <div class="dash-stat-text">
+                  <span class="dash-stat-value">$48,290</span>
+                  <span class="dash-stat-label">Total Revenue</span>
+                </div>
+                <span class="dash-stat-trend up">+12.5%</span>
+              </div>
+
+              <div class="dash-stat-card green">
+                <div class="dash-stat-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                  </svg>
+                </div>
+                <div class="dash-stat-text">
+                  <span class="dash-stat-value">384</span>
+                  <span class="dash-stat-label">Total Orders</span>
+                </div>
+                <span class="dash-stat-trend up">+8.2%</span>
+              </div>
+
+              <div class="dash-stat-card purple">
+                <div class="dash-stat-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
+                <div class="dash-stat-text">
+                  <span class="dash-stat-value">1,247</span>
+                  <span class="dash-stat-label">Customers</span>
+                </div>
+                <span class="dash-stat-trend up">+5.1%</span>
+              </div>
+
+              <div class="dash-stat-card amber">
+                <div class="dash-stat-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  </svg>
+                </div>
+                <div class="dash-stat-text">
+                  <span class="dash-stat-value">86</span>
+                  <span class="dash-stat-label">Products</span>
+                </div>
+                <span class="dash-stat-trend down">-2.3%</span>
+              </div>
+            </div>
+
+            <!-- Chart + Recent Orders -->
+            <div class="dash-grid-2">
+              <!-- Revenue Chart -->
+              <div class="dash-card">
+                <div class="dash-card-head">
+                  <h3>Revenue Overview</h3>
+                  <span class="dash-card-sub">Last 7 days</span>
+                </div>
+                <div class="chart-container">
+                  <div class="chart-bars">
+                    <div class="chart-bar-group">
+                      <div class="chart-bar" style="--h: 55%;" data-value="$4,200"></div>
+                      <span>Mon</span>
+                    </div>
+                    <div class="chart-bar-group">
+                      <div class="chart-bar" style="--h: 72%;" data-value="$5,500"></div>
+                      <span>Tue</span>
+                    </div>
+                    <div class="chart-bar-group">
+                      <div class="chart-bar" style="--h: 48%;" data-value="$3,700"></div>
+                      <span>Wed</span>
+                    </div>
+                    <div class="chart-bar-group">
+                      <div class="chart-bar" style="--h: 90%;" data-value="$6,800"></div>
+                      <span>Thu</span>
+                    </div>
+                    <div class="chart-bar-group">
+                      <div class="chart-bar" style="--h: 65%;" data-value="$4,900"></div>
+                      <span>Fri</span>
+                    </div>
+                    <div class="chart-bar-group">
+                      <div class="chart-bar" style="--h: 82%;" data-value="$6,200"></div>
+                      <span>Sat</span>
+                    </div>
+                    <div class="chart-bar-group">
+                      <div class="chart-bar active" style="--h: 100%;" data-value="$7,500"></div>
+                      <span>Sun</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recent Orders -->
+              <div class="dash-card">
+                <div class="dash-card-head">
+                  <h3>Recent Orders</h3>
+                  <a href="#" class="dash-link" onclick="return false">View All</a>
+                </div>
+                <div class="dash-orders">
+                  <div class="dash-order-row">
+                    <div class="dash-order-info">
+                      <strong>#ORD-1204</strong>
+                      <span>Premium Sneakers</span>
+                    </div>
+                    <span class="dash-order-status shipped">Shipped</span>
+                    <span class="dash-order-amount">$189.00</span>
+                  </div>
+                  <div class="dash-order-row">
+                    <div class="dash-order-info">
+                      <strong>#ORD-1203</strong>
+                      <span>Leather Jacket</span>
+                    </div>
+                    <span class="dash-order-status delivered">Delivered</span>
+                    <span class="dash-order-amount">$249.99</span>
+                  </div>
+                  <div class="dash-order-row">
+                    <div class="dash-order-info">
+                      <strong>#ORD-1202</strong>
+                      <span>Cotton T-Shirt x3</span>
+                    </div>
+                    <span class="dash-order-status processing">Processing</span>
+                    <span class="dash-order-amount">$89.97</span>
+                  </div>
+                  <div class="dash-order-row">
+                    <div class="dash-order-info">
+                      <strong>#ORD-1201</strong>
+                      <span>Running Shoes</span>
+                    </div>
+                    <span class="dash-order-status delivered">Delivered</span>
+                    <span class="dash-order-amount">$129.99</span>
+                  </div>
+                  <div class="dash-order-row">
+                    <div class="dash-order-info">
+                      <strong>#ORD-1200</strong>
+                      <span>Winter Beanie</span>
+                    </div>
+                    <span class="dash-order-status cancelled">Cancelled</span>
+                    <span class="dash-order-amount">$34.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Products -->
+            <div class="dash-card">
+              <div class="dash-card-head">
+                <h3>Top Selling Products</h3>
+                <span class="dash-card-sub">This month</span>
+              </div>
+              <div class="top-products-table">
+                <div class="tp-header">
+                  <span>Product</span>
+                  <span>Sold</span>
+                  <span>Revenue</span>
+                  <span>Performance</span>
+                </div>
+                <div class="tp-row">
+                  <div class="tp-product">
+                    <div class="tp-thumb"><img src="https://picsum.photos/seed/tp1/80/80.jpg" alt="Product" /></div>
+                    <div>
+                      <strong>Premium Running Shoes</strong>
+                      <span>Footwear</span>
+                    </div>
+                  </div>
+                  <span class="tp-sold">142</span>
+                  <span class="tp-revenue">$18,358</span>
+                  <div class="tp-bar-wrap">
+                    <div class="tp-bar" style="--w: 92%;"></div>
+                  </div>
+                </div>
+                <div class="tp-row">
+                  <div class="tp-product">
+                    <div class="tp-thumb"><img src="https://picsum.photos/seed/tp2/80/80.jpg" alt="Product" /></div>
+                    <div>
+                      <strong>Cotton Crew Socks</strong>
+                      <span>Accessories</span>
+                    </div>
+                  </div>
+                  <span class="tp-sold">238</span>
+                  <span class="tp-revenue">$7,140</span>
+                  <div class="tp-bar-wrap">
+                    <div class="tp-bar" style="--w: 78%;"></div>
+                  </div>
+                </div>
+                <div class="tp-row">
+                  <div class="tp-product">
+                    <div class="tp-thumb"><img src="https://picsum.photos/seed/tp3/80/80.jpg" alt="Product" /></div>
+                    <div>
+                      <strong>Leather Wallet</strong>
+                      <span>Accessories</span>
+                    </div>
+                  </div>
+                  <span class="tp-sold">96</span>
+                  <span class="tp-revenue">$5,760</span>
+                  <div class="tp-bar-wrap">
+                    <div class="tp-bar" style="--w: 64%;"></div>
+                  </div>
+                </div>
+                <div class="tp-row">
+                  <div class="tp-product">
+                    <div class="tp-thumb"><img src="https://picsum.photos/seed/tp4/80/80.jpg" alt="Product" /></div>
+                    <div>
+                      <strong>Winter Jacket</strong>
+                      <span>Apparel</span>
+                    </div>
+                  </div>
+                  <span class="tp-sold">67</span>
+                  <span class="tp-revenue">$14,673</span>
+                  <div class="tp-bar-wrap">
+                    <div class="tp-bar" style="--w: 55%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Placeholder Sections -->
+          <section class="dash-section" id="sec-orders">
+            <div class="dash-card empty-state-card">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+              <h3>Orders Management</h3>
+              <p>View, process, and manage all customer orders from here.</p>
+            </div>
+          </section>
+          <section class="dash-section" id="sec-products">
+            <div class="dash-card empty-state-card">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              </svg>
+              <h3>Products Management</h3>
+              <p>Add, edit, and organize your product catalog.</p>
+            </div>
+          </section>
+          <section class="dash-section" id="sec-customers">
+            <div class="dash-card empty-state-card">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <h3>Customer Management</h3>
+              <p>View customer profiles, activity, and purchase history.</p>
+            </div>
+          </section>
+          <section class="dash-section" id="sec-analytics">
+            <div class="dash-card empty-state-card">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              <h3>Analytics</h3>
+              <p>Detailed insights into sales, traffic, and performance metrics.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    // ===== Credentials =====
+    const VALID_USER = 'Admin';
+    const VALID_PASS = 'Admin@1234';
+
+    // ===== DOM =====
+    const loginScreen = document.getElementById('loginScreen');
+    const dashboardScreen = document.getElementById('dashboardScreen');
+    const adminForm = document.getElementById('adminForm');
+    const adminUser = document.getElementById('adminUser');
+    const adminPass = document.getElementById('adminPass');
+    const userError = document.getElementById('userError');
+    const passError = document.getElementById('passError');
+    const loginFailMsg = document.getElementById('loginFailMsg');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminEye = document.getElementById('adminEye');
+
+    // ===== Password Toggle =====
+    adminEye.addEventListener('click', () => {
+      const show = adminEye.querySelector('.eye-show');
+      const hide = adminEye.querySelector('.eye-hide');
+      if (adminPass.type === 'password') {
+        adminPass.type = 'text';
+        show.style.display = 'none';
+        hide.style.display = 'block';
+      } else {
+        adminPass.type = 'password';
+        show.style.display = 'block';
+        hide.style.display = 'none';
+      }
+    });
+
+    // ===== Clear Errors on Typing =====
+    adminUser.addEventListener('input', () => {
+      userError.textContent = '';
+      adminUser.style.borderColor = '';
+      loginFailMsg.style.display = 'none';
+    });
+    adminPass.addEventListener('input', () => {
+      passError.textContent = '';
+      adminPass.style.borderColor = '';
+      loginFailMsg.style.display = 'none';
+    });
+
+    // ===== Form Submit =====
+    adminForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      let valid = true;
+
+      userError.textContent = '';
+      passError.textContent = '';
+      adminUser.style.borderColor = '';
+      adminPass.style.borderColor = '';
+      loginFailMsg.style.display = 'none';
+
+      if (!adminUser.value.trim()) {
+        userError.textContent = 'Username is required.';
+        adminUser.style.borderColor = '#ef4444';
+        valid = false;
+      }
+      if (!adminPass.value) {
+        passError.textContent = 'Password is required.';
+        adminPass.style.borderColor = '#ef4444';
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      // Show loading
+      const btnLabel = adminLoginBtn.querySelector('.btn-label');
+      const btnSpinner = adminLoginBtn.querySelector('.btn-spinner');
+      btnLabel.style.display = 'none';
+      btnSpinner.style.display = 'inline-flex';
+      btnSpinner.style.animation = 'adminSpin 1s linear infinite';
+      adminLoginBtn.disabled = true;
+
+      setTimeout(() => {
+        btnLabel.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+        btnSpinner.style.animation = '';
+        adminLoginBtn.disabled = false;
+
+        if (adminUser.value.trim() === VALID_USER && adminPass.value === VALID_PASS) {
+          // SUCCESS → show dashboard
+          loginScreen.style.display = 'none';
+          dashboardScreen.style.display = 'flex';
+          document.body.style.background = '#f1f5f9';
+        } else {
+          // FAIL
+          loginFailMsg.style.display = 'flex';
+          adminUser.style.borderColor = '#ef4444';
+          adminPass.style.borderColor = '#ef4444';
+          adminPass.value = '';
+          adminPass.focus();
+        }
+      }, 1500);
+    });
+
+    // ===== Dashboard: Sidebar Navigation =====
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    const dashSections = document.querySelectorAll('.dash-section');
+    const pageTitle = document.getElementById('pageTitle');
+
+    sidebarLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        sidebarLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        const section = link.dataset.section;
+        dashSections.forEach(s => s.classList.remove('active'));
+        const target = document.getElementById('sec-' + section);
+        if (target) target.classList.add('active');
+        pageTitle.textContent = link.textContent.trim();
+
+        // Close mobile sidebar
+        document.getElementById('adminSidebar').classList.remove('open');
+      });
+    });
+
+    // ===== Mobile Menu Toggle =====
+    document.getElementById('menuToggle').addEventListener('click', () => {
+      document.getElementById('adminSidebar').classList.toggle('open');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('adminSidebar');
+      const toggle = document.getElementById('menuToggle');
+      if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+
+    // ===== Logout =====
+    document.getElementById('adminLogout').addEventListener('click', () => {
+      dashboardScreen.style.display = 'none';
+      loginScreen.style.display = 'flex';
+      document.body.style.background = '#e9f5fb';
+      adminUser.value = '';
+      adminPass.value = '';
+      loginFailMsg.style.display = 'none';
+      adminUser.style.borderColor = '';
+      adminPass.style.borderColor = '';
+      userError.textContent = '';
+      passError.textContent = '';
+      adminUser.focus();
+    });
+
+    // ===== Chart Bar Tooltips =====
+    document.querySelectorAll('.chart-bar').forEach(bar => {
+      bar.addEventListener('mouseenter', () => {
+        bar.classList.add('hovered');
+      });
+      bar.addEventListener('mouseleave', () => {
+        bar.classList.remove('hovered');
+      });
+    });
+  </script>
+</body>
+</html>
