@@ -713,3 +713,269 @@ document.addEventListener('DOMContentLoaded', function () {
     renderCheckoutOrderSummary();
   }
 });
+(function () {
+  'use strict';
+
+  // ===== Credentials =====
+  const VALID_USER = 'Admin';
+  const VALID_PASS = 'Admin@1234';
+
+  // ===== Detect current page =====
+  const isLoginPage = document.getElementById('loginScreen') !== null;
+  const isDashPage = document.querySelector('.admin-body') !== null;
+
+  // =============================================
+  //  LOGIN PAGE LOGIC
+  // =============================================
+  if (isLoginPage) {
+    const adminForm = document.getElementById('adminForm');
+    const adminUser = document.getElementById('adminUser');
+    const adminPass = document.getElementById('adminPass');
+    const userError = document.getElementById('userError');
+    const passError = document.getElementById('passError');
+    const loginFailMsg = document.getElementById('loginFailMsg');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminEye = document.getElementById('adminEye');
+
+    // Password toggle
+    if (adminEye) {
+      adminEye.addEventListener('click', () => {
+        const show = adminEye.querySelector('.eye-show');
+        const hide = adminEye.querySelector('.eye-hide');
+        if (adminPass.type === 'password') {
+          adminPass.type = 'text';
+          show.style.display = 'none';
+          hide.style.display = 'block';
+        } else {
+          adminPass.type = 'password';
+          show.style.display = 'block';
+          hide.style.display = 'none';
+        }
+      });
+    }
+
+    // Clear errors on typing
+    if (adminUser) {
+      adminUser.addEventListener('input', () => {
+        userError.textContent = '';
+        adminUser.style.borderColor = '';
+        loginFailMsg.style.display = 'none';
+      });
+    }
+    if (adminPass) {
+      adminPass.addEventListener('input', () => {
+        passError.textContent = '';
+        adminPass.style.borderColor = '';
+        loginFailMsg.style.display = 'none';
+      });
+    }
+
+    // Form submit
+    if (adminForm) {
+      adminForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        let valid = true;
+
+        userError.textContent = '';
+        passError.textContent = '';
+        adminUser.style.borderColor = '';
+        adminPass.style.borderColor = '';
+        loginFailMsg.style.display = 'none';
+
+        if (!adminUser.value.trim()) {
+          userError.textContent = 'Username is required.';
+          adminUser.style.borderColor = '#ef4444';
+          valid = false;
+        }
+        if (!adminPass.value) {
+          passError.textContent = 'Password is required.';
+          adminPass.style.borderColor = '#ef4444';
+          valid = false;
+        }
+
+        if (!valid) return;
+
+        // Show loading
+        const btnLabel = adminLoginBtn.querySelector('.btn-label');
+        const btnSpinner = adminLoginBtn.querySelector('.btn-spinner');
+        btnLabel.style.display = 'none';
+        btnSpinner.style.display = 'inline-flex';
+        btnSpinner.style.animation = 'adminSpin 1s linear infinite';
+        adminLoginBtn.disabled = true;
+
+        setTimeout(() => {
+          btnLabel.style.display = 'inline';
+          btnSpinner.style.display = 'none';
+          btnSpinner.style.animation = '';
+          adminLoginBtn.disabled = false;
+
+          if (adminUser.value.trim() === VALID_USER && adminPass.value === VALID_PASS) {
+            // SUCCESS → redirect to dashboard
+            window.location.href = 'admin-dashboard.html';
+          } else {
+            // FAIL
+            loginFailMsg.style.display = 'flex';
+            adminUser.style.borderColor = '#ef4444';
+            adminPass.style.borderColor = '#ef4444';
+            adminPass.value = '';
+            adminPass.focus();
+          }
+        }, 1500);
+      });
+    }
+
+    // Check if already logged in (session flag)
+    if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+      window.location.href = 'admin-dashboard.html';
+    }
+  }
+
+  // =============================================
+  //  DASHBOARD PAGES LOGIC
+  // =============================================
+  if (isDashPage) {
+    // Auth guard
+    if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
+      window.location.href = 'admin-login.html';
+      return;
+    }
+
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('adminSidebar');
+
+    if (menuToggle) {
+      menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+      });
+    }
+
+    // Close sidebar on outside click (mobile)
+    document.addEventListener('click', (e) => {
+      if (sidebar && sidebar.classList.contains('open') && !sidebar.contains(e.target) && menuToggle && !menuToggle.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+
+    // Logout
+    const logoutBtn = document.getElementById('adminLogout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('adminLoggedIn');
+        window.location.href = 'admin-login.html';
+      });
+    }
+
+    // Chart bar tooltips
+    document.querySelectorAll('.chart-bar').forEach(bar => {
+      bar.addEventListener('mouseenter', () => bar.classList.add('hovered'));
+      bar.addEventListener('mouseleave', () => bar.classList.remove('hovered'));
+    });
+
+    // ===== ORDERS PAGE: Search & Filter =====
+    const orderSearch = document.getElementById('orderSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const ordersBody = document.getElementById('ordersTableBody');
+
+    function filterOrders() {
+      if (!ordersBody) return;
+      const search = (orderSearch ? orderSearch.value : '').toLowerCase();
+      const status = statusFilter ? statusFilter.value : 'all';
+      const rows = ordersBody.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowStatus = row.getAttribute('data-status') || '';
+        const matchSearch = !search || text.includes(search);
+        const matchStatus = status === 'all' || rowStatus === status;
+        row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+      });
+    }
+
+    if (orderSearch) orderSearch.addEventListener('input', filterOrders);
+    if (statusFilter) statusFilter.addEventListener('change', filterOrders);
+
+    // Pagination buttons (visual only)
+    document.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (btn.textContent === 'Previous' || btn.textContent === 'Next') {
+          btn.classList.remove('active');
+        }
+      });
+    });
+
+    // ===== PRODUCTS PAGE: Search & Modal =====
+    const productSearch = document.getElementById('productSearch');
+    const addProductBtn = document.getElementById('addProductBtn');
+    const addProductModal = document.getElementById('addProductModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelModal = document.getElementById('cancelModal');
+    const saveProduct = document.getElementById('saveProduct');
+
+    if (productSearch) {
+      productSearch.addEventListener('input', () => {
+        const q = productSearch.value.toLowerCase();
+        document.querySelectorAll('.product-admin-card').forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    function openModal() { if (addProductModal) addProductModal.style.display = 'flex'; }
+    function closeProductModal() { if (addProductModal) addProductModal.style.display = 'none'; }
+
+    if (addProductBtn) addProductBtn.addEventListener('click', openModal);
+    if (closeModal) closeModal.addEventListener('click', closeProductModal);
+    if (cancelModal) cancelModal.addEventListener('click', closeProductModal);
+    if (addProductModal) {
+      addProductModal.addEventListener('click', (e) => {
+        if (e.target === addProductModal) closeProductModal();
+      });
+    }
+    if (saveProduct) {
+      saveProduct.addEventListener('click', () => {
+        closeProductModal();
+      });
+    }
+
+    // ===== CUSTOMERS PAGE: Search =====
+    const customerSearch = document.getElementById('customerSearch');
+    if (customerSearch) {
+      customerSearch.addEventListener('input', () => {
+        const q = customerSearch.value.toLowerCase();
+        document.querySelectorAll('.customer-card').forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+  }
+
+  // Set session on successful login (handled in submit above via redirect)
+  // We set it right before redirect
+  const origSubmit = document.getElementById('adminForm');
+  if (origSubmit) {
+    origSubmit.addEventListener('submit', function setSession() {
+      // This runs after the validation in the main handler above
+      // The session is set below
+    });
+  }
+
+  // Patch: set session flag before redirect on login page
+  if (isLoginPage) {
+    const form = document.getElementById('adminForm');
+    if (form) {
+      const originalHandler = form.onsubmit;
+      form.addEventListener('submit', function () {
+        const u = document.getElementById('adminUser');
+        const p = document.getElementById('adminPass');
+        if (u && p && u.value.trim() === VALID_USER && p.value === VALID_PASS) {
+          sessionStorage.setItem('adminLoggedIn', 'true');
+        }
+      }, true); // capture phase so it runs before the main handler
+    }
+  }
+})();
