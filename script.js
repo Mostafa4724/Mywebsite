@@ -1015,14 +1015,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    function openModal() {
-      if (addProductModal) addProductModal.style.display = "flex";
-    }
-    function closeProductModal() {
-      if (addProductModal) addProductModal.style.display = "none";
-    }
-
-    if (addProductBtn) addProductBtn.addEventListener("click", openModal);
+    if (addProductBtn) addProductBtn.addEventListener("click", () => {
+    window.location.href = "add.html";
+});
     if (closeModal) closeModal.addEventListener("click", closeProductModal);
     if (cancelModal) cancelModal.addEventListener("click", closeProductModal);
     if (addProductModal) {
