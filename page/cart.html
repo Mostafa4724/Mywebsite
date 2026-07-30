@@ -42,12 +42,12 @@
             </svg>
           </a>
 
-          <button class="icon-btn cart" aria-label="cart">
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
             <svg
               width="20"
               height="20"
               viewBox="0 0 24 24"
-              fill="white"
+              fill="none"
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden
             >
@@ -61,7 +61,8 @@
               <circle cx="10" cy="20" r="1" fill="currentColor" />
               <circle cx="18" cy="20" r="1" fill="currentColor" />
             </svg>
-          </button>
+            <span class="cart-bubble">0</span>
+          </a>
 
           <button class="icon-btn" aria-label="account">
             <svg
@@ -115,89 +116,7 @@
         <!-- Cart Items -->
 
         <div class="cart-items" id="cart-items">
-          <!-- Product 1 -->
-
-          <article
-            class="cart-item"
-            data-name="Wireless Headphone"
-            data-price="79.99"
-          >
-            <div class="cart-item-img">
-              <img
-                src="https://picsum.photos/300/250?1"
-                alt="Wireless Headphone"
-              />
-            </div>
-
-            <div class="cart-item-info">
-              <h3>Wireless Headphone</h3>
-              <p class="item-price">$79.99</p>
-            </div>
-
-            <div class="cart-item-actions">
-              <div class="qty-controls">
-                <button class="qty-btn qty-minus">−</button>
-                <span class="qty-value">1</span>
-                <button class="qty-btn qty-plus">+</button>
-              </div>
-
-              <button class="remove-btn">Remove</button>
-            </div>
-          </article>
-
-          <!-- Product 2 -->
-
-          <article
-            class="cart-item"
-            data-name="Smart Watch"
-            data-price="129.99"
-          >
-            <div class="cart-item-img">
-              <img src="https://picsum.photos/300/250?2" alt="Smart Watch" />
-            </div>
-
-            <div class="cart-item-info">
-              <h3>Smart Watch</h3>
-              <p class="item-price">$129.99</p>
-            </div>
-
-            <div class="cart-item-actions">
-              <div class="qty-controls">
-                <button class="qty-btn qty-minus">−</button>
-                <span class="qty-value">2</span>
-                <button class="qty-btn qty-plus">+</button>
-              </div>
-
-              <button class="remove-btn">Remove</button>
-            </div>
-          </article>
-
-          <!-- Product 3 -->
-
-          <article
-            class="cart-item"
-            data-name="Gaming Mouse"
-            data-price="39.99"
-          >
-            <div class="cart-item-img">
-              <img src="https://picsum.photos/300/250?4" alt="Gaming Mouse" />
-            </div>
-
-            <div class="cart-item-info">
-              <h3>Gaming Mouse</h3>
-              <p class="item-price">$39.99</p>
-            </div>
-
-            <div class="cart-item-actions">
-              <div class="qty-controls">
-                <button class="qty-btn qty-minus">−</button>
-                <span class="qty-value">1</span>
-                <button class="qty-btn qty-plus">+</button>
-              </div>
-
-              <button class="remove-btn">Remove</button>
-            </div>
-          </article>
+          <!-- Cart items are dynamically rendered from localStorage via script.js -->
         </div>
         <!-- End Cart Items -->
 

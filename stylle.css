@@ -382,7 +382,17 @@ body {
   padding: 4px 16px 16px;
 }
 
-.product-card button {
+.product-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.product-card-link:hover {
+  color: inherit;
+}
+
+.product-card button, .product-card .add-to-cart-btn {
   margin: 0 16px 16px;
   padding: 12px;
   background-color: #1e40af;
@@ -681,6 +691,9 @@ footer {
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
 }
 
 .checkout-btn:hover {
@@ -1478,6 +1491,10 @@ footer {
 .product-actions .btn-secondary {
   background: #e2e8f0;
   color: #0f1724;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .product-actions .btn-secondary:hover {
