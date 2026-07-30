@@ -149,6 +149,190 @@ function setupCheckout() {
   }
 }
 
+// ===== Product Page - Reviews Data =====
+let productReviews = [
+  { name: 'Sarah M.', rating: 5, text: 'Amazing quality! Highly recommend this product.', date: '2025-01-15' },
+  { name: 'James K.', rating: 4, text: 'Great value for the price. Would buy again.', date: '2025-02-03' },
+  { name: 'Emily R.', rating: 5, text: 'Exceeded my expectations. Fast shipping too!', date: '2025-02-20' }
+];
+
+let selectedRating = 0;
+
+// ===== Star Input (clickable stars) =====
+function initStarInput() {
+  const starBtns = document.querySelectorAll('.star-input .star-btn');
+  starBtns.forEach(btn => {
+    btn.addEventListener('click', function () {
+      selectedRating = parseInt(this.dataset.value);
+      starBtns.forEach(s => s.classList.remove('active'));
+      // Highlight selected and all before it (since direction is rtl)
+      starBtns.forEach(s => {
+        if (parseInt(s.dataset.value) <= selectedRating) {
+          s.classList.add('active');
+        }
+      });
+    });
+
+    btn.addEventListener('mouseenter', function () {
+      const val = parseInt(this.dataset.value);
+      starBtns.forEach(s => {
+        s.classList.remove('active');
+        if (parseInt(s.dataset.value) <= val) {
+          s.style.color = '#f59e0b';
+        } else {
+          s.style.color = '#e2e8f0';
+        }
+      });
+    });
+
+    btn.addEventListener('mouseleave', function () {
+      starBtns.forEach(s => {
+        s.style.color = '';
+        if (selectedRating > 0 && parseInt(s.dataset.value) <= selectedRating) {
+          s.classList.add('active');
+        }
+      });
+    });
+  });
+}
+
+// ===== Submit Review =====
+function initReviewSubmit() {
+  const submitBtn = document.querySelector('.submit-review-btn');
+  const textarea = document.querySelector('.review-form textarea');
+
+  if (!submitBtn || !textarea) return;
+
+  submitBtn.addEventListener('click', function () {
+    const text = textarea.value.trim();
+    if (selectedRating === 0) {
+      alert('Please select a star rating.');
+      return;
+    }
+    if (!text) {
+      alert('Please write a review comment.');
+      return;
+    }
+
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+
+    productReviews.push({
+      name: 'You',
+      rating: selectedRating,
+      text: text,
+      date: dateStr
+    });
+
+    // Reset form
+    textarea.value = '';
+    selectedRating = 0;
+    document.querySelectorAll('.star-input .star-btn').forEach(s => s.classList.remove('active'));
+
+    // Refresh displays
+    displayReviews();
+    displayAverageRating();
+    alert('Thank you for your review!');
+  });
+}
+
+// ===== Display Reviews =====
+function displayReviews() {
+  const reviewsList = document.querySelector('.reviews-list');
+  if (!reviewsList) return;
+
+  if (productReviews.length === 0) {
+    reviewsList.innerHTML = '<p class="no-reviews">No reviews yet. Be the first to review!</p>';
+    return;
+  }
+
+  reviewsList.innerHTML = productReviews.map(review => {
+    const starsHtml = Array.from({ length: 5 }, (_, i) =>
+      `<span class="star ${i < review.rating ? '' : 'empty'}">★</span>`
+    ).join('');
+
+    return `
+      <div class="review-card">
+        <div class="review-header">
+          <span class="reviewer-name">${review.name}</span>
+          <span class="review-date">${review.date}</span>
+        </div>
+        <div class="review-stars">${starsHtml}</div>
+        <p class="review-text">${review.text}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== Calculate & Display Average Rating =====
+function calculateAverageRating() {
+  if (productReviews.length === 0) return 0;
+  const total = productReviews.reduce((sum, r) => sum + r.rating, 0);
+  return total / productReviews.length;
+}
+
+function displayAverageRating() {
+  const starsDisplay = document.querySelector('.stars-display');
+  const averageText = document.querySelector('.average-text');
+  const reviewCount = document.querySelector('.review-count');
+
+  if (!starsDisplay) return;
+
+  const avg = calculateAverageRating();
+  const fullStars = Math.floor(avg);
+  const hasHalf = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+  let html = '';
+  for (let i = 0; i < fullStars; i++) {
+    html += '<span class="star filled">★</span>';
+  }
+  if (hasHalf) {
+    html += '<span class="star half">★</span>';
+  }
+  for (let i = 0; i < emptyStars; i++) {
+    html += '<span class="star">★</span>';
+  }
+
+  starsDisplay.innerHTML = html;
+  if (averageText) averageText.textContent = avg > 0 ? avg.toFixed(1) : '0.0';
+  if (reviewCount) reviewCount.textContent = `(${productReviews.length} review${productReviews.length !== 1 ? 's' : ''})`;
+}
+
+// ===== Add To Cart =====
+function initAddToCart() {
+  const addToCartBtn = document.querySelector('.btn-primary');
+  if (addToCartBtn) {
+    addToCartBtn.addEventListener('click', function () {
+      const productName = document.querySelector('.product-name')?.textContent || 'Product';
+      const productPrice = document.querySelector('.product-price')?.textContent || '$0.00';
+      alert(`"${productName}" has been added to your cart!`);
+    });
+  }
+}
+
+// ===== Buy Now =====
+function initBuyNow() {
+  const buyNowBtn = document.querySelector('.btn-secondary');
+  if (buyNowBtn) {
+    buyNowBtn.addEventListener('click', function () {
+      const productName = document.querySelector('.product-name')?.textContent || 'Product';
+      const productPrice = document.querySelector('.product-price')?.textContent || '$0.00';
+      alert(`Proceeding to checkout with "${productName}" - ${productPrice}`);
+    });
+  }
+}
+
+// ===== Init Product Page =====
+function initProductPage() {
+  initStarInput();
+  initReviewSubmit();
+  displayReviews();
+  displayAverageRating();
+  initAddToCart();
+  initBuyNow();
+}
+
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', function () {
   setupQtyControls();
@@ -157,4 +341,9 @@ document.addEventListener('DOMContentLoaded', function () {
   setupCheckout();
   updateOrderSummary();
   checkEmptyCart();
+
+  // Check if we're on the product page
+  if (document.querySelector('.product-page')) {
+    initProductPage();
+  }
 });
