@@ -57,6 +57,18 @@ async function loadProducts() {
 
             productsContainer.appendChild(card);
 
+            const button = card.querySelector(".add-to-cart-btn");
+
+            button.addEventListener("click", () => {
+
+                addToCart(
+                    product.title,
+                    product.price,
+                    image
+                );
+
+            });
+
         });
     }
 

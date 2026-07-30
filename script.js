@@ -20,6 +20,8 @@ function generateId(name) {
 }
 
 function addToCart(name, price, image) {
+  console.log("addToCart called");
+  console.log(name, price, image);
   const cart = getCart();
   const id = generateId(name);
   const existing = cart.find((item) => item.id === id);
@@ -80,11 +82,35 @@ function getTotalItems() {
 }
 
 function updateCartBubble() {
-  const bubble = document.querySelector(".cart-bubble");
-  if (!bubble) return;
-  const count = getCartCount();
-  bubble.textContent = count;
-  bubble.style.display = count > 0 ? "flex" : "none";
+
+    const bubbles = document.querySelectorAll(".cart-bubble");
+
+    const count = getCartCount();
+
+    bubbles.forEach(bubble => {
+
+        bubble.textContent = count;
+
+        if (count > 0) {
+            bubble.classList.remove("pop");
+
+          void bubble.offsetWidth;
+
+          bubble.classList.add("pop");
+
+            bubble.style.display = "flex";
+
+            bubble.style.alignItems = "center";
+            bubble.style.justifyContent = "center";
+
+        } else {
+
+            bubble.style.display = "none";
+
+        }
+
+    });
+
 }
 
 // ===== Render Cart Items from localStorage =====
@@ -1627,3 +1653,8 @@ if (form) {
     });
 
 }
+document.addEventListener("DOMContentLoaded", () => {
+
+    updateCartBubble();
+
+});
