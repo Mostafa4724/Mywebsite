@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics - Admin Panel</title>
+    <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="../stylle.css" />
+  </head>
+  <body class="admin-body">
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <span>Admin Panel</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="admin-dashboard.html" class="sidebar-link" data-section="overview"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a>
+        <a href="admin-orders.html" class="sidebar-link" data-section="orders"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>Orders<span class="sidebar-badge">24</span></a>
+        <a href="admin-products.html" class="sidebar-link" data-section="products"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Products</a>
+        <a href="admin-customers.html" class="sidebar-link" data-section="customers"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Customers</a>
+        <a href="admin-analytics.html" class="sidebar-link active" data-section="analytics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="sidebar-logout" id="adminLogout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Log Out</button>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="topbar-title"><h2>Analytics</h2></div>
+        <div class="topbar-right"><div class="admin-user-chip"><div class="admin-user-avatar">A</div><span>Admin</span></div></div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Summary Stats -->
+        <div class="dash-stats" style="margin-bottom:24px;">
+          <div class="dash-stat-card blue">
+            <div class="dash-stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+            <div class="dash-stat-text"><span class="dash-stat-value">14,820</span><span class="dash-stat-label">Page Views</span></div>
+            <span class="dash-stat-trend up">+18.3%</span>
+          </div>
+          <div class="dash-stat-card green">
+            <div class="dash-stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div class="dash-stat-text"><span class="dash-stat-value">3,420</span><span class="dash-stat-label">Unique Visitors</span></div>
+            <span class="dash-stat-trend up">+9.7%</span>
+          </div>
+          <div class="dash-stat-card purple">
+            <div class="dash-stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="dash-stat-text"><span class="dash-stat-value">4:32</span><span class="dash-stat-label">Avg. Session</span></div>
+            <span class="dash-stat-trend up">+0:45</span>
+          </div>
+          <div class="dash-stat-card amber">
+            <div class="dash-stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+            <div class="dash-stat-text"><span class="dash-stat-value">2.8%</span><span class="dash-stat-label">Conversion Rate</span></div>
+            <span class="dash-stat-trend down">-0.3%</span>
+          </div>
+        </div>
+
+        <!-- Traffic Sources + Top Pages -->
+        <div class="dash-grid-2" style="margin-bottom:24px;">
+          <div class="dash-card">
+            <div class="dash-card-head"><h3>Traffic Sources</h3><span class="dash-card-sub">This month</span></div>
+            <div class="traffic-list">
+              <div class="traffic-row"><div class="traffic-label"><span class="traffic-dot" style="background:#2563eb;"></span><strong>Organic Search</strong></div><div class="traffic-bar-bg"><div class="traffic-bar-fill" style="--w:68%;background:#2563eb;"></div></div><span class="traffic-pct">68%</span></div>
+              <div class="traffic-row"><div class="traffic-label"><span class="traffic-dot" style="background:#7c3aed;"></span><strong>Direct</strong></div><div class="traffic-bar-bg"><div class="traffic-bar-fill" style="--w:15%;background:#7c3aed;"></div></div><span class="traffic-pct">15%</span></div>
+              <div class="traffic-row"><div class="traffic-label"><span class="traffic-dot" style="background:#ec4899;"></span><strong>Social Media</strong></div><div class="traffic-bar-bg"><div class="traffic-bar-fill" style="--w:11%;background:#ec4899;"></div></div><span class="traffic-pct">11%</span></div>
+              <div class="traffic-row"><div class="traffic-label"><span class="traffic-dot" style="background:#d97706;"></span><strong>Email Campaigns</strong></div><div class="traffic-bar-bg"><div class="traffic-bar-fill" style="--w:4%;background:#d97706;"></div></div><span class="traffic-pct">4%</span></div>
+              <div class="traffic-row"><div class="traffic-label"><span class="traffic-dot" style="background:#16a34a;"></span><strong>Referral</strong></div><div class="traffic-bar-bg"><div class="traffic-bar-fill" style="--w:2%;background:#16a34a;"></div></div><span class="traffic-pct">2%</span></div>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-head"><h3>Top Pages</h3><span class="dash-card-sub">By views</span></div>
+            <div class="top-pages-list">
+              <div class="top-page-row"><span class="top-page-rank">1</span><div class="top-page-info"><strong>/home</strong><span>Homepage</span></div><span class="top-page-views">4,820</span></div>
+              <div class="top-page-row"><span class="top-page-rank">2</span><div class="top-page-info"><strong>/category/footwear</strong><span>Footwear Category</span></div><span class="top-page-views">2,340</span></div>
+              <div class="top-page-row"><span class="top-page-rank">3</span><div class="top-page-info"><strong>/product/running-shoes</strong><span>Premium Running Shoes</span></div><span class="top-page-views">1,890</span></div>
+              <div class="top-page-row"><span class="top-page-rank">4</span><div class="top-page-info"><strong>/category/apparel</strong><span>Apparel Category</span></div><span class="top-page-views">1,450</span></div>
+              <div class="top-page-row"><span class="top-page-rank">5</span><div class="top-page-info"><strong>/cart</strong><span>Shopping Cart</span></div><span class="top-page-views">1,120</span></div>
+              <div class="top-page-row"><span class="top-page-rank">6</span><div class="top-page-info"><strong>/checkout</strong><span>Checkout Page</span></div><span class="top-page-views">680</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Trend -->
+        <div class="dash-card">
+          <div class="dash-card-head"><h3>Monthly Revenue Trend</h3><span class="dash-card-sub">Last 6 months</span></div>
+          <div class="chart-container" style="height:200px;">
+            <div class="chart-bars">
+              <div class="chart-bar-group"><div class="chart-bar" style="--h: 45%;" data-value="$28,400"></div><span>Nov</span></div>
+              <div class="chart-bar-group"><div class="chart-bar" style="--h: 58%;" data-value="$36,700"></div><span>Dec</span></div>
+              <div class="chart-bar-group"><div class="chart-bar" style="--h: 52%;" data-value="$32,100"></div><span>Jan</span></div>
+              <div class="chart-bar-group"><div class="chart-bar" style="--h: 71%;" data-value="$44,200"></div><span>Feb</span></div>
+              <div class="chart-bar-group"><div class="chart-bar" style="--h: 85%;" data-value="$52,800"></div><span>Mar</span></div>
+              <div class="chart-bar-group"><div class="chart-bar active" style="--h: 100%;" data-value="$62,300"></div><span>Apr</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="admin.js"></script>
+  </body>
+</html>
