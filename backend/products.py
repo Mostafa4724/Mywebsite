@@ -49,7 +49,7 @@ def get_product(id):
     })
 
 @products_bp.route("/admin/products", methods=["POST"])
-@admin_required
+#@admin_required#
 def add_product():
 
     data = request.get_json()

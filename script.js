@@ -1000,9 +1000,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // ===== PRODUCTS PAGE: Search & Modal =====
     const productSearch = document.getElementById("productSearch");
     const addProductBtn = document.getElementById("addProductBtn");
-    const addProductModal = document.getElementById("addProductModal");
-    const closeModal = document.getElementById("closeModal");
-    const cancelModal = document.getElementById("cancelModal");
     const saveProduct = document.getElementById("saveProduct");
 
     if (productSearch) {
@@ -1018,19 +1015,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (addProductBtn) addProductBtn.addEventListener("click", () => {
     window.location.href = "add.html";
 });
-    if (closeModal) closeModal.addEventListener("click", closeProductModal);
-    if (cancelModal) cancelModal.addEventListener("click", closeProductModal);
-    if (addProductModal) {
-      addProductModal.addEventListener("click", (e) => {
-        if (e.target === addProductModal) closeProductModal();
-      });
-    }
-    if (saveProduct) {
-      saveProduct.addEventListener("click", () => {
-        closeProductModal();
-      });
-    }
-
+    
     // ===== CUSTOMERS PAGE: Search =====
     const customerSearch = document.getElementById("customerSearch");
     if (customerSearch) {
@@ -1584,3 +1569,61 @@ document.addEventListener("DOMContentLoaded", function () {
     setTimeout(() => toast.classList.remove('visible'), 3000);
   }
 })();
+
+const form = document.getElementById("addProductForm");
+
+if (form) {
+
+    form.addEventListener("submit", async (e) => {
+
+        e.preventDefault();
+
+        const product = {
+
+            title: document.getElementById("prodName").value.trim(),
+            description: document.getElementById("prodDesc").value.trim(),
+            category: document.getElementById("prodCategory").value,
+            price: parseFloat(document.getElementById("prodPrice").value),
+            stock: parseInt(document.getElementById("prodStock").value),
+            image: ""
+
+        };
+
+        try {
+
+            const response = await fetch(
+                "http://127.0.0.1:5000/admin/products",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(product)
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+
+                alert("Product published successfully!");
+
+                window.location.href = "admin_product.html";
+
+            } else {
+
+                alert(data.message);
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Cannot connect to server.");
+
+        }
+
+    });
+
+}
