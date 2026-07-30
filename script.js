@@ -553,14 +553,95 @@ function initHomePage() {
   });
 }
 
-// ===== Buy Now (placeholder) =====
+// ===== Buy Now =====
 function initBuyNow() {
   const buyNowBtn = document.querySelector('.product-actions .btn-secondary');
   if (buyNowBtn) {
     buyNowBtn.addEventListener('click', function (e) {
-      // Default behavior: link to checkout page
-      // The href is already set to checkout.html
+      e.preventDefault();
+
+      const productName = document.querySelector('.product-name')?.textContent || 'Product';
+      const priceText = document.querySelector('.product-price')?.textContent || '$0.00';
+      const price = priceText.replace(/[^0-9.]/g, '');
+      const productImage = document.querySelector('#product-image')?.src || '';
+
+      // Clear cart and add only this product
+      localStorage.removeItem('shopping_cart');
+      addToCart(productName, price, productImage);
+
+      // Navigate to checkout
+      window.location.href = 'checkout.html';
     });
+  }
+}
+
+// ===== Checkout Page - Render Order Summary from Cart =====
+function renderCheckoutOrderSummary() {
+  const orderItemsContainer = document.querySelector('.order-items');
+  const checkoutSubtotal = document.getElementById('checkout-subtotal');
+  const checkoutShipping = document.getElementById('checkout-shipping');
+  const checkoutTax = document.getElementById('checkout-tax');
+  const checkoutTotal = document.getElementById('checkout-total');
+  const confirmBtn = document.querySelector('.checkout-btn-primary');
+
+  if (!orderItemsContainer) return;
+
+  const cart = getCart();
+  orderItemsContainer.innerHTML = '';
+
+  if (cart.length === 0) {
+    orderItemsContainer.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">Your cart is empty. <a href="home.html" style="color:#2563eb;">Continue shopping</a></p>';
+    if (checkoutSubtotal) checkoutSubtotal.textContent = '$0.00';
+    if (checkoutShipping) checkoutShipping.textContent = '$0.00';
+    if (checkoutTax) checkoutTax.textContent = '$0.00';
+    if (checkoutTotal) checkoutTotal.textContent = '$0.00';
+    if (confirmBtn) confirmBtn.innerHTML = 'Confirm and Pay $0.00';
+    return;
+  }
+
+  let subtotal = 0;
+  let totalItems = 0;
+
+  cart.forEach(item => {
+    const itemTotal = item.price * item.quantity;
+    subtotal += itemTotal;
+    totalItems += item.quantity;
+
+    const itemEl = document.createElement('div');
+    itemEl.className = 'order-item';
+    itemEl.innerHTML = `
+      <div class="order-item-thumb">
+        <img src="${item.image || 'https://picsum.photos/104/104?default'}" alt="${item.name}" />
+        <span class="order-item-qty">${item.quantity}</span>
+      </div>
+      <div class="order-item-info">
+        <h4>${item.name}</h4>
+        <span>$${item.price.toFixed(2)} each</span>
+      </div>
+      <span class="order-item-price">$${itemTotal.toFixed(2)}</span>
+    `;
+    orderItemsContainer.appendChild(itemEl);
+  });
+
+  const shipping = totalItems > 0 ? 12.00 : 0;
+  const tax = subtotal * 0.08;
+  const total = subtotal + shipping + tax;
+
+  if (checkoutSubtotal) checkoutSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+  if (checkoutShipping) checkoutShipping.textContent = `$${shipping.toFixed(2)}`;
+  if (checkoutTax) checkoutTax.textContent = `$${tax.toFixed(2)}`;
+  if (checkoutTotal) checkoutTotal.textContent = `$${total.toFixed(2)}`;
+
+  // Update confirm button with dynamic total
+  if (confirmBtn) {
+    const svg = confirmBtn.querySelector('svg');
+    confirmBtn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+      Confirm and Pay $${total.toFixed(2)}
+    `;
   }
 }
 
@@ -589,5 +670,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // Check if we're on the home page
   if (document.querySelector('.hero') && document.querySelector('#product-container')) {
     initHomePage();
+  }
+
+  // Check if we're on the checkout page
+  if (document.querySelector('.checkout-page')) {
+    renderCheckoutOrderSummary();
   }
 });
