@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout - Your Shop</title>
+    <link rel="stylesheet" href="checkout.css" />
+    <link rel="stylesheet" href="../stylle.css" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <div class="logo">Logo Here.</div>
+
+        <ul class="nav-links" role="menu" aria-label="Main navigation">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="Catagory.html">Catagory</a></li>
+          <li><a href="Contact.html">Contact Us</a></li>
+          <li><a href="About us.html">About us</a></li>
+        </ul>
+
+        <div class="nav-icons">
+          <a class="icon-btn" href="Wishlist.html" aria-label="Wishlist">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <path d="M12 21s-7-4.35-9-6.6A5.5 5.5 0 0 1 6 4.5 6 6 0 0 1 12 8a6 6 0 0 1 6-3.5c2.5 0 3.9 2.9 3 6.1C19 16.6 12 21 12 21z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <path d="M6 6h15l-1.5 9h-12L4 2H2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="10" cy="20" r="1" fill="currentColor"/>
+              <circle cx="18" cy="20" r="1" fill="currentColor"/>
+            </svg>
+          </a>
+
+          <button class="icon-btn" aria-label="account">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="checkout-page">
+      <section class="checkout-hero">
+        <span class="eyebrow">Final Step</span>
+        <h1>Checkout</h1>
+        <p>Complete your order with secure payment and shipping details.</p>
+      </section>
+
+      <div class="checkout-steps">
+        <div class="step completed">
+          <span class="step-num">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </span>
+          <span class="step-label">Cart</span>
+        </div>
+        <div class="step active">
+          <span class="step-num">2</span>
+          <span class="step-label">Checkout</span>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <span class="step-label">Confirmation</span>
+        </div>
+      </div>
+
+      <a href="cart.html" class="back-to-cart">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Back to Cart
+      </a>
+
+      <div class="checkout-layout">
+        <div class="checkout-form-sections">
+
+          <section class="form-section">
+            <div class="form-section-header">
+              <div class="form-section-icon shipping">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <div>
+                <h2>Shipping Information</h2>
+                <p>Where should we deliver your order?</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label>First Name <span class="required">*</span></label>
+                <input type="text" placeholder="John" required />
+              </div>
+              <div class="form-group">
+                <label>Last Name <span class="required">*</span></label>
+                <input type="text" placeholder="Doe" required />
+              </div>
+              <div class="form-group full-width">
+                <label>Email Address <span class="required">*</span></label>
+                <input type="email" placeholder="john@example.com" required />
+              </div>
+              <div class="form-group full-width">
+                <label>Street Address <span class="required">*</span></label>
+                <input type="text" placeholder="123 Main Street, Apt 4B" required />
+              </div>
+              <div class="form-group">
+                <label>City <span class="required">*</span></label>
+                <input type="text" placeholder="New York" required />
+              </div>
+              <div class="form-group">
+                <label>State / Province</label>
+                <input type="text" placeholder="NY" />
+              </div>
+              <div class="form-group">
+                <label>Zip / Postal Code <span class="required">*</span></label>
+                <input type="text" placeholder="10001" required />
+              </div>
+              <div class="form-group">
+                <label>Country <span class="required">*</span></label>
+                <select required>
+                  <option value="" disabled selected>Select country</option>
+                  <option value="US">United States</option>
+                  <option value="CA">Canada</option>
+                  <option value="UK">United Kingdom</option>
+                  <option value="AU">Australia</option>
+                  <option value="DE">Germany</option>
+                  <option value="FR">France</option>
+                  <option value="JP">Japan</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label>Phone Number <span class="required">*</span></label>
+                <input type="tel" placeholder="+1 (555) 000-0000" required />
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="form-section-header">
+              <div class="form-section-icon payment">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <path d="M1 10h22"/>
+                </svg>
+              </div>
+              <div>
+                <h2>Payment Method</h2>
+                <p>Choose how you'd like to pay.</p>
+              </div>
+            </div>
+
+            <div class="payment-options">
+              <label class="payment-option selected" data-method="card">
+                <input type="radio" name="payment" value="card" checked />
+                <span class="radio-circle"></span>
+                <div class="payment-option-icon card-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                    <path d="M1 10h22"/>
+                  </svg>
+                </div>
+                <div class="payment-option-text">
+                  <strong>Credit / Debit Card</strong>
+                  <span>Visa, Mastercard, Amex</span>
+                </div>
+              </label>
+
+              <label class="payment-option" data-method="transfer">
+                <input type="radio" name="payment" value="transfer" />
+                <span class="radio-circle"></span>
+                <div class="payment-option-icon transfer-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 1l4 4-4 4"/>
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                    <path d="M7 23l-4-4 4-4"/>
+                    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                  </svg>
+                </div>
+                <div class="payment-option-text">
+                  <strong>Bank Transfer</strong>
+                  <span>Direct bank payment</span>
+                </div>
+              </label>
+
+              <label class="payment-option" data-method="cod">
+                <input type="radio" name="payment" value="cod" />
+                <span class="radio-circle"></span>
+                <div class="payment-option-icon cod-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                    <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/>
+                  </svg>
+                </div>
+                <div class="payment-option-text">
+                  <strong>Cash on Delivery</strong>
+                  <span>Pay when you receive</span>
+                </div>
+              </label>
+            </div>
+
+            <div class="card-details visible" id="cardDetails">
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label>Card Number <span class="required">*</span></label>
+                  <input type="text" placeholder="1234 5678 9012 3456" maxlength="19" />
+                </div>
+                <div class="form-group">
+                  <label>Expiry Date <span class="required">*</span></label>
+                  <input type="text" placeholder="MM / YY" maxlength="7" />
+                </div>
+                <div class="form-group">
+                  <label>CVV <span class="required">*</span></label>
+                  <input type="text" placeholder="123" maxlength="4" />
+                </div>
+                <div class="form-group full-width">
+                  <label>Cardholder Name <span class="required">*</span></label>
+                  <input type="text" placeholder="JOHN DOE" />
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="cart-summary checkout-summary">
+          <h2>Order Summary</h2>
+
+          <div class="order-items">
+            <div class="order-item">
+              <div class="order-item-thumb">
+                <img src="https://picsum.photos/seed/prod1/104/104.jpg" alt="Product" />
+                <span class="order-item-qty">1</span>
+              </div>
+              <div class="order-item-info">
+                <h4>Premium Running Shoes</h4>
+                <span>Size: 10 / Blue</span>
+              </div>
+              <span class="order-item-price">$129.99</span>
+            </div>
+
+            <div class="order-item">
+              <div class="order-item-thumb">
+                <img src="https://picsum.photos/seed/prod2/104/104.jpg" alt="Product" />
+                <span class="order-item-qty">2</span>
+              </div>
+              <div class="order-item-info">
+                <h4>Cotton Crew Socks</h4>
+                <span>Black / Pack of 2</span>
+              </div>
+              <span class="order-item-price">$59.98</span>
+            </div>
+
+            <div class="order-item">
+              <div class="order-item-thumb">
+                <img src="https://picsum.photos/seed/prod3/104/104.jpg" alt="Product" />
+                <span class="order-item-qty">1</span>
+              </div>
+              <div class="order-item-info">
+                <h4>Leather Wallet</h4>
+                <span>Brown</span>
+              </div>
+              <span class="order-item-price">$60.00</span>
+            </div>
+          </div>
+
+          <div class="summary-row">
+            <span>Subtotal (4 items)</span>
+            <span>$249.97</span>
+          </div>
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span>$9.99</span>
+          </div>
+          <div class="summary-row">
+            <span>Tax (8%)</span>
+            <span>$20.00</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total</span>
+            <span>$279.96</span>
+          </div>
+
+          <button class="checkout-btn-primary" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Confirm and Pay $279.96
+          </button>
+
+          <div class="secure-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Secured with 256-bit SSL encryption
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 Your Shop. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+      const paymentOptions = document.querySelectorAll('.payment-option');
+      const cardDetails = document.getElementById('cardDetails');
+
+      paymentOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          paymentOptions.forEach(o => o.classList.remove('selected'));
+          option.classList.add('selected');
+          const method = option.getAttribute('data-method');
+          if (method === 'card') {
+            cardDetails.classList.add('visible');
+          } else {
+            cardDetails.classList.remove('visible');
+          }
+        });
+      });
+
+      const cardInput = document.querySelector('#cardDetails input[placeholder*="1234"]');
+      if (cardInput) {
+        cardInput.addEventListener('input', (e) => {
+          let value = e.target.value.replace(/\D/g, '');
+          value = value.substring(0, 16);
+          let formatted = value.replace(/(.{4})/g, '$1 ').trim();
+          e.target.value = formatted;
+        });
+      }
+
+      const expiryInput = document.querySelector('#cardDetails input[placeholder*="MM"]');
+      if (expiryInput) {
+        expiryInput.addEventListener('input', (e) => {
+          let value = e.target.value.replace(/\D/g, '');
+          value = value.substring(0, 4);
+          if (value.length >= 2) {
+            value = value.substring(0, 2) + ' / ' + value.substring(2);
+          }
+          e.target.value = value;
+        });
+      }
+
+      const cvvInput = document.querySelector('#cardDetails input[placeholder*="123"]');
+      if (cvvInput) {
+        cvvInput.addEventListener('input', (e) => {
+          e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+        });
+      }
+
+      const confirmBtn = document.querySelector('.checkout-btn-primary');
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+          const formSection = document.querySelector('.checkout-form-sections');
+          const inputs = formSection.querySelectorAll('input[required], select[required]');
+          let allFilled = true;
+
+          inputs.forEach(input => {
+            if (!input.value.trim()) {
+              allFilled = false;
+              input.style.borderColor = '#ef4444';
+              input.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+              input.addEventListener('focus', function handler() {
+                input.style.borderColor = '';
+                input.style.boxShadow = '';
+                input.removeEventListener('focus', handler);
+              });
+            }
+          });
+
+          if (!allFilled) {
+            const firstEmpty = Array.from(inputs).find(i => !i.value.trim());
+            if (firstEmpty) {
+              firstEmpty.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              firstEmpty.focus();
+            }
+            return;
+          }
+
+          confirmBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            Order Placed Successfully!
+          `;
+          confirmBtn.style.background = 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)';
+          confirmBtn.style.pointerEvents = 'none';
+
+          const steps = document.querySelectorAll('.step');
+          steps[1].classList.remove('active');
+          steps[1].classList.add('completed');
+          steps[1].querySelector('.step-num').innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          `;
+          steps[2].classList.add('active');
+        });
+      }
+    </script>
+  </body>
+</html>
