@@ -1099,6 +1099,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const previewGrid = document.getElementById('previewGrid');
   const MAX_IMAGES = 5;
   let uploadedImages = [];
+  
+  window.uploadedImages = uploadedImages;
 
   if (uploadArea) {
     uploadArea.addEventListener('click', (e) => {
@@ -1131,22 +1133,35 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function handleFiles(files) {
+
     const remaining = MAX_IMAGES - uploadedImages.length;
     const toAdd = files.slice(0, remaining);
 
     toAdd.forEach(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('File "' + file.name + '" exceeds 5MB limit.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        uploadedImages.push(e.target.result);
-        renderPreviews();
-      };
-      reader.readAsDataURL(file);
+
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('File "' + file.name + '" exceeds 5MB limit.');
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+
+            uploadedImages.push({
+                file: file,
+                preview: e.target.result
+            });
+
+            renderPreviews();
+
+        };
+
+        reader.readAsDataURL(file);
+
     });
-  }
+
+}
 
   function renderPreviews() {
     if (uploadedImages.length === 0) {
@@ -1159,11 +1174,11 @@ document.addEventListener("DOMContentLoaded", function () {
     previewGrid.style.display = 'grid';
     previewGrid.innerHTML = '';
 
-    uploadedImages.forEach((src, i) => {
+    uploadedImages.forEach((img, i) => {
       const item = document.createElement('div');
       item.className = 'preview-item';
       item.innerHTML =
-        '<img src="' + src + '" alt="Preview ' + (i + 1) + '" />' +
+        '<img src="' + img.preview + '" alt="Preview ' + (i + 1) + '" />' +
         (i === 0 ? '<span class="preview-badge">Main</span>' : '') +
         '<button type="button" class="preview-remove" data-index="' + i + '" aria-label="Remove image">&times;</button>';
       previewGrid.appendChild(item);
@@ -1596,90 +1611,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 })();
 
-const form = document.getElementById("addProductForm");
-
-if (form) {
-
-    form.addEventListener("submit", async (e) => {
-
-        e.preventDefault();
-
-        const formData = new FormData();
-
-        formData.append(
-            "title",
-            document.getElementById("prodName").value
-        );
-
-        formData.append(
-            "description",
-            document.getElementById("prodDesc").value
-        );
-
-        formData.append(
-            "category",
-            document.getElementById("prodCategory").value
-        );
-
-        formData.append(
-            "price",
-            document.getElementById("prodPrice").value
-        );
-
-        formData.append(
-            "stock",
-            document.getElementById("prodStock").value
-        );
-        const imageInput = document.getElementById("imageInput");
-
-        if (imageInput.files.length > 0) {
-
-            formData.append(
-                "image",
-                imageInput.files[0]
-            );
-
-        }
-
-        try {
-            console.log(imageInput.files);
-            console.log(formData.get("image"));
-            const response = await fetch(
-                "http://127.0.0.1:5000/admin/products",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization:
-                          "Bearer " + localStorage.getItem("token")
-                    },
-                    body: formData
-                }
-            );
-
-            const data = await response.json();
-
-            if (data.success) {
-
-               
-                window.location.href = "admin_product.html";
-
-            } else {
-
-                alert(data.message);
-
-            }
-
-        } catch (err) {
-
-            console.error(err);
-
-            alert("Cannot connect to server.");
-
-        }
-
-    });
-
-}
 document.addEventListener("DOMContentLoaded", () => {
 
     updateCartBubble();

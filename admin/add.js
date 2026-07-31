@@ -1,4 +1,31 @@
+const form = document.getElementById("addProductForm");
 
+console.log("Form:", form);
+
+form.addEventListener("submit", async (e) => {
+
+    console.log("Submit fired");
+
+    e.preventDefault();
+
+    const formData = new FormData();
+
+    formData.append("title", document.getElementById("prodName").value);
+    formData.append("description", document.getElementById("prodDesc").value);
+    formData.append("category", document.getElementById("prodCategory").value);
+    formData.append("price", document.getElementById("prodPrice").value);
+    formData.append("stock", document.getElementById("prodStock").value);
+
+    if (window.uploadedImages.length > 0) {
+
+        formData.append(
+            "image",
+            window.uploadedImages[0].file
+        );
+
+    }
+
+    console.log("Sending request...");
 
     try {
 
@@ -7,35 +34,23 @@
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    Authorization:
+                        "Bearer " + localStorage.getItem("token")
                 },
-                body: JSON.stringify(product)
+                body: formData
             }
         );
 
-        const result = await response.json();
+        console.log("Response:", response.status);
 
-        console.log(result);
+        const data = await response.json();
 
-        if (result.success) {
+        console.log(data);
 
-            
+    } catch (err) {
 
-            form.reset();
-
-            window.location.href = "admin_product.html";
-
-        } else {
-
-            alert(result.message);
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert("Cannot connect to Flask server.");
+        console.error("Fetch error:", err);
 
     }
 
+});
