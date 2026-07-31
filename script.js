@@ -1604,27 +1604,55 @@ if (form) {
 
         e.preventDefault();
 
-        const product = {
+        const formData = new FormData();
 
-            title: document.getElementById("prodName").value.trim(),
-            description: document.getElementById("prodDesc").value.trim(),
-            category: document.getElementById("prodCategory").value,
-            price: parseFloat(document.getElementById("prodPrice").value),
-            stock: parseInt(document.getElementById("prodStock").value),
-            image: ""
+        formData.append(
+            "title",
+            document.getElementById("prodName").value
+        );
 
-        };
+        formData.append(
+            "description",
+            document.getElementById("prodDesc").value
+        );
+
+        formData.append(
+            "category",
+            document.getElementById("prodCategory").value
+        );
+
+        formData.append(
+            "price",
+            document.getElementById("prodPrice").value
+        );
+
+        formData.append(
+            "stock",
+            document.getElementById("prodStock").value
+        );
+        const imageInput = document.getElementById("imageInput");
+
+        if (imageInput.files.length > 0) {
+
+            formData.append(
+                "image",
+                imageInput.files[0]
+            );
+
+        }
 
         try {
-
+            console.log(imageInput.files);
+            console.log(formData.get("image"));
             const response = await fetch(
                 "http://127.0.0.1:5000/admin/products",
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        Authorization:
+                          "Bearer " + localStorage.getItem("token")
                     },
-                    body: JSON.stringify(product)
+                    body: formData
                 }
             );
 
@@ -1632,8 +1660,7 @@ if (form) {
 
             if (data.success) {
 
-                alert("Product published successfully!");
-
+               
                 window.location.href = "admin_product.html";
 
             } else {

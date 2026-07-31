@@ -1,6 +1,6 @@
 import os
 from flask_jwt_extended import JWTManager
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from products import products_bp
 from database import db
@@ -10,6 +10,7 @@ from models import User
 from config import Config
 
 app = Flask(__name__)
+
 
 app.config.from_object(Config)
 CORS(app)
@@ -22,8 +23,16 @@ DATABASE_PATH = os.path.join(
     "database",
     "shopping.db"
 )
+UPLOAD_FOLDER = os.path.join(
+    BASE_DIR,
+    "uploads",
+    "products"
+)
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH}"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Connect SQLAlchemy to Flask
@@ -77,6 +86,14 @@ def home():
         "success": True,
         "message": "Shopping Server Running"
     })
+
+@app.route("/uploads/products/<filename>")
+def uploaded_file(filename):
+
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"],
+        filename
+    )
 
 from auth import auth_bp
 
