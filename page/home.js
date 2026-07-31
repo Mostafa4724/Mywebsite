@@ -21,9 +21,9 @@ async function loadProducts() {
         data.products.forEach(product => {
 
             const image =
-                product.image && product.image.trim() !== ""
-                    ? product.image
-                    : "https://picsum.photos/300/250?random=" + product.id;
+            product.image && product.image !== ""
+                ? "http://127.0.0.1:5000/uploads/products/" + product.image
+                : "https://picsum.photos/300/250?random=" + product.id;
 
             const card = document.createElement("div");
 

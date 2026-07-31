@@ -1,3 +1,9 @@
+import os
+import uuid
+
+from werkzeug.utils import secure_filename
+from flask import current_app
+
 from flask import Blueprint, request, jsonify
 
 from models import Product
@@ -52,7 +58,31 @@ def get_product(id):
 #@admin_required#
 def add_product():
 
-    data = request.get_json()
+    data = request.form
+
+    image = request.files.get("image")
+
+    filename = ""
+
+    if image:
+
+        filename = (
+            str(uuid.uuid4())
+            + "_"
+            + secure_filename(image.filename)
+        )
+
+        image.save(
+
+            os.path.join(
+
+                current_app.config["UPLOAD_FOLDER"],
+
+                filename
+
+            )
+
+        )
 
     product = Product(
 
@@ -66,7 +96,7 @@ def add_product():
 
         stock=int(data["stock"]),
 
-        image=data.get("image","")
+        image=filename
 
     )
 
