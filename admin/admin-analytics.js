@@ -92,11 +92,6 @@ function showToast(msg, icon = 'fa-circle-check') {
   $('#sidebarOverlay').classList.remove('show');
 });
 
-// Logout
- $('#adminLogout').addEventListener('click', () => {
-  showToast('Signed out successfully', 'fa-right-from-bracket');
-});
-
 // ── Period Toggle ──
  $('#periodToggle').addEventListener('click', (e) => {
   const btn = e.target.closest('.aa-period-btn');
