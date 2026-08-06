@@ -6,6 +6,12 @@
     <title>Checkout - Your Shop</title>
     <link rel="stylesheet" href="checkout.css" />
     <link rel="stylesheet" href="../stylle.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
   </head>
   <body>
     <nav class="site-nav">
@@ -21,7 +27,7 @@
 
         <div class="nav-icons">
           <a class="icon-btn cart" href="cart.html" aria-label="Cart">
-            <i class="fa-solid fa-cart-shopping"></i> 
+            <i class="fa-solid fa-cart-shopping"></i>
             <span class="cart-bubble">0</span>
             <svg
               width="20"
@@ -42,8 +48,6 @@
               <circle cx="18" cy="20" r="1" fill="currentColor" />
             </svg>
           </a>
-
-          
         </div>
       </div>
     </nav>
@@ -147,29 +151,84 @@
                 />
               </div>
               <div class="form-group">
-                <label>City <span class="required">*</span></label>
-                <input type="text" placeholder="New York" required />
+                <label>Architecture <span class="required">*</span></label>
+                <input
+                  type="text"
+                  placeholder="e.g. Modern, Classic"
+                  required
+                />
               </div>
               <div class="form-group">
-                <label>State / Province</label>
-                <input type="text" placeholder="NY" />
+                <label>Floor</label>
+                <input type="text" placeholder="e.g. 3rd Floor" />
               </div>
-              <div class="form-group">
-                <label>Zip / Postal Code <span class="required">*</span></label>
-                <input type="text" placeholder="10001" required />
-              </div>
-              <div class="form-group">
-                <label>Country <span class="required">*</span></label>
-                <select required>
-                  <option value="" disabled selected>Select country</option>
-                  <option value="US">United States</option>
-                  <option value="CA">Canada</option>
-                  <option value="UK">United Kingdom</option>
-                  <option value="AU">Australia</option>
-                  <option value="DE">Germany</option>
-                  <option value="FR">France</option>
-                  <option value="JP">Japan</option>
-                </select>
+              <div class="form-group full-width">
+                <label
+                  >Select Your Location from Map
+                  <span class="required">*</span></label
+                >
+                <div class="map-container" id="mapContainer">
+                  <div id="checkoutMap"></div>
+                  <div class="map-overlay" id="mapOverlay">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"
+                      />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <span>Click to select your location</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="map-locate-btn"
+                    id="mapLocateBtn"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="4" />
+                      <line x1="12" y1="2" x2="12" y2="6" />
+                      <line x1="12" y1="18" x2="12" y2="22" />
+                      <line x1="2" y1="12" x2="6" y2="12" />
+                      <line x1="18" y1="12" x2="22" y2="12" />
+                    </svg>
+                    <span>My Location</span>
+                  </button>
+                  <input type="hidden" id="mapLat" />
+                  <input type="hidden" id="mapLng" />
+                </div>
+                <div class="map-coords" id="mapCoords" style="display: none">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <span id="coordsText"></span>
+                </div>
               </div>
               <div class="form-group full-width">
                 <label>Phone Number <span class="required">*</span></label>
@@ -308,9 +367,7 @@
         <aside class="cart-summary checkout-summary">
           <h2>Order Summary</h2>
 
-          <div class="order-items">
-            <!-- Dynamically rendered from cart data via script.js -->
-          </div>
+          <div class="order-items"></div>
 
           <div class="summary-row">
             <span>Subtotal</span>
@@ -371,111 +428,12 @@
     </footer>
 
     <script src="../script.js"></script>
-    <script>
-      const paymentOptions = document.querySelectorAll(".payment-option");
-      const cardDetails = document.getElementById("cardDetails");
-
-      paymentOptions.forEach((option) => {
-        option.addEventListener("click", () => {
-          paymentOptions.forEach((o) => o.classList.remove("selected"));
-          option.classList.add("selected");
-          const method = option.getAttribute("data-method");
-          if (method === "card") {
-            cardDetails.classList.add("visible");
-          } else {
-            cardDetails.classList.remove("visible");
-          }
-        });
-      });
-
-      const cardInput = document.querySelector(
-        '#cardDetails input[placeholder*="1234"]',
-      );
-      if (cardInput) {
-        cardInput.addEventListener("input", (e) => {
-          let value = e.target.value.replace(/\D/g, "");
-          value = value.substring(0, 16);
-          let formatted = value.replace(/(.{4})/g, "$1 ").trim();
-          e.target.value = formatted;
-        });
-      }
-
-      const expiryInput = document.querySelector(
-        '#cardDetails input[placeholder*="MM"]',
-      );
-      if (expiryInput) {
-        expiryInput.addEventListener("input", (e) => {
-          let value = e.target.value.replace(/\D/g, "");
-          value = value.substring(0, 4);
-          if (value.length >= 2) {
-            value = value.substring(0, 2) + " / " + value.substring(2);
-          }
-          e.target.value = value;
-        });
-      }
-
-      const cvvInput = document.querySelector(
-        '#cardDetails input[placeholder*="123"]',
-      );
-      if (cvvInput) {
-        cvvInput.addEventListener("input", (e) => {
-          e.target.value = e.target.value.replace(/\D/g, "").substring(0, 4);
-        });
-      }
-
-      const confirmBtn = document.querySelector(".checkout-btn-primary");
-      if (confirmBtn) {
-        confirmBtn.addEventListener("click", () => {
-          const formSection = document.querySelector(".checkout-form-sections");
-          const inputs = formSection.querySelectorAll(
-            "input[required], select[required]",
-          );
-          let allFilled = true;
-
-          inputs.forEach((input) => {
-            if (!input.value.trim()) {
-              allFilled = false;
-              input.style.borderColor = "#ef4444";
-              input.style.boxShadow = "0 0 0 3px rgba(239, 68, 68, 0.1)";
-              input.addEventListener("focus", function handler() {
-                input.style.borderColor = "";
-                input.style.boxShadow = "";
-                input.removeEventListener("focus", handler);
-              });
-            }
-          });
-
-          if (!allFilled) {
-            const firstEmpty = Array.from(inputs).find((i) => !i.value.trim());
-            if (firstEmpty) {
-              firstEmpty.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-              });
-              firstEmpty.focus();
-            }
-            return;
-          }
-
-          confirmBtn.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
-            Order Placed Successfully!
-          `;
-          confirmBtn.style.background =
-            "linear-gradient(135deg, #16a34a 0%, #22c55e 100%)";
-          confirmBtn.style.pointerEvents = "none";
-
-          const steps = document.querySelectorAll(".step");
-          steps[1].classList.remove("active");
-          steps[1].classList.add("completed");
-          steps[1].querySelector(".step-num").innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-          `;
-          steps[2].classList.add("active");
-        });
-      }
-    </script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="checkout-map.js"></script>
+    <script src="checkout-form.js"></script>
   </body>
 </html>
