@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Home - Website</title>
     <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="home.css" />
   </head>
   <body>
     <nav class="site-nav">
@@ -50,16 +51,25 @@
       </div>
     </nav>
     <section class="hero">
-      <div class="hero-content">
-        <h1>Discover Amazing Products</h1>
-        <p>Quality products with the best prices.</p>
-
-        <button id="shop-now-btn">Shop Now</button>
+      <div class="hero-grid">
+        <div class="hero-text">
+          <span class="hero-badge">New Collection 2026</span>
+          <h1>Discover Amazing Products</h1>
+          <p>Quality products with the best prices. Curated for people who appreciate design and function.</p>
+          <button id="shop-now-btn">Shop Now</button>
+        </div>
+        <div class="hero-visual">
+          <div class="geo-shape geo-1"></div>
+          <div class="geo-shape geo-2"></div>
+          <div class="geo-shape geo-3"></div>
+          <div class="geo-shape geo-4"></div>
+        </div>
       </div>
     </section>
 
     <section class="products">
       <div class="section-title">
+        <span class="section-badge">Curated</span>
         <h2>Featured Products</h2>
       </div>
 
@@ -67,7 +77,9 @@
     </section>
 
     <footer>
-      <p>© 2026 Your Shop. All Rights Reserved.</p>
+      <div class="footer-inner">
+        <p>&copy; 2026 Your Shop. All Rights Reserved.</p>
+      </div>
     </footer>
 
     <script src="../script.js"></script>
