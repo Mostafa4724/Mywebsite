@@ -95,6 +95,9 @@ def uploaded_file(filename):
         filename
     )
 
+from flask import send_from_directory
+
+
 from auth import auth_bp
 
 app.register_blueprint(auth_bp)

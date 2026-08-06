@@ -83,6 +83,17 @@
         <div class="product-info">
           <h2 class="product-name" id="product-name">Wireless Headphone</h2>
 
+          <div class="product-meta">
+            <div class="meta-pill">
+              <span class="meta-label">Brand</span>
+              <span class="meta-value" id="product-brand">Loading...</span>
+            </div>
+            <div class="meta-pill">
+              <span class="meta-label">Category</span>
+              <span class="meta-value" id="product-category">Loading...</span>
+            </div>
+          </div>
+
           <!-- Rating Display -->
           <div class="rating-display">
             <div class="stars-display"></div>
@@ -90,17 +101,26 @@
             <span class="review-count">(0 reviews)</span>
           </div>
 
-          <p class="product-price" id="product-price">$79.99</p>
+          <div class="product-price-block">
+            <p class="product-price" id="product-price">$0.00</p>
+            <p class="product-original-price" id="product-original-price"></p>
+          </div>
+
+          <div class="sale-highlight" id="product-sale-card" style="display: none">
+            <span class="sale-badge" id="sale-badge">Sale</span>
+            <span class="sale-text" id="sale-price-text"></span>
+            <span class="sale-text sale-discount" id="sale-discount-text"></span>
+          </div>
 
           <!-- Availability Badge -->
           <div class="availability-badge in-stock" id="availability-badge">
             <span class="dot"></span>
-            <span>Available</span>
+            <span id="availability-text">Available</span>
           </div>
 
           <!-- Action Buttons -->
           <div class="product-actions">
-            <button class="btn-primary">Add to Cart</button>
+            <button class="btn-primary" id="addToCartBtn">Add to Cart</button>
             <a class="btn-secondary" href="checkout.html">Buy Now</a>
           </div>
         </div>
@@ -110,19 +130,9 @@
 
       <section class="about-section">
         <h2>About This Product</h2>
-        <p>
-          Experience premium sound quality with our Wireless Headphone. Designed
-          for comfort and long-lasting use, this headphone delivers rich bass,
-          clear highs, and a balanced mid-range that brings your music to life.
+        <p id="product-description">
+          Loading...
         </p>
-        <ul>
-          <li>Bluetooth 5.0 with 30ft range</li>
-          <li>Up to 20 hours of battery life</li>
-          <li>Memory foam ear cushions for all-day comfort</li>
-          <li>Built-in microphone for hands-free calls</li>
-          <li>Foldable design for easy portability</li>
-          <li>Compatible with all Bluetooth-enabled devices</li>
-        </ul>
       </section>
 
       <!-- Reviews Section -->
@@ -154,11 +164,18 @@
           </div>
 
           <textarea
-            placeholder="Share your thoughts about this product..."
-            rows="4"
-          ></textarea>
+              id="reviewComment"
+              placeholder="Share your thoughts about this product..."
+              rows="4">
+          </textarea>
 
-          <button class="submit-review-btn">Submit Review</button>
+          <button
+              class="submit-review-btn"
+              id="submitReviewBtn">
+
+              Submit Review
+
+          </button>
         </div>
 
         <!-- Reviews List -->
@@ -175,5 +192,6 @@
     </footer>
 
     <script src="../script.js"></script>
+    <script src="product.js"></script>
   </body>
 </html>

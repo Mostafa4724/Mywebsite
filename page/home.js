@@ -25,12 +25,22 @@ async function loadProducts() {
                 ? "http://127.0.0.1:5000/uploads/products/" + product.image
                 : "https://picsum.photos/300/250?random=" + product.id;
 
+            const originalPrice = Number(product.price || 0);
+            const salePrice = Number(product.sale_price || 0);
+            const saleActive = isSaleActive(product);
+            const displayPrice = saleActive && salePrice > 0
+                ? salePrice
+                : originalPrice;
+            const discountPercent = saleActive && originalPrice > 0
+                ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
+                : 0;
+
             const card = document.createElement("div");
 
             card.className = "product-card";
 
             card.dataset.name = product.title;
-            card.dataset.price = product.price;
+            card.dataset.price = displayPrice;
             card.dataset.image = image;
 
             card.innerHTML = `
@@ -40,7 +50,17 @@ async function loadProducts() {
 
                     <h3>${product.title}</h3>
 
-                    <p class="price">$${Number(product.price).toFixed(2)}</p>
+                    <div class="price-row">
+                        <p class="price">$${Number(displayPrice).toFixed(2)}</p>
+                        ${saleActive && product.sale_price ? `<p class="original-price">$${originalPrice.toFixed(2)}</p>` : ""}
+                    </div>
+
+                    ${saleActive && product.sale_price ? `
+                        <div class="sale-info">
+                            <span class="sale-chip" style="background:${product.sale_badge_color || "#f97316"};">${product.sale_badge || "Sale"}</span>
+                            <span class="sale-discount">Save ${discountPercent}%</span>
+                        </div>
+                    ` : ""}
 
                 </a>
 
@@ -48,7 +68,7 @@ async function loadProducts() {
                     class="add-to-cart-btn"
                     data-id="${product.id}"
                     data-name="${product.title}"
-                    data-price="${product.price}"
+                    data-price="${displayPrice}"
                     data-image="${image}"
                 >
                     Add To Cart
@@ -63,7 +83,7 @@ async function loadProducts() {
 
                 addToCart(
                     product.title,
-                    product.price,
+                    displayPrice,
                     image
                 );
 
@@ -77,6 +97,48 @@ async function loadProducts() {
         console.log(err);
 
     }
+
+}
+
+function isSaleActive(product) {
+
+    const salePrice = Number(product.sale_price ?? 0);
+    const regularPrice = Number(product.price ?? 0);
+    const hasValidSalePrice = salePrice > 0 && regularPrice > salePrice;
+
+    if (!hasValidSalePrice) {
+
+        return false;
+
+    }
+
+    const now = new Date();
+
+    if (product.sale_start) {
+
+        const start = new Date(product.sale_start);
+
+        if (!Number.isNaN(start.getTime()) && now < start) {
+
+            return false;
+
+        }
+
+    }
+
+    if (product.sale_end) {
+
+        const end = new Date(product.sale_end);
+
+        if (!Number.isNaN(end.getTime()) && now > end) {
+
+            return false;
+
+        }
+
+    }
+
+    return true;
 
 }
 
