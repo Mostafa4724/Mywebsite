@@ -280,24 +280,6 @@ function checkEmptyCart() {
   }
 }
 
-// ===== Promo Code (placeholder) =====
-function setupPromoCode() {
-  const applyBtn = document.getElementById("apply-promo");
-  const promoInput = document.getElementById("promo-input");
-  if (applyBtn && promoInput) {
-    applyBtn.addEventListener("click", function () {
-      const code = promoInput.value.trim().toUpperCase();
-      if (code === "SAVE10") {
-        alert("Promo code applied! 10% discount will be reflected.");
-      } else if (code) {
-        alert(`"${code}" is not a valid promo code.`);
-      } else {
-        alert("Please enter a promo code.");
-      }
-    });
-  }
-}
-
 // ===== Checkout (placeholder) =====
 function setupCheckout() {
   const checkoutBtn = document.getElementById("checkout-btn");
