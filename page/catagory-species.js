@@ -28,7 +28,8 @@
       var image = this.dataset.image || "";
 
       if (typeof addToCart === "function") {
-        addToCart(name, price, image);
+        const productId = this.dataset.id || null;
+        addToCart(name, price, image, productId);
       }
 
       var originalHTML = this.innerHTML;

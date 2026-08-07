@@ -237,6 +237,28 @@ def edit_product(id):
 
     )
 
+    # Persist the admin's availability/out-of-stock control.
+    # `stock_status` is the field that determines whether a product is
+    # available ("in"/"low") or out of stock ("out"). If it is not provided,
+    # derive it from the stock quantity so the value stays consistent.
+    if data.get("stock_status"):
+        product.stock_status = data.get("stock_status")
+    else:
+        if product.stock <= 0:
+            product.stock_status = "out"
+        elif product.stock <= (product.low_stock or 0):
+            product.stock_status = "low"
+        else:
+            product.stock_status = "in"
+
+    if data.get("low_stock") is not None:
+        product.low_stock = int(data.get("low_stock"))
+
+    # Persist the publish status too so the admin panel's publish control
+    # (draft/published/scheduled) is saved correctly.
+    if data.get("status"):
+        product.status = data.get("status")
+
     product.image = data.get(
 
         "image",

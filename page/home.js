@@ -84,7 +84,8 @@ async function loadProducts() {
                 addToCart(
                     product.title,
                     displayPrice,
-                    image
+                    image,
+                    product.id
                 );
 
             });

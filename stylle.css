@@ -756,6 +756,35 @@ footer {
   background: #fef2f2;
 }
 
+.cart-item-unavailable {
+  opacity: 0.85;
+}
+
+.cart-item-unavailable .qty-btn[disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.item-availability-message {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.cart-summary-note {
+  margin: 16px 0 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.checkout-btn.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ===== Cart Summary ===== */
 .cart-summary {
   background: #fff;

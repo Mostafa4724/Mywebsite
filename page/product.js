@@ -115,7 +115,9 @@ async function loadProduct() {
 
             price,
 
-            image
+            image,
+
+            product.id
 
         );
 
