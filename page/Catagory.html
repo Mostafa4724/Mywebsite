@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Category</title>
     <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="category.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   </head>
   <body>
     <nav class="site-nav">
@@ -21,9 +25,8 @@
         </ul>
 
         <div class="nav-icons">
-
           <a class="icon-btn cart" href="cart.html" aria-label="Cart">
-            <i class="fa-solid fa-cart-shopping"></i> 
+            <i class="fa-solid fa-cart-shopping"></i>
             <span class="cart-bubble">0</span>
             <svg
               width="20"
@@ -44,73 +47,183 @@
               <circle cx="18" cy="20" r="1" fill="currentColor" />
             </svg>
           </a>
-
-          
         </div>
       </div>
     </nav>
-    <main class="contact-page category-page">
-      <section class="contact-hero">
-        <div class="contact-copy">
-          <p class="eyebrow">Explore</p>
-          <h1>Shop by Category</h1>
-          <p>
-            Browse curated collections across trending styles, accessories, and
-            essentials.
-          </p>
+
+    <main class="category-page">
+      <!-- HERO -->
+      <section class="hero reveal">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <div class="hero-eyebrow">
+              <span class="pulse-dot"></span>
+              Explore
+            </div>
+            <h1 class="hero-title">
+              Shop by<br><span class="highlight">Category</span>
+            </h1>
+            <p class="hero-desc">
+              Browse curated collections across trending styles, accessories, and everyday essentials — all in one place.
+            </p>
+          </div>
+          <div class="hero-preview">
+            <div class="preview-float preview-float--1">
+              <img src="https://picsum.photos/seed/catprev1/320/400.jpg" alt="Preview" loading="lazy" />
+            </div>
+            <div class="preview-float preview-float--2">
+              <img src="https://picsum.photos/seed/catprev2/280/340.jpg" alt="Preview" loading="lazy" />
+            </div>
+            <div class="preview-float preview-float--3">
+              <img src="https://picsum.photos/seed/catprev3/240/280.jpg" alt="Preview" loading="lazy" />
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="categories">
-        <h2>Popular Categories</h2>
-        <div class="category-list">
-          <a
-            class="category-card category-footwear"
-            href="#"
-            aria-label="Footwear category"
-          >
-            <div class="category-icon">👟</div>
-            <div class="category-body">
-              <strong>Footwear</strong>
-              <span>Stylish sneakers, sandals, and boots.</span>
+      <!-- CATEGORIES -->
+      <div class="sec-head reveal">
+        <span class="sec-badge">Collections</span>
+        <h2 class="sec-title">Category</h2>
+        <div class="sec-line"></div>
+      </div>
+
+      <div class="cat-grid">
+        <a class="cat-item cat-item--footwear reveal reveal-d1" href="catagory-species.html" aria-label="Footwear" data-name="footwear">
+          <div class="cat-item__img">
+            <span class="cat-item__num">01</span>
+            <img src="https://picsum.photos/seed/blue-footwear/600/400.jpg" alt="Footwear" loading="lazy" />
+            <div class="cat-item__icon-wrap">👟</div>
+          </div>
+          <div class="cat-item__body">
+            <h3 class="cat-item__name">Footwear</h3>
+            <p class="cat-item__desc">Sneakers, sandals, boots, and limited-edition drops from top brands.</p>
+            <div class="cat-item__footer">
+              <span class="cat-item__count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                482 items
+              </span>
+              <span class="cat-item__arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </span>
             </div>
-          </a>
-          <a
-            class="category-card category-apparel"
-            href="#"
-            aria-label="Apparel category"
-          >
-            <div class="category-icon">👕</div>
-            <div class="category-body">
-              <strong>Apparel</strong>
-              <span>New arrivals in shirts, jackets, and tees.</span>
+          </div>
+        </a>
+
+        <a class="cat-item cat-item--apparel reveal reveal-d2" href="#" aria-label="Apparel" data-name="apparel">
+          <div class="cat-item__img">
+            <span class="cat-item__num">02</span>
+            <img src="https://picsum.photos/seed/blue-apparel/600/400.jpg" alt="Apparel" loading="lazy" />
+            <div class="cat-item__icon-wrap">👕</div>
+          </div>
+          <div class="cat-item__body">
+            <h3 class="cat-item__name">Apparel</h3>
+            <p class="cat-item__desc">New arrivals in shirts, jackets, and tees for every season.</p>
+            <div class="cat-item__footer">
+              <span class="cat-item__count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                638 items
+              </span>
+              <span class="cat-item__arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </span>
             </div>
-          </a>
-          <a
-            class="category-card category-accessories"
-            href="#"
-            aria-label="Accessories category"
-          >
-            <div class="category-icon">👜</div>
-            <div class="category-body">
-              <strong>Accessories</strong>
-              <span>Bags, watches, and everyday essentials.</span>
+          </div>
+        </a>
+
+        <a class="cat-item cat-item--accessories reveal reveal-d3" href="#" aria-label="Accessories" data-name="accessories">
+          <div class="cat-item__img">
+            <span class="cat-item__num">03</span>
+            <img src="https://picsum.photos/seed/blue-access/600/400.jpg" alt="Accessories" loading="lazy" />
+            <div class="cat-item__icon-wrap">👜</div>
+          </div>
+          <div class="cat-item__body">
+            <h3 class="cat-item__name">Accessories</h3>
+            <p class="cat-item__desc">Bags, watches, and everyday essentials to complete your look.</p>
+            <div class="cat-item__footer">
+              <span class="cat-item__count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                315 items
+              </span>
+              <span class="cat-item__arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </span>
             </div>
-          </a>
-          <a
-            class="category-card category-home"
-            href="#"
-            aria-label="Home and living category"
-          >
-            <div class="category-icon">🕯️</div>
-            <div class="category-body">
-              <strong>Home & Living</strong>
-              <span>Decor, candles, and curated lifestyle picks.</span>
+          </div>
+        </a>
+
+        <a class="cat-item cat-item--home reveal reveal-d4" href="#" aria-label="Home and living" data-name="home">
+          <div class="cat-item__img">
+            <span class="cat-item__num">04</span>
+            <img src="https://picsum.photos/seed/blue-home/600/400.jpg" alt="Home and living" loading="lazy" />
+            <div class="cat-item__icon-wrap">🕯️</div>
+          </div>
+          <div class="cat-item__body">
+            <h3 class="cat-item__name">Home & Living</h3>
+            <p class="cat-item__desc">Decor, candles, and curated lifestyle picks for every room.</p>
+            <div class="cat-item__footer">
+              <span class="cat-item__count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                257 items
+              </span>
+              <span class="cat-item__arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </span>
             </div>
-          </a>
-        </div>
-      </section>
+          </div>
+        </a>
+
+        <a class="cat-item cat-item--electronics reveal reveal-d5" href="#" aria-label="Electronics" data-name="electronics">
+          <div class="cat-item__img">
+            <span class="cat-item__num">05</span>
+            <img src="https://picsum.photos/seed/blue-elec/600/400.jpg" alt="Electronics" loading="lazy" />
+            <div class="cat-item__icon-wrap">🎧</div>
+          </div>
+          <div class="cat-item__body">
+            <h3 class="cat-item__name">Electronics</h3>
+            <p class="cat-item__desc">Gadgets, audio gear, and tech essentials for modern living.</p>
+            <div class="cat-item__footer">
+              <span class="cat-item__count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                409 items
+              </span>
+              <span class="cat-item__arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </span>
+            </div>
+          </div>
+        </a>
+
+        <a class="cat-item cat-item--sports reveal reveal-d6" href="#" aria-label="Sports and fitness" data-name="sports">
+          <div class="cat-item__img">
+            <span class="cat-item__num">06</span>
+            <img src="https://picsum.photos/seed/blue-sports/600/400.jpg" alt="Sports" loading="lazy" />
+            <div class="cat-item__icon-wrap">🏋️</div>
+          </div>
+          <div class="cat-item__body">
+            <h3 class="cat-item__name">Sports & Fitness</h3>
+            <p class="cat-item__desc">Performance gear, apparel, and supplements for every athlete.</p>
+            <div class="cat-item__footer">
+              <span class="cat-item__count">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                299 items
+              </span>
+              <span class="cat-item__arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+              </span>
+            </div>
+          </div>
+        </a>
+      </div>
     </main>
+
+    <footer>
+      <div class="footer-inner">
+        <p>&copy; 2026 Your Shop. All Rights Reserved.</p>
+      </div>
+    </footer>
+
+    <script src="category.js"></script>
     <script src="/script.js"></script>
   </body>
 </html>
