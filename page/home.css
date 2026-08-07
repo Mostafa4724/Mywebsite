@@ -1,31 +1,37 @@
 /* ===== HOME PAGE — Geometric Grid Style ===== */
 
-/* --- Hero: Split layout with geometric shapes --- */
+/* ===== HERO ===== */
 .hero {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 100px 24px 80px;
-  background: #0a1929;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 100px 24px 80px !important;
+  background: #0a1929 !important;
+  text-align: left !important;
   position: relative;
   overflow: hidden;
 }
 
 /* Dot grid pattern */
 .hero::before {
-  content: "";
+  content: "" !important;
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(37, 99, 235, 0.12) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-image: radial-gradient(rgba(37, 99, 235, 0.12) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
   pointer-events: none;
   z-index: 0;
+  animation: none !important;
+  top: auto !important;
+  left: auto !important;
+  width: auto !important;
+  height: auto !important;
 }
 
-/* Large gradient glow */
+/* Bottom glow */
 .hero::after {
-  content: "";
+  content: "" !important;
   position: absolute;
   bottom: -30%;
   left: -10%;
@@ -36,8 +42,17 @@
   filter: blur(60px);
   pointer-events: none;
   z-index: 0;
+  animation: none !important;
+  top: auto !important;
+  right: auto !important;
 }
 
+/* Hide old hero-content if it ever appears */
+.hero-content {
+  display: none !important;
+}
+
+/* ===== HERO GRID LAYOUT ===== */
 .hero-grid {
   position: relative;
   z-index: 1;
@@ -49,7 +64,7 @@
   align-items: center;
 }
 
-/* --- Hero Text Side --- */
+/* ===== HERO TEXT ===== */
 .hero-text {
   display: flex;
   flex-direction: column;
@@ -103,40 +118,51 @@
   max-width: 440px;
 }
 
-/* Button: Ghost with animated border */
+/* ===== HERO BUTTON: Ghost fill ===== */
 .hero-text button {
-  background: transparent;
-  color: #ffffff;
+  background: transparent !important;
+  color: #ffffff !important;
   padding: 15px 40px;
   font-size: 0.85rem;
   font-weight: 700;
   border-radius: 12px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  border: 1.5px solid rgba(37, 99, 235, 0.4);
+  border: 1.5px solid rgba(37, 99, 235, 0.4) !important;
   position: relative;
   overflow: hidden;
   width: fit-content;
   z-index: 1;
-  transition: color 0.4s ease, border-color 0.4s ease, transform 0.3s ease;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: color 0.4s ease, border-color 0.4s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .hero-text button::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: -1;
+  border-radius: 0 !important;
+  animation: none !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+
+.hero-text button::after {
+  display: none !important;
 }
 
 .hero-text button:hover {
-  color: #ffffff;
-  border-color: #2563eb;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.3);
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.3) !important;
+  background: transparent !important;
 }
 
 .hero-text button:hover::before {
@@ -144,17 +170,10 @@
 }
 
 .hero-text button:active {
-  transform: translateY(0);
+  transform: translateY(0) !important;
 }
 
-/* Kill old styles */
-.hero-content button::after,
-.hero-content button::before {
-  display: none !important;
-}
-
-
-/* --- Hero Visual: Geometric Shapes --- */
+/* ===== GEOMETRIC SHAPES ===== */
 .hero-visual {
   position: relative;
   width: 100%;
@@ -175,8 +194,8 @@
   left: 50%;
   transform: translate(-50%, -50%) rotate(15deg);
   animation: geoFloat1 12s ease-in-out infinite;
-  border-color: rgba(37, 99, 235, 0.2);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(59, 130, 246, 0.02));
+  border-color: rgba(37, 99, 235, 0.25);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.02));
 }
 
 .geo-2 {
@@ -187,7 +206,8 @@
   transform: rotate(-20deg);
   animation: geoFloat2 10s ease-in-out infinite;
   border-radius: 50%;
-  border-color: rgba(96, 165, 250, 0.15);
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(96, 165, 250, 0.04);
 }
 
 .geo-3 {
@@ -197,8 +217,8 @@
   left: 5%;
   transform: rotate(45deg);
   animation: geoFloat1 8s ease-in-out infinite reverse;
-  background: rgba(59, 130, 246, 0.06);
-  border-color: rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .geo-4 {
@@ -209,9 +229,9 @@
   transform: rotate(-10deg);
   border-radius: 50%;
   animation: geoFloat2 7s ease-in-out infinite;
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.3);
-  box-shadow: 0 0 40px rgba(37, 99, 235, 0.1);
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 50px rgba(37, 99, 235, 0.12);
 }
 
 @keyframes geoFloat1 {
@@ -226,17 +246,17 @@
 }
 
 
-/* --- Products Section --- */
+/* ===== PRODUCTS SECTION ===== */
 .products {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 80px 24px 60px;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 80px 24px 60px !important;
 }
 
 .section-title {
-  margin-bottom: 48px;
-  text-align: center;
-  display: flex;
+  margin-bottom: 48px !important;
+  text-align: center !important;
+  display: flex !important;
   flex-direction: column;
   align-items: center;
   gap: 12px;
@@ -260,30 +280,39 @@
   font-weight: 900;
   color: #0f2b46;
   letter-spacing: -0.5px;
-  margin: 0;
+  margin: 0 !important;
+}
+
+.section-title h2::before,
+.section-title h2::after {
+  display: none !important;
 }
 
 #product-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 24px !important;
 }
 
 
-/* --- Product Cards: Left accent style --- */
+/* ===== PRODUCT CARDS ===== */
 .product-card {
-  background-color: #ffffff;
-  border-radius: 20px;
+  background-color: #ffffff !important;
+  border-radius: 20px !important;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(15, 43, 70, 0.04), 0 6px 20px rgba(15, 43, 70, 0.05);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(15, 23, 36, 0.05);
+  box-shadow: 0 1px 3px rgba(15, 43, 70, 0.04), 0 6px 20px rgba(15, 43, 70, 0.05) !important;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid rgba(15, 23, 36, 0.05) !important;
   position: relative;
 }
 
-/* Left accent bar — always visible, expands on hover */
+/* Left accent bar */
+.product-card::before {
+  display: none !important;
+}
+
 .product-card::after {
   content: "";
   position: absolute;
@@ -306,18 +335,16 @@
 }
 
 .product-card:hover {
-  transform: translateY(-6px) translateX(2px);
-  box-shadow: 0 1px 3px rgba(15, 43, 70, 0.04), 0 16px 48px rgba(15, 43, 70, 0.1);
-  border-color: rgba(37, 99, 235, 0.08);
+  transform: translateY(-6px) translateX(2px) !important;
+  box-shadow: 0 1px 3px rgba(15, 43, 70, 0.04), 0 16px 48px rgba(15, 43, 70, 0.1) !important;
+  border-color: rgba(37, 99, 235, 0.08) !important;
 }
 
-/* Image with bottom gradient fade */
 .product-card img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
+  width: 100% !important;
+  height: 200px !important;
+  object-fit: cover !important;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
 }
 
 .product-card:hover img {
@@ -325,112 +352,112 @@
 }
 
 .product-card h3 {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #0f1724;
-  padding: 18px 22px 6px;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  color: #0f1724 !important;
+  padding: 18px 22px 6px !important;
   line-height: 1.4;
 }
 
 .product-card .price-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 2px 22px 6px;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+  padding: 2px 22px 6px !important;
   flex-wrap: wrap;
 }
 
 .product-card .price {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #2563eb;
-  margin: 0;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  color: #2563eb !important;
+  margin: 0 !important;
 }
 
 .product-card .original-price {
-  font-size: 0.82rem;
-  color: #94a3b8;
-  text-decoration: line-through;
-  margin: 0;
+  font-size: 0.82rem !important;
+  color: #94a3b8 !important;
+  text-decoration: line-through !important;
+  margin: 0 !important;
 }
 
 .product-card .sale-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 22px 16px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 22px 16px !important;
   flex-wrap: wrap;
 }
 
-/* Sale chip: White style */
+/* Sale chip: White */
 .product-card .sale-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 10px;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #dc2626;
-  font-size: 0.68rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border: 1.5px solid #fecaca;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 3px 10px !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  color: #dc2626 !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  border: 1.5px solid #fecaca !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }
 
 .product-card .sale-discount {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #dc2626;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: #dc2626 !important;
 }
 
 .product-card-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
+  text-decoration: none !important;
+  color: inherit !important;
+  display: block !important;
 }
 
-.product-card-link:hover {
-  color: inherit;
-}
-
-/* Add to cart: Ghost button that fills */
+/* Add to cart: Ghost fill button */
 .product-card button,
 .product-card .add-to-cart-btn {
-  margin: auto 22px 22px;
-  padding: 11px 16px;
-  background: transparent;
-  color: #2563eb;
-  font-size: 0.72rem;
-  font-weight: 800;
-  border-radius: 10px;
-  margin-top: auto;
+  margin: auto 22px 22px !important;
+  padding: 11px 16px !important;
+  background: transparent !important;
+  color: #2563eb !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  border-radius: 10px !important;
+  margin-top: auto !important;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  border: 1.5px solid #bfdbfe;
+  border: 1.5px solid #bfdbfe !important;
   position: relative;
   overflow: hidden;
   z-index: 1;
-  transition: color 0.35s ease, border-color 0.35s ease, transform 0.25s ease;
+  transition: color 0.35s ease, border-color 0.35s ease, transform 0.25s ease, box-shadow 0.25s ease, background 0.35s ease;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .product-card button::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #1e40af, #2563eb);
+  background: linear-gradient(135deg, #1e40af, #2563eb) !important;
   transform: scaleY(0);
   transform-origin: bottom;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: -1;
+  border-radius: 0 !important;
 }
 
 .product-card button:hover {
-  color: #ffffff;
-  border-color: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  background: transparent !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25) !important;
 }
 
 .product-card button:hover::before {
@@ -438,19 +465,23 @@
 }
 
 .product-card button:active {
-  transform: translateY(0);
+  transform: translateY(0) !important;
 }
 
 
-/* --- Footer: Clean with accent line --- */
+/* ===== FOOTER ===== */
 footer {
-  text-align: center;
-  padding: 0;
-  margin-top: 0;
-  background-color: #ffffff;
-  color: #64748b;
+  text-align: center !important;
+  padding: 0 !important;
+  margin-top: 0 !important;
+  background-color: #ffffff !important;
+  color: #64748b !important;
   font-size: 0.85rem;
   position: relative;
+}
+
+footer::before {
+  display: none !important;
 }
 
 .footer-inner {
@@ -459,7 +490,6 @@ footer {
   position: relative;
 }
 
-/* Blue gradient accent line at very top */
 .footer-inner::before {
   content: "";
   position: absolute;
@@ -476,10 +506,10 @@ footer p {
 }
 
 
-/* ===== Responsive ===== */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 1000px) {
   #product-container {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
   .hero-text h1 {
@@ -517,8 +547,8 @@ footer p {
 
 @media (max-width: 768px) {
   .hero {
-    min-height: auto;
-    padding: 80px 20px 60px;
+    min-height: auto !important;
+    padding: 80px 20px 60px !important;
   }
 
   .hero-text h1 {
@@ -530,12 +560,12 @@ footer p {
   }
 
   #product-container {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
   }
 
   .product-card img {
-    height: 170px;
+    height: 170px !important;
   }
 
   .section-title h2 {
@@ -549,21 +579,20 @@ footer p {
   }
 
   .hero-text button {
-    padding: 13px 32px;
-    font-size: 0.78rem;
+    padding: 13px 32px !important;
+    font-size: 0.78rem !important;
     width: 100%;
-    justify-content: center;
   }
 
   #product-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
   }
 
   .product-card img {
-    height: 220px;
+    height: 220px !important;
   }
 
   .section-title h2 {
