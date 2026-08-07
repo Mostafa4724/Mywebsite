@@ -3,6 +3,7 @@ from flask_jwt_extended import JWTManager
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from products import products_bp
+from orders import orders_bp
 from database import db
 from werkzeug.security import generate_password_hash
 from models import User
@@ -102,6 +103,7 @@ from auth import auth_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(products_bp)
+app.register_blueprint(orders_bp)
 
 
 with app.app_context():

@@ -56,7 +56,7 @@ if (cvvInput) {
 // ===== Confirm Button =====
 var confirmBtn = document.querySelector(".checkout-btn-primary");
 if (confirmBtn) {
-  confirmBtn.addEventListener("click", function () {
+confirmBtn.addEventListener("click", async function () {
     var formSection = document.querySelector(".checkout-form-sections");
     var inputs = formSection.querySelectorAll(
       "input[required], select[required]",
@@ -107,6 +107,28 @@ if (confirmBtn) {
         });
       }
       return;
+    }
+
+// The frontend is NOT the final authority on order validity. Send the
+    // available items to the backend, which re-validates products, prices and
+    // stock before creating the order. Only show success if the server accepts.
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = "Placing your order...";
+
+    var result = await placeOrder();
+
+    if (!result || !result.success) {
+      confirmBtn.disabled = false;
+      confirmBtn.style.background = "";
+      confirmBtn.innerHTML =
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Confirm and Pay';
+      alert(result.message || "Unable to place your order. Please try again.");
+      return;
+    }
+
+    // On success, clear the consumed Buy-Now payload / purchased cart items.
+    if (typeof clearConsumedCheckout === "function") {
+      clearConsumedCheckout(result.items || []);
     }
 
     confirmBtn.innerHTML =

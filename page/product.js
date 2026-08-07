@@ -5,6 +5,9 @@ const id = params.get("id");
 const productId =
     new URLSearchParams(window.location.search).get("id");
 
+// Buy Now quantity state (defaults to 1)
+let buyNowQuantity = 1;
+
 function isSaleActive(product) {
 
     const salePrice = Number(product.sale_price ?? 0);
@@ -177,6 +180,32 @@ async function loadProduct() {
 }
 
 
+
+// ==========================
+// Buy Now Quantity Selector
+// ==========================
+(function setupBuyNowQty() {
+  const valueEl = document.getElementById("buyNowQtyValue");
+  const minusBtn = document.getElementById("buyNowQtyMinus");
+  const plusBtn = document.getElementById("buyNowQtyPlus");
+  if (!valueEl || !minusBtn || !plusBtn) return;
+
+  function render() {
+    valueEl.textContent = buyNowQuantity;
+  }
+
+  minusBtn.addEventListener("click", () => {
+    buyNowQuantity = Math.max(1, buyNowQuantity - 1);
+    render();
+  });
+
+  plusBtn.addEventListener("click", () => {
+    buyNowQuantity = buyNowQuantity + 1;
+    render();
+  });
+
+  render();
+})();
 
 let selectedRating = 0;
 

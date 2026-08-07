@@ -348,7 +348,20 @@ function updateOrderSummary() {
   if (taxEl) taxEl.textContent = `$${tax.toFixed(2)}`;
   if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
 
-  if (hasUnavailable) {
+const hasAvailableItems = totalItems > 0;
+
+  if (!hasAvailableItems && items.length > 0) {
+    // All items in the cart are unavailable — keep the user on the cart page.
+    if (!noteContainer && checkoutBtn) {
+      const note = document.createElement("p");
+      note.id = "cart-summary-note";
+      note.className = "cart-summary-note";
+      note.textContent = "No available products to checkout.";
+      checkoutBtn.insertAdjacentElement("afterend", note);
+    } else if (noteContainer) {
+      noteContainer.textContent = "No available products to checkout.";
+    }
+  } else if (hasUnavailable) {
     if (!noteContainer && checkoutBtn) {
       const note = document.createElement("p");
       note.id = "cart-summary-note";
@@ -365,7 +378,6 @@ function updateOrderSummary() {
   }
 
   if (checkoutBtn) {
-    const hasAvailableItems = totalItems > 0;
     if (!hasAvailableItems) {
       checkoutBtn.classList.add("disabled");
       checkoutBtn.removeAttribute("href");
@@ -587,28 +599,99 @@ function initHomePage() {
 }
 
 // ===== Buy Now =====
+async function handleBuyNow() {
+  const buyNowBtn = document.getElementById("buyNowBtn");
+  if (!buyNowBtn) return;
+
+  const messageEl = document.getElementById("buyNowMessage");
+  const showMessage = (text) => {
+    if (messageEl) {
+      messageEl.textContent = text;
+      messageEl.style.display = "block";
+    }
+    alert(text);
+  };
+
+  const productId = new URLSearchParams(window.location.search).get("id");
+  if (!productId) {
+    showMessage("Unable to determine the product.");
+    return;
+  }
+
+  // Always use the backend as the source of truth for the current product.
+  const product = await fetchProductById(productId);
+
+  if (!product) {
+    showMessage("This product is no longer available.");
+    return;
+  }
+
+  // Availability rule: unobtainable only when the product is missing OR the
+  // admin explicitly marked it out of stock (stock_status === "out").
+  if (!isProductAvailable(product)) {
+    showMessage(
+      "This product is currently out of stock and cannot be purchased."
+    );
+    return;
+  }
+
+  const quantity = Math.max(
+    1,
+    Math.floor(
+      Number(document.getElementById("buyNowQtyValue")?.textContent) || 1
+    )
+  );
+
+  const image =
+    product.image && product.image !== ""
+      ? `${SHOP_API_BASE}/uploads/products/${product.image}`
+      : "https://picsum.photos/500/400?random=" + product.id;
+
+  // Store a dedicated Buy-Now payload. This does NOT touch the user's cart,
+  // keeping the Buy Now and Cart checkout flows fully independent.
+  localStorage.setItem(
+    "buy_now_checkout",
+    JSON.stringify({
+      id: String(product.id),
+      productId: Number(product.id),
+      name: product.title,
+      price: Number(product.price),
+      sale_price: Number(product.sale_price),
+      stock_status: product.stock_status,
+      status: product.status,
+      image: image,
+      quantity: quantity,
+      source: "buy-now",
+    })
+  );
+
+  window.location.href = "checkout.html";
+}
+
 function initBuyNow() {
-  const buyNowBtn = document.querySelector(".product-actions .btn-secondary");
+  const buyNowBtn = document.getElementById("buyNowBtn");
   if (buyNowBtn) {
     buyNowBtn.addEventListener("click", function (e) {
       e.preventDefault();
-
-      const productName =
-        document.querySelector(".product-name")?.textContent || "Product";
-      const priceText =
-        document.querySelector(".product-price")?.textContent || "$0.00";
-      const price = priceText.replace(/[^0-9.]/g, "");
-      const productImage = document.querySelector("#product-image")?.src || "";
-      const productId = new URLSearchParams(window.location.search).get("id");
-
-      // Clear cart and add only this product
-      localStorage.removeItem("shopping_cart");
-      addToCart(productName, price, productImage, productId);
-
-      // Navigate to checkout
-      window.location.href = "checkout.html";
+      handleBuyNow();
     });
   }
+}
+
+// ===== Get items for the checkout summary =====
+// Returns the Buy-Now payload (if present) OR the cart items. Buy Now and the
+// cart are independent flows; the Buy-Now payload takes precedence so a single
+// product purchase is not mixed with the ongoing cart.
+function getCheckoutItems() {
+  try {
+    const buyNow = JSON.parse(localStorage.getItem("buy_now_checkout"));
+    if (buyNow && buyNow.productId) {
+      return [{ ...buyNow, id: String(buyNow.productId) }];
+    }
+  } catch {
+    // ignore and fall back to cart
+  }
+  return getCart();
 }
 
 // ===== Checkout Page - Render Order Summary from Cart =====
@@ -622,7 +705,7 @@ async function renderCheckoutOrderSummary() {
 
   if (!orderItemsContainer) return;
 
-  const cart = await normalizeCartItems(getCart());
+  const cart = await normalizeCartItems(getCheckoutItems());
   orderItemsContainer.innerHTML = "";
 
   if (cart.length === 0) {
@@ -632,11 +715,11 @@ async function renderCheckoutOrderSummary() {
     if (checkoutShipping) checkoutShipping.textContent = "$0.00";
     if (checkoutTax) checkoutTax.textContent = "$0.00";
     if (checkoutTotal) checkoutTotal.textContent = "$0.00";
-    if (confirmBtn) {
+if (confirmBtn) {
       confirmBtn.innerHTML = "Confirm and Pay $0.00";
       confirmBtn.disabled = true;
     }
-    return;
+    return { empty: true };
   }
 
   let subtotal = 0;
@@ -695,7 +778,7 @@ async function renderCheckoutOrderSummary() {
   if (checkoutTax) checkoutTax.textContent = `$${tax.toFixed(2)}`;
   if (checkoutTotal) checkoutTotal.textContent = `$${total.toFixed(2)}`;
 
-  if (confirmBtn) {
+if (confirmBtn) {
     if (totalItems === 0) {
       confirmBtn.innerHTML = `Confirm and Pay $${total.toFixed(2)}`;
       confirmBtn.disabled = true;
@@ -714,12 +797,77 @@ async function renderCheckoutOrderSummary() {
       `;
     }
   }
+
+  // Requirement #9: if every item is unavailable, do not keep an empty
+  // checkout open. Signal the caller to redirect back to the cart.
+  if (cart.length > 0 && totalItems === 0) {
+    return { empty: true };
+  }
+}
+
+// ===== Place Order (server-side validation) =====
+// The frontend is NOT the final authority on order validity. This sends the
+// available checkout items to the backend, which re-validates that each product
+// still exists, is still available, has sufficient stock, and uses the current
+// price before creating the order.
+async function placeOrder() {
+  const items = await normalizeCartItems(getCheckoutItems());
+  const availableItems = [];
+
+  for (const item of items) {
+    const currentProduct = item.productId
+      ? await fetchProductById(item.productId)
+      : null;
+    const state = buildCartItemState(item, currentProduct);
+    if (state.available && state.currentProduct) {
+      availableItems.push({
+        product_id: Number(state.currentProduct.id),
+        quantity: Math.max(1, Number(item.quantity) || 1),
+      });
+    }
+  }
+
+  if (availableItems.length === 0) {
+    return {
+      success: false,
+      message: "No available products to checkout.",
+    };
+  }
+
+  try {
+    const response = await fetch(`${SHOP_API_BASE}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: availableItems }),
+    });
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("Failed to place order", err);
+    return {
+      success: false,
+      message: "Unable to place your order right now. Please try again.",
+    };
+  }
+}
+
+// Removes the consumed Buy-Now payload and/or purchased cart items after a
+// successful order so the next checkout starts fresh.
+function clearConsumedCheckout(placedItems) {
+  localStorage.removeItem("buy_now_checkout");
+  if (placedItems && placedItems.length > 0) {
+    const placedIds = new Set(placedItems.map((i) => String(i.product_id)));
+    const cart = getCart().filter((item) => !placedIds.has(String(item.id)));
+    saveCart(cart);
+  }
 }
 
 // ===== Init =====
 document.addEventListener("DOMContentLoaded", async function () {
-  // Cart page: render from localStorage
+  // Cart page: render from localStorage. Visiting the cart page also clears any
+  // leftover Buy-Now payload so the two flows stay independent.
   if (document.querySelector(".cart-page")) {
+    localStorage.removeItem("buy_now_checkout");
     await renderCartItems();
   } else {
     setupQtyControls();
@@ -728,7 +876,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     checkEmptyCart();
   }
 
-  setupPromoCode();
+if (typeof setupPromoCode === "function") {
+    setupPromoCode();
+  }
   setupCheckout();
   updateCartBubble();
 
@@ -747,7 +897,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Check if we're on the checkout page
   if (document.querySelector(".checkout-page")) {
-    await renderCheckoutOrderSummary();
+    const result = await renderCheckoutOrderSummary();
+    if (result && result.empty) {
+      // No available products to checkout — do not show an empty checkout.
+      alert("No available products to checkout.");
+      window.location.href = "cart.html";
+    }
   }
 });
 (function () {

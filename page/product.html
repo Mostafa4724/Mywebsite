@@ -118,11 +118,22 @@
             <span id="availability-text">Available</span>
           </div>
 
+<!-- Quantity Selector -->
+          <div class="product-qty">
+            <span class="qty-label">Quantity</span>
+            <div class="qty-controls">
+              <button type="button" class="qty-btn qty-minus" id="buyNowQtyMinus" aria-label="Decrease quantity">−</button>
+              <span class="qty-value" id="buyNowQtyValue">1</span>
+              <button type="button" class="qty-btn qty-plus" id="buyNowQtyPlus" aria-label="Increase quantity">+</button>
+            </div>
+          </div>
+
           <!-- Action Buttons -->
           <div class="product-actions">
             <button class="btn-primary" id="addToCartBtn">Add to Cart</button>
-            <a class="btn-secondary" href="checkout.html">Buy Now</a>
+            <a class="btn-secondary" id="buyNowBtn" href="checkout.html">Buy Now</a>
           </div>
+          <p id="buyNowMessage" class="buy-now-message" style="display: none"></p>
         </div>
       </section>
 

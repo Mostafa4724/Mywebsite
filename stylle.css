@@ -1742,6 +1742,61 @@ footer {
   transform: translateY(-2px);
 }
 
+/* Quantity Selector (Buy Now) */
+.product-qty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.product-qty .qty-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.product-qty .qty-controls {
+  background: #f1f5f9;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.product-qty .qty-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #0f2b46;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+
+.product-qty .qty-btn:hover {
+  background: #e2e8f0;
+}
+
+.product-qty .qty-value {
+  width: 36px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f2b46;
+}
+
+/* Buy Now message */
+.buy-now-message {
+  margin: 10px 0 0;
+  color: #dc2626;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 /* About Section */
 
 .about-section {
