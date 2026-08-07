@@ -389,21 +389,21 @@
   flex-wrap: wrap;
 }
 
-/* Sale chip: White */
+/* Sale chip: Red background, White text */
 .product-card .sale-chip {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 3px 10px !important;
   border-radius: 6px !important;
-  background: #ffffff !important;
-  color: #dc2626 !important;
+  background: #dc2626 !important;
+  color: #ffffff !important;
   font-size: 0.68rem !important;
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
-  border: 1.5px solid #fecaca !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+  border: 1.5px solid #dc2626 !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3) !important;
 }
 
 .product-card .sale-discount {
