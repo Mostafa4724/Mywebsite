@@ -571,19 +571,6 @@ footer p {
   .hero-inner {
     grid-template-columns: 1fr;
     gap: 40px;
-    text-align: center;
-  }
-
-  .hero-text {
-    align-items: center;
-  }
-
-  .hero-eyebrow {
-    margin: 0 auto;
-  }
-
-  .hero-desc {
-    max-width: 500px;
   }
 
   .hero-title {
