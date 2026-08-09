@@ -81,15 +81,17 @@ img {
   font-weight: 500;
 }
 
-/* ===== HERO ===== */
+/* ===== HERO — FULL WIDTH ===== */
 .fw-hero {
   position: relative;
-  padding: 80px 0 60px;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  padding: 100px 48px 80px;
   overflow: hidden;
   background: #0a1929 !important;
   border-radius: 0;
-  margin-bottom: 0;
   border: none;
+  margin-bottom: 0;
 }
 
 .fw-hero::before {
@@ -121,11 +123,12 @@ img {
 .fw-hero-inner {
   position: relative;
   z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 48px;
   align-items: center;
-  padding: 0 48px;
 }
 
 .fw-hero-text {
@@ -281,14 +284,6 @@ img {
   padding: 80px 0 60px;
 }
 
-.product-grid .product-card:nth-child(4n + 2) {
-  transform: translateY(0);
-}
-
-.product-grid .product-card:nth-child(4n + 4) {
-  transform: translateY(0);
-}
-
 /* ===== PRODUCT CARD — matches home exactly ===== */
 .product-card {
   background-color: #ffffff !important;
@@ -305,12 +300,10 @@ img {
   color: var(--fg);
 }
 
-/* Remove dark animated gradient border */
 .product-card::before {
   display: none !important;
 }
 
-/* Blue accent bar — same as home */
 .product-card::after {
   content: "";
   position: absolute;
@@ -352,7 +345,7 @@ img {
   display: none;
 }
 
-/* ===== SHARED PRODUCT-CARD LAYOUT — matches home ===== */
+/* ===== SHARED PRODUCT-CARD LAYOUT ===== */
 .product-card .product-card-link {
   display: block !important;
 }
@@ -523,7 +516,7 @@ img {
 .reveal-d3 { transition-delay: 0.15s; }
 .reveal-d4 { transition-delay: 0.2s; }
 .reveal-d5 { transition-delay: 0.25s; }
-.reveal-d6 { transition-delay: 0.3s; }
+.reveal-d6 { transition: delay: 0.3s; }
 .reveal-d7 { transition-delay: 0.35s; }
 .reveal-d8 { transition-delay: 0.4s; }
 
@@ -585,7 +578,7 @@ footer p {
   }
 
   .fw-hero-inner {
-    padding: 0 32px;
+    padding: 0;
   }
 
   .fw-hero-title {
@@ -599,7 +592,7 @@ footer p {
   }
 
   .fw-hero {
-    padding: 60px 0 40px;
+    padding: 80px 20px 60px;
   }
 
   .fw-hero-inner {
