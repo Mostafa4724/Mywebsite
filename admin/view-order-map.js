@@ -17,6 +17,19 @@
   var currentLocation = null;
   var openInMapsEl = document.getElementById("openInMaps");
 
+/* Build an "Open in Google Maps" URL from a location. When the order has
+     real coordinates (not the neutral default), use them so the link opens
+     exactly on the delivery pin. Otherwise fall back to a text address
+     query. */
+  function googleMapsUrl(loc) {
+    if (loc && typeof loc.lat === "number" && typeof loc.lng === "number" &&
+        !Number.isNaN(loc.lat) && !Number.isNaN(loc.lng) &&
+        (loc.lat !== DEFAULT_LAT || loc.lng !== DEFAULT_LNG)) {
+      return "https://www.google.com/maps?q=" + loc.lat + "," + loc.lng;
+    }
+    return "https://www.google.com/maps?q=" + encodeURIComponent((loc && loc.fullAddress) || "");
+  }
+
   /* ── Custom marker icon ── */
   var markerIcon = L.divIcon({
     className: "vo-custom-marker",
@@ -187,11 +200,11 @@
     }, 350);
   }
 
-  /* Update the "Open in Google Maps" link to the current address. */
+  /* Update the "Open in Google Maps" link to the current location. Uses the
+     real coordinates when available (most reliable), else the address. */
   function updateOpenInMaps(loc) {
     if (openInMapsEl) {
-      openInMapsEl.href =
-        "https://www.google.com/maps?q=" + encodeURIComponent(loc.fullAddress);
+      openInMapsEl.href = googleMapsUrl(loc);
     }
   }
 
