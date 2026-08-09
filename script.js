@@ -1022,7 +1022,7 @@ async function placeOrder(extraData) {
   try {
     const response = await fetch(`${SHOP_API_BASE}/orders`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + (localStorage.getItem("token") || "") },
       body: JSON.stringify({
         items: availableItems,
         customer: customer,
@@ -1151,7 +1151,8 @@ if (typeof setupPromoCode === "function") {
       });
     }
 
-    // Form submit
+    // Form submit — validates input, checks credentials, sets the session
+    // flag on success, and redirects to the dashboard.
     if (adminForm) {
       adminForm.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -1218,122 +1219,156 @@ if (typeof setupPromoCode === "function") {
   // =============================================
   //  DASHBOARD PAGES LOGIC
   // =============================================
-  if (isDashPage) {
-    // Auth guard
-    if (sessionStorage.getItem("adminLoggedIn") !== "true") {
+  async function checkAdminAuth() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
       window.location.href = "login.html";
-      return;
+      return false;
     }
 
-    // Mobile menu toggle
-    const menuToggle = document.getElementById("menuToggle");
-    const sidebar = document.getElementById("adminSidebar");
-
-    if (menuToggle) {
-      menuToggle.addEventListener("click", () => {
-        sidebar.classList.toggle("open");
+    try {
+      const response = await fetch("http://127.0.0.1:5000/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-    }
 
-    // Close sidebar on outside click (mobile)
-    document.addEventListener("click", (e) => {
-      if (
-        sidebar &&
-        sidebar.classList.contains("open") &&
-        !sidebar.contains(e.target) &&
-        menuToggle &&
-        !menuToggle.contains(e.target)
-      ) {
-        sidebar.classList.remove("open");
+      if (!response.ok) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("auth_user");
+        window.location.href = "login.html";
+        return false;
       }
-    });
 
-    // Logout
-    const logoutBtn = document.getElementById("adminLogout");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
-        sessionStorage.removeItem("adminLoggedIn");
-        window.location.href = "admin-login.html";
-      });
-    }
+      const data = await response.json();
 
-    // Chart bar tooltips
-    document.querySelectorAll(".chart-bar").forEach((bar) => {
-      bar.addEventListener("mouseenter", () => bar.classList.add("hovered"));
-      bar.addEventListener("mouseleave", () => bar.classList.remove("hovered"));
-    });
+      if (data.user.role !== "admin") {
+        window.location.href = "../page/home.html";
+        return false;
+      }
 
-    // ===== ORDERS PAGE: Search & Filter =====
-    const orderSearch = document.getElementById("orderSearch");
-    const statusFilter = document.getElementById("statusFilter");
-    const ordersBody = document.getElementById("ordersTableBody");
-
-    function filterOrders() {
-      if (!ordersBody) return;
-      const search = (orderSearch ? orderSearch.value : "").toLowerCase();
-      const status = statusFilter ? statusFilter.value : "all";
-      const rows = ordersBody.querySelectorAll("tr");
-
-      rows.forEach((row) => {
-        const text = row.textContent.toLowerCase();
-        const rowStatus = row.getAttribute("data-status") || "";
-        const matchSearch = !search || text.includes(search);
-        const matchStatus = status === "all" || rowStatus === status;
-        row.style.display = matchSearch && matchStatus ? "" : "none";
-      });
-    }
-
-    if (orderSearch) orderSearch.addEventListener("input", filterOrders);
-    if (statusFilter) statusFilter.addEventListener("change", filterOrders);
-
-    // Pagination buttons (visual only)
-    document.querySelectorAll(".page-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document
-          .querySelectorAll(".page-btn")
-          .forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        if (btn.textContent === "Previous" || btn.textContent === "Next") {
-          btn.classList.remove("active");
-        }
-      });
-    });
-
-    // ===== PRODUCTS PAGE: Search & Modal =====
-    const productSearch = document.getElementById("productSearch");
-    const addProductBtn = document.getElementById("addProductBtn");
-    const saveProduct = document.getElementById("saveProduct");
-
-    if (productSearch) {
-      productSearch.addEventListener("input", () => {
-        const q = productSearch.value.toLowerCase();
-        document.querySelectorAll(".product-admin-card").forEach((card) => {
-          const text = card.textContent.toLowerCase();
-          card.style.display = text.includes(q) ? "" : "none";
-        });
-      });
-    }
-
-    if (addProductBtn) addProductBtn.addEventListener("click", () => {
-    window.location.href = "add.html";
-});
-    
-    // ===== CUSTOMERS PAGE: Search =====
-    const customerSearch = document.getElementById("customerSearch");
-    if (customerSearch) {
-      customerSearch.addEventListener("input", () => {
-        const q = customerSearch.value.toLowerCase();
-        document.querySelectorAll(".customer-card").forEach((card) => {
-          const text = card.textContent.toLowerCase();
-          card.style.display = text.includes(q) ? "" : "none";
-        });
-      });
+      return true;
+    } catch (error) {
+      console.error("Authentication check failed:", error);
+      return false;
     }
   }
+
+  if (isDashPage) {
+    checkAdminAuth();
+  }
+
+  // Mobile menu toggle
+  const menuToggle = document.getElementById("menuToggle");
+  const sidebar = document.getElementById("adminSidebar");
+
+  if (menuToggle) {
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
+  }
+
+  // Close sidebar on outside click (mobile)
+  document.addEventListener("click", (e) => {
+    if (
+      sidebar &&
+      sidebar.classList.contains("open") &&
+      !sidebar.contains(e.target) &&
+      menuToggle &&
+      !menuToggle.contains(e.target)
+    ) {
+      sidebar.classList.remove("open");
+    }
+  });
+
+  // Logout
+  const logoutBtn = document.getElementById("adminLogout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      sessionStorage.removeItem("adminLoggedIn");
+      window.location.href = "login.html";
+    });
+  }
+
+  // Chart bar tooltips
+  document.querySelectorAll(".chart-bar").forEach((bar) => {
+    bar.addEventListener("mouseenter", () => bar.classList.add("hovered"));
+    bar.addEventListener("mouseleave", () => bar.classList.remove("hovered"));
+  });
+
+  // ===== ORDERS PAGE: Search & Filter =====
+  const orderSearch = document.getElementById("orderSearch");
+  const statusFilter = document.getElementById("statusFilter");
+  const ordersBody = document.getElementById("ordersTableBody");
+
+  function filterOrders() {
+    if (!ordersBody) return;
+    const search = (orderSearch ? orderSearch.value : "").toLowerCase();
+    const status = statusFilter ? statusFilter.value : "all";
+    const rows = ordersBody.querySelectorAll("tr");
+
+    rows.forEach((row) => {
+      const text = row.textContent.toLowerCase();
+      const rowStatus = row.getAttribute("data-status") || "";
+      const matchSearch = !search || text.includes(search);
+      const matchStatus = status === "all" || rowStatus === status;
+      row.style.display = matchSearch && matchStatus ? "" : "none";
+    });
+  }
+
+  if (orderSearch) orderSearch.addEventListener("input", filterOrders);
+  if (statusFilter) statusFilter.addEventListener("change", filterOrders);
+
+  // Pagination buttons (visual only)
+  document.querySelectorAll(".page-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document
+        .querySelectorAll(".page-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (btn.textContent === "Previous" || btn.textContent === "Next") {
+        btn.classList.remove("active");
+      }
+    });
+  });
+
+  // ===== PRODUCTS PAGE: Search & Modal =====
+  const productSearch = document.getElementById("productSearch");
+  const addProductBtn = document.getElementById("addProductBtn");
+
+  if (productSearch) {
+    productSearch.addEventListener("input", () => {
+      const q = productSearch.value.toLowerCase();
+      document.querySelectorAll(".product-admin-card").forEach((card) => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(q) ? "" : "none";
+      });
+    });
+  }
+
+  if (addProductBtn)
+    addProductBtn.addEventListener("click", () => {
+      window.location.href = "add.html";
+    });
+
+  // ===== CUSTOMERS PAGE: Search =====
+  const customerSearch = document.getElementById("customerSearch");
+  if (customerSearch) {
+    customerSearch.addEventListener("input", () => {
+      const q = customerSearch.value.toLowerCase();
+      document.querySelectorAll(".customer-card").forEach((card) => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(q) ? "" : "none";
+      });
+    });
+  }
+})();
 
   // Set session on successful login (handled in submit above via redirect)
   // We set it right before redirect
   const origSubmit = document.getElementById("adminForm");
+
   if (origSubmit) {
     origSubmit.addEventListener("submit", function setSession() {
       // This runs after the validation in the main handler above
@@ -1360,11 +1395,11 @@ if (typeof setupPromoCode === "function") {
             sessionStorage.setItem("adminLoggedIn", "true");
           }
         },
-        true,
+        true
       ); // capture phase so it runs before the main handler
     }
   }
-})();
+
 (function () {
   'use strict';
 

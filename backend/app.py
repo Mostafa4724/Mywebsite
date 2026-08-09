@@ -1,6 +1,6 @@
 import os
 from flask_jwt_extended import JWTManager
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 from products import products_bp
 from orders import orders_bp
@@ -8,8 +8,13 @@ from auth import auth_bp
 from database import db
 from werkzeug.security import generate_password_hash
 from models import User
-
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from config import Config
+
+SECRET_KEY = os.environ.get("SECRET_KEY")
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+if not SECRET_KEY or not JWT_SECRET_KEY:
+    raise RuntimeError("SECRET_KEY and JWT_SECRET_KEY environment variables are required")
 
 app = Flask(__name__)
 
@@ -46,27 +51,6 @@ from models import User, Product, Cart, Order, OrderItem
 
 
 
-@app.route("/create-admin")
-def create_admin():
-
-    admin = User.query.filter_by(email="admin@shop.com").first()
-
-    if admin:
-        return {"message": "Admin already exists"}
-
-    admin = User(
-        username="admin",
-        email="admin@shop.com",
-        password=generate_password_hash("admin123"),
-        role="admin"
-    )
-
-    db.session.add(admin)
-    db.session.commit()
-
-    return {"message": "Admin created"}
-
-import sqlite3
 
 @app.route("/debug/products")
 def debug_products():
@@ -172,9 +156,81 @@ with app.app_context():
     db.create_all()
     migrate()
 
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not email or not password:
+        return jsonify(success=False, message="Email and password are required"), 400
+
+    user = User.query.filter(db.func.lower(User.email) == email).first()
+    if user is None or not user.check_password(password):
+        return jsonify(success=False, message="Invalid email or password"), 401
+
+    token = create_access_token(identity=str(user.id))
+    return jsonify(
+        success=True,
+        token=token,
+        user={
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role
+        }
+    )
+
+@app.route("/me", methods=["GET"])
+@jwt_required()
+def me():
+    identity = get_jwt_identity()
+    user = User.query.get(int(identity))
+    if user is None:
+        return jsonify(success=False, message="User not found"), 404
+    return jsonify(success=True, user={
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role
+    })
+
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not username or not email or not password:
+        return jsonify(success=False, message="Username, email and password are required"), 400
+    if len(password) < 8:
+        return jsonify(success=False, message="Password must be at least 8 characters"), 400
+
+    if User.query.filter(db.func.lower(User.email) == email).first():
+        return jsonify(success=False, message="Email is already registered"), 409
+    if User.query.filter_by(username=username).first():
+        return jsonify(success=False, message="Username is already registered"), 409
+
+    user = User(
+        username=username,
+        email=email,
+        password=generate_password_hash(password),
+        role="user"
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    token = create_access_token(identity=str(user.id))
+    return jsonify(success=True, token=token, user={
+        "id": user.id, "username": user.username, "email": user.email, "role": user.role
+    }), 201
+
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=5000,
-        debug=True
+        debug=False
     )

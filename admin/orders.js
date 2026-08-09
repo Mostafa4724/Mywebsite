@@ -162,7 +162,13 @@
   async function loadOrders() {
     if (!ordersTableBody) return;
     try {
-      const response = await fetch(API_BASE + "/orders");
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(API_BASE + "/orders", {
+          headers: {
+              "Authorization": `Bearer ${token}`
+          }
+      });
       const data = await response.json();
       if (data.success) {
         allOrders = data.orders || [];

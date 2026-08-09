@@ -4,6 +4,8 @@ from flask import Blueprint, request, jsonify
 
 from models import Product, Order, OrderItem
 from database import db
+from security import user_required, admin_required
+from flask_jwt_extended import get_jwt_identity
 
 orders_bp = Blueprint("orders", __name__)
 
@@ -80,6 +82,7 @@ def _order_to_dict(order):
 
 
 @orders_bp.route("/orders", methods=["POST"])
+@user_required
 def create_order():
     """
     Create an order from a list of items plus customer/shipping info.
@@ -147,7 +150,7 @@ def create_order():
 
     # Persist the order and its line items, and decrement stock.
     order = Order(
-        user_id=data.get("user_id"),
+        user_id=int(get_jwt_identity()),
         customer_name=(customer.get("firstName") or customer.get("name")),
         customer_lastname=customer.get("lastName"),
         customer_email=customer.get("email"),
@@ -217,6 +220,7 @@ def create_order():
 
 
 @orders_bp.route("/orders", methods=["GET"])
+@user_required
 def list_orders():
     """Return all orders (most recent first) for the admin panel."""
     orders = Order.query.order_by(Order.id.desc()).all()
@@ -227,6 +231,7 @@ def list_orders():
 
 
 @orders_bp.route("/orders/<int:order_id>", methods=["GET"])
+@user_required
 def get_order(order_id):
     """Return a single order with its items."""
     order = Order.query.get(order_id)
@@ -242,6 +247,7 @@ def get_order(order_id):
 
 
 @orders_bp.route("/orders/<int:order_id>/status", methods=["PUT"])
+@admin_required
 def update_order_status(order_id):
     """Update the status of an order (admin)."""
     order = Order.query.get(order_id)

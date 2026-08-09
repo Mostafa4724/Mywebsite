@@ -1,7 +1,11 @@
+from werkzeug.security import check_password_hash, generate_password_hash
 from database import db
 
 
 class User(db.Model):
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)

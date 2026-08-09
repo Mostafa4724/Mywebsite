@@ -340,30 +340,47 @@
     elms.statusModalWarning.style.display = "block";
     elms.statusModal.classList.add("show");
   }
-
   async function updateStatus(newStatus) {
-    elms.statusModal.classList.remove("show");
-    try {
-      const response = await fetch(API_BASE + "/orders/" + orderData.id + "/status", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
-      });
-      const data = await response.json();
-      if (data.success) {
-        orderData = data.order;
-        renderStatusBadge();
-        renderTimeline();
-        renderStatusControl();
-        showToast("Order marked as " + statusConfig[newStatus].label, "success");
-      } else {
-        showToast(data.message || "Failed to update status", "warn");
+      elms.statusModal.classList.remove("show");
+
+      try {
+          const token = localStorage.getItem("token");
+
+          const response = await fetch(
+              API_BASE + "/orders/" + orderData.id + "/status",
+              {
+                  method: "PUT",
+                  headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${token}`
+                  },
+                  body: JSON.stringify({ status: newStatus })
+              }
+          );
+
+          const data = await response.json();
+
+          if (data.success) {
+              orderData = data.order;
+              renderStatusBadge();
+              renderTimeline();
+              renderStatusControl();
+              showToast(
+                  "Order marked as " + statusConfig[newStatus].label,
+                  "success"
+              );
+          } else {
+              showToast(
+                  data.message || "Failed to update status",
+                  "warn"
+              );
+          }
+      } catch (err) {
+          console.error("Failed to update status", err);
+          showToast("Failed to update status.", "warn");
       }
-    } catch (err) {
-      console.error("Failed to update status", err);
-      showToast("Failed to update status.", "warn");
-    }
-    pendingStatus = null;
+
+      pendingStatus = null;
   }
 
   var toastTimer = null;
@@ -456,30 +473,47 @@
     }
 
     try {
-      const response = await fetch(API_BASE + "/orders/" + orderId);
-      const data = await response.json();
-      if (!data.success) {
-        document.querySelector(".admin-content").innerHTML =
-          '<div class="dash-card" style="padding:40px;text-align:center;color:#ef4444;">' +
-          (data.message || "Order not found") + ' <a href="orders.html">Back to Orders</a></div>';
-        return;
-      }
-orderData = data.order;
-      window.__orderData = orderData;
-      window.dispatchEvent(
-        new CustomEvent("order-loaded", { detail: orderData })
-      );
-      renderHeader();
-      renderCustomer();
-      renderItems();
-      renderSummary();
-      renderStatusBadge();
-      renderTimeline();
-      renderStatusControl();
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+            API_BASE + "/orders/" + orderId,
+            {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.success) {
+            document.querySelector(".admin-content").innerHTML =
+                '<div class="dash-card" style="padding:40px;text-align:center;color:#ef4444;">' +
+                (data.message || "Order not found") +
+                ' <a href="orders.html">Back to Orders</a></div>';
+            return;
+        }
+
+        orderData = data.order;
+        window.__orderData = orderData;
+
+        window.dispatchEvent(
+            new CustomEvent("order-loaded", { detail: orderData })
+        );
+
+        renderHeader();
+        renderCustomer();
+        renderItems();
+        renderSummary();
+        renderStatusBadge();
+        renderTimeline();
+        renderStatusControl();
+
     } catch (err) {
-      console.error("Failed to load order", err);
-      document.querySelector(".admin-content").innerHTML =
-        '<div class="dash-card" style="padding:40px;text-align:center;color:#ef4444;">Failed to load order. Is the server running?</div>';
+        console.error("Failed to load order", err);
+
+        document.querySelector(".admin-content").innerHTML =
+            '<div class="dash-card" style="padding:40px;text-align:center;color:#ef4444;">Failed to load order. Is the server running?</div>';
     }
   }
 
