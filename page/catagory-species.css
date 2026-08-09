@@ -521,18 +521,7 @@ img {
   pointer-events: none;
 }
 
-/* ======================================================================
-   SHARED PRODUCT-CARD LAYOUT (home + catagory-species)
-   ----------------------------------------------------------------------
-   Product cards now come from the shared renderer in /script.js
-   (buildProductCard), which produces the SAME markup home.html uses:
-     .product-card
-       a.product-card-link      (image + h3 + .price-row + .sale-info)
-       button.add-to-cart-btn   (sibling at the bottom)
-
-   These rules give catagory-species cards the same look and behavior as the
-   home cards while keeping the dark theme styling.
-   ====================================================================== */
+/* ===== SHARED PRODUCT-CARD LAYOUT ===== */
 .product-card .product-card-link {
   display: block;
 }
@@ -612,7 +601,6 @@ img {
   color: #dc2626;
 }
 
-/* Pinned Add-to-Cart button on the bottom of the dark card. */
 .product-card > .add-to-cart-btn {
   margin: auto 22px 22px !important;
 }

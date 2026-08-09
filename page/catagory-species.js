@@ -11,18 +11,9 @@ const heroTags = document.getElementById("heroTags");
 
 document.title = "Loading...";
 
-// ==========================================================================
-// Category products page uses the SAME SHARED product-card renderer from
-// /script.js (buildProductCard / isSaleActive / getDisplayPrice) that home.html
-// uses. This guarantees the category cards are pixel-for-pixel identical and
-// behave the same: sale display, price, image, whole-card navigation to
-// product.html?id=..., add-to-cart, availability/out-of-stock.
-// ==========================================================================
-
 function renderProductCard(product, index) {
-  // Build a detached element using the shared renderer.
-  const built = buildProductCard(product, index);
-  const wrapper = document.createElement("div");
+  var built = buildProductCard(product, index);
+  var wrapper = document.createElement("div");
   wrapper.innerHTML = built.html.trim();
   return wrapper.firstChild;
 }
@@ -34,17 +25,15 @@ function showEmptyMessage() {
   heroCount.textContent = "0 Products";
 }
 
-// Load category + its products from the backend
 async function loadCategoryProducts() {
   if (!productGrid) return;
 
   try {
-    // Fetch category details (by id) to populate the hero
-    const catRes = await fetch(SHOP_API_BASE + "/categories/" + categoryId);
-    const catData = await catRes.json();
-    const category = catData.success ? catData.category : null;
+    var catRes = await fetch(SHOP_API_BASE + "/categories/" + categoryId);
+    var catData = await catRes.json();
+    var category = catData.success ? catData.category : null;
 
-    const name = category ? category.name : "Category";
+    var name = category ? category.name : "Category";
 
     document.title = name;
     if (crumbName) crumbName.textContent = name;
@@ -53,14 +42,13 @@ async function loadCategoryProducts() {
       heroTags.innerHTML = '<span class="fw-tag">' + name + "</span>";
     }
 
-    // Fetch products filtered by category id (backend filtering)
-    const prodUrl =
+    var prodUrl =
       SHOP_API_BASE +
       "/products" +
       (categoryId ? "?category_id=" + encodeURIComponent(categoryId) : "");
 
-    const res = await fetch(prodUrl);
-    const data = await res.json();
+    var res = await fetch(prodUrl);
+    var data = await res.json();
 
     if (!data.success) {
       showEmptyMessage();
@@ -81,8 +69,8 @@ async function loadCategoryProducts() {
 
     if (heroCount) heroCount.textContent = data.products.length + " Products";
 
-    data.products.forEach((product, index) => {
-      const card = renderProductCard(product, index);
+    data.products.forEach(function (product, index) {
+      var card = renderProductCard(product, index);
       productGrid.appendChild(card);
     });
 
@@ -168,4 +156,3 @@ function initTilt() {
 }
 
 loadCategoryProducts();
-
