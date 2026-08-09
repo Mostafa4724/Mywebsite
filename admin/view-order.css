@@ -736,3 +736,7 @@
   .vo-tl-info strong { font-size: 0.75rem; }
   .vo-modal-actions { flex-direction: column; }
 }
+
+/* ── Added: icon colors for placed & confirmed ── */
+.vo-status-btn-icon.placed-icon { background: #f1f5f9; color: #475569; }
+.vo-status-btn-icon.confirmed-icon { background: #dcfce7; color: #16a34a; }

@@ -6,10 +6,12 @@
 
   var orderData = null;
 
-  var statusFlow = ["processing", "shipped", "delivered"];
+  var statusFlow = ["placed", "confirmed", "processing", "shipped", "delivered"];
 
   var statusConfig = {
     pending: { label: "Pending", iconClass: "processing-icon", desc: "Awaiting processing" },
+    placed: { label: "Order Placed", iconClass: "placed-icon", desc: "Order has been placed by the customer" },
+    confirmed: { label: "Order Confirmed", iconClass: "confirmed-icon", desc: "Order has been confirmed" },
     processing: { label: "Processing", iconClass: "processing-icon", desc: "Order is being prepared for shipment" },
     shipped: { label: "Shipped", iconClass: "shipped-icon", desc: "Order has been dispatched to the carrier" },
     delivered: { label: "Delivered", iconClass: "delivered-icon", desc: "Order has been delivered to the customer" },
@@ -17,10 +19,15 @@
   };
 
   var statusIcons = {
+    placed: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    confirmed: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
     processing: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
     shipped: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
     delivered: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
   };
+
+  // Statuses that exist only as visual steps — never sent to the API
+  var nonActionable = { placed: true, confirmed: true };
 
   var elms = {};
   var pendingStatus = null;
@@ -200,9 +207,10 @@
     var lines = elms.orderTimeline.querySelectorAll(".vo-tl-line");
     var status = (orderData.status || "pending").toLowerCase();
 
-    var flow = ["pending", "processing", "shipped", "delivered"];
+    var flow = ["placed", "confirmed", "processing", "shipped", "delivered"];
     var currentIdx = flow.indexOf(status);
-    if (status === "cancelled") currentIdx = 0; // treat cancelled as terminal from start
+    var isPendingStatus = (status === "pending");
+    if (status === "cancelled") currentIdx = 0;
 
     for (var i = 0; i < steps.length; i++) {
       var step = steps[i];
@@ -212,8 +220,8 @@
       var line = lines[i];
 
       step.className = "vo-tl-step";
-      var isCompleted = i < currentIdx || (status === "cancelled" && i === 0);
-      var isActive = i === currentIdx && status !== "cancelled";
+      var isCompleted = i < currentIdx || (isPendingStatus && i <= 1) || (status === "cancelled" && i === 0);
+      var isActive = i === currentIdx && status !== "cancelled" && !isPendingStatus;
 
       if (isCompleted) step.classList.add("completed");
       else if (isActive) step.classList.add("active");
@@ -269,14 +277,30 @@
 
     if (elms.lockedNotice) elms.lockedNotice.style.display = "none";
 
-    var currentIdx = statusFlow.indexOf(status);
-    if (currentIdx < 0) currentIdx = 0;
+    // Only actionable statuses are used for index comparison
+    // placed & confirmed are visual-only — never sent to the API
+    var actionableFlow = statusFlow.filter(function (s) { return !nonActionable[s]; });
+    var currentIdx = actionableFlow.indexOf(status);
+    // For "pending" (not in actionableFlow), currentIdx stays -1
+    // so the first actionable status (processing) becomes "next"
 
     statusFlow.forEach(function (s, idx) {
       var cfg = statusConfig[s];
-      var isCurrent = idx === currentIdx;
-      var isPast = idx < currentIdx;
-      var isNext = idx === currentIdx + 1;
+      var isNonActionable = !!nonActionable[s];
+
+      var isPast, isCurrent, isNext;
+
+      if (isNonActionable) {
+        // Placed & confirmed are always shown as Done for any existing order
+        isPast = true;
+        isCurrent = false;
+        isNext = false;
+      } else {
+        var actionableIdx = actionableFlow.indexOf(s);
+        isPast = actionableIdx < currentIdx;
+        isCurrent = actionableIdx === currentIdx;
+        isNext = actionableIdx === currentIdx + 1;
+      }
 
       var btn = document.createElement("button");
       btn.type = "button";
@@ -363,7 +387,6 @@
     var fullNameStr = fullName();
     var email = orderData.customer_email || "";
 
-    // Buyer card
     var buyerName = document.querySelector(".vo-customer-top strong");
     var buyerEmail = document.querySelector(".vo-customer-top div span");
     var buyerAvatar = document.querySelector(".vo-customer-avatar");
@@ -373,7 +396,6 @@
       buyerAvatar.textContent = (fullNameStr || "A").split(" ").map(function (w) { return w[0] || ""; }).join("").toUpperCase().slice(0, 2);
     }
 
-    // Phone detail row
     var detailRows = document.querySelectorAll(".vo-customer-details .vo-detail-row");
     if (detailRows[0]) {
       var spans = detailRows[0].querySelectorAll("span");
@@ -384,7 +406,6 @@
       if (spans2[0]) spans2[0].textContent = "Order #" + orderData.id;
     }
 
-    // Shipping address
     var addressBlocks = document.querySelectorAll(".vo-address-block");
     var addressParts = [
       fullNameStr || "Anonymous",
@@ -402,7 +423,6 @@
       }
     });
 
-    // Payment method
     var paymentRows = document.querySelectorAll(".vo-payment-row");
     if (paymentRows[0]) {
       var methodSpan = paymentRows[0].querySelector(".vo-payment-method span");
@@ -445,12 +465,7 @@
         return;
       }
 orderData = data.order;
-      // Expose loaded order so the map module (view-order-map.js) can use the
-      // real customer lat/lng and address instead of hardcoded demo data.
       window.__orderData = orderData;
-      // The map module initializes synchronously on page load (before the
-      // fetch resolves), so it will not yet have the coordinates. Dispatch an
-      // event now so the map can rebind to the real delivery location.
       window.dispatchEvent(
         new CustomEvent("order-loaded", { detail: orderData })
       );
