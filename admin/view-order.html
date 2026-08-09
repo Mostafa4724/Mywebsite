@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="admin.css" />
     <link rel="stylesheet" href="view-order.css" />
     <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="view-order-map.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   </head>
   <body class="admin-body">
     <aside class="admin-sidebar" id="adminSidebar">
@@ -357,6 +359,18 @@
                 <p>United States</p>
               </div>
             </div>
+
+            <div class="vo-map-card">
+              <div class="vo-card-head">
+                <h3>Delivery Location</h3>
+                <button class="vo-map-expand-btn" id="mapExpandBtn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                  Expand
+                </button>
+              </div>
+              <div class="vo-map-container" id="deliveryMap"></div>
+            </div>
+
             <div class="vo-card">
               <div class="vo-card-head"><h3>Billing Address</h3></div>
               <div class="vo-address-block">
@@ -427,6 +441,31 @@
           <div class="vo-bottom-right">
             <button type="button" id="refundBtn"></button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vo-map-overlay" id="mapOverlay">
+      <div class="vo-map-overlay-inner">
+        <div class="vo-map-overlay-header">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Delivery Location — Full View
+          </h3>
+          <button class="vo-map-overlay-close" id="mapOverlayClose">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="vo-map-overlay-body" id="deliveryMapExpanded"></div>
+        <div class="vo-map-overlay-footer">
+          <div class="vo-map-overlay-address">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            742 Evergreen Terrace, Apt 4B, Springfield, IL 62704
+          </div>
+          <a class="vo-map-overlay-open-external" id="openInMaps" href="#" target="_blank" rel="noopener noreferrer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open in Google Maps
+          </a>
         </div>
       </div>
     </div>
@@ -548,6 +587,8 @@
       </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="view-order.js"></script>
+    <script src="view-order-map.js"></script>
   </body>
 </html>
