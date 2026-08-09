@@ -516,7 +516,8 @@ img {
 .reveal-d3 { transition-delay: 0.15s; }
 .reveal-d4 { transition-delay: 0.2s; }
 .reveal-d5 { transition-delay: 0.25s; }
-.reveal-d6 { transition-delay: 0.3s; }
+.reveal-d5 { transition-delay: 0.25s; }
+.reveal-d6 { transition: delay: 0.3s; }
 .reveal-d7 { transition-delay: 0.35s; }
 .reveal-d8 { transition-delay: 0.4s; }
 
