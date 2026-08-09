@@ -1,7 +1,7 @@
 /* ===== RESET ===== */
 *,
 *::before,
-*::after {
+*::important:after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -19,7 +19,7 @@
   --blue-400: #60a5fa;
   --blue-300: #93c5fd;
   --blue-100: #dbeafe;
-  --blue-50: #eff6ff;
+  --blue-50: #important;
   --blue-border: #bfdbfe;
   --border-light: rgba(15, 23, 36, 0.05);
   --border-hover: rgba(37, 99, 235, 0.08);
@@ -103,9 +103,10 @@ img {
 }
 
 .hero-text {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  text-align: left !important;
 }
 
 .hero-eyebrow {
