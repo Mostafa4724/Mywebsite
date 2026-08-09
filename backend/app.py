@@ -4,6 +4,7 @@ from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from products import products_bp
 from orders import orders_bp
+from auth import auth_bp
 from database import db
 from werkzeug.security import generate_password_hash
 from models import User
@@ -99,15 +100,54 @@ def uploaded_file(filename):
 from flask import send_from_directory
 
 
-from auth import auth_bp
+import sqlite3
+
+from categories import categories_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(products_bp)
 app.register_blueprint(orders_bp)
+app.register_blueprint(categories_bp)
+
+
+def _ensure_column(conn, table, column, ddl):
+    """Add a column to an existing SQLite table if it does not exist."""
+    columns = [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
+    if column not in columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
+
+
+def migrate():
+    """Backward-compatible migrations for the existing shopping.db."""
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        _ensure_column(
+            conn,
+            "products",
+            "category_id",
+            "INTEGER REFERENCES categories(id)"
+        )
+    # NOTE: SQLite's ALTER TABLE ADD COLUMN cannot add a UNIQUE column,
+    # so the `name` column uniqueness for categories is enforced in code
+    # (see categories.create_category) and by the app-level index below.
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        indexes = [
+            row[1]
+            for row in conn.execute("PRAGMA index_list('categories')")
+        ]
+        if "ix_categories_name" not in indexes:
+            try:
+                conn.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS "
+                    "ix_categories_name ON categories(name)"
+                )
+            except Exception:
+                # Duplicate names may already exist; enforce in code only.
+                pass
 
 
 with app.app_context():
     db.create_all()
+    migrate()
 
 if __name__ == "__main__":
     app.run(
