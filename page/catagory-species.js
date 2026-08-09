@@ -1,5 +1,4 @@
-const SHOP_API_BASE = "http://127.0.0.1:5000";
-
+// SHOP_API_BASE is provided globally by /script.js (loaded first).
 const params = new URLSearchParams(window.location.search);
 const categoryId = params.get("category");
 
@@ -12,90 +11,20 @@ const heroTags = document.getElementById("heroTags");
 
 document.title = "Loading...";
 
-// Mirrors home.js isSaleActive so product cards behave identically
-function isSaleActive(product) {
-  const salePrice = Number(product.sale_price ?? 0);
-  const regularPrice = Number(product.price ?? 0);
-  const hasValidSalePrice = salePrice > 0 && regularPrice > salePrice;
+// ==========================================================================
+// Category products page uses the SAME SHARED product-card renderer from
+// /script.js (buildProductCard / isSaleActive / getDisplayPrice) that home.html
+// uses. This guarantees the category cards are pixel-for-pixel identical and
+// behave the same: sale display, price, image, whole-card navigation to
+// product.html?id=..., add-to-cart, availability/out-of-stock.
+// ==========================================================================
 
-  if (!hasValidSalePrice) return false;
-
-  const now = new Date();
-
-  if (product.sale_start) {
-    const start = new Date(product.sale_start);
-    if (!Number.isNaN(start.getTime()) && now < start) return false;
-  }
-
-  if (product.sale_end) {
-    const end = new Date(product.sale_end);
-    if (!Number.isNaN(end.getTime()) && now > end) return false;
-  }
-
-  return true;
-}
-
-// Reuses the same product-card structure/logic as page/home.js
 function renderProductCard(product, index) {
-  const image =
-    product.image && product.image !== ""
-      ? SHOP_API_BASE + "/uploads/products/" + product.image
-      : "https://picsum.photos/300/250?random=" + product.id;
-
-  const originalPrice = Number(product.price || 0);
-  const salePrice = Number(product.sale_price || 0);
-  const saleActive = isSaleActive(product);
-  const displayPrice = saleActive && salePrice > 0 ? salePrice : originalPrice;
-  const discountPercent = saleActive && originalPrice > 0
-    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
-    : 0;
-
-  const num = String(index + 1).padStart(2, "0");
-  const delay = Math.min((index % 8) + 1, 8);
-
-  // Reuse the .product-card / .product-card__* markup from home.js and the
-  // catagory-species.css styling so the cards look identical to home.html.
-  const card = document.createElement("div");
-  card.className = "product-card reveal reveal-d" + delay;
-  card.dataset.name = product.title;
-  card.dataset.price = displayPrice;
-  card.dataset.image = image;
-
-  const badgeHTML = saleActive && product.sale_price
-    ? '<span class="product-card__badge sale">-' + discountPercent + "%</span>"
-    : (product.status === "published" ? '<span class="product-card__badge">New</span>' : "");
-
-  const priceHTML = saleActive && product.sale_price
-    ? '<div class="product-card__pricing">' +
-      '<span class="product-card__price sale-price">$' + displayPrice.toFixed(2) + "</span>" +
-      '<span class="product-card__old-price">$' + originalPrice.toFixed(2) + "</span>" +
-      "</div>"
-    : '<span class="product-card__price">$' + displayPrice.toFixed(2) + "</span>";
-
-  const stockStatus = (product.stock_status || "in").toLowerCase();
-  const outOfStock = stockStatus === "out";
-
-  card.innerHTML =
-    '<div class="product-card__img">' +
-    '<span class="product-card__num">' + num + "</span>" +
-    '<img src="' + image + '" alt="' + product.title + '" loading="lazy" />' +
-    badgeHTML +
-    "</div>" +
-    '<div class="product-card__body">' +
-    '<span class="product-card__type">' + (product.category || product.brand || "Product") + "</span>" +
-    '<a href="product.html?id=' + product.id + '" style="text-decoration:none;color:inherit;">' +
-    '<h3 class="product-card__name">' + product.title + "</h3>" +
-    "</a>" +
-    '<div class="product-card__bottom">' +
-    priceHTML +
-    '<button class="add-to-cart-btn" data-id="' + product.id + '" data-name="' + product.title + '" data-price="' + displayPrice + '" data-image="' + image + '"' + (outOfStock ? " disabled" : "") + ">" +
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-    (outOfStock ? " Sold Out" : " Add") +
-    "</button>" +
-    "</div>" +
-    "</div>";
-
-  return card;
+  // Build a detached element using the shared renderer.
+  const built = buildProductCard(product, index);
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = built.html.trim();
+  return wrapper.firstChild;
 }
 
 function showEmptyMessage() {
@@ -125,7 +54,9 @@ async function loadCategoryProducts() {
     }
 
     // Fetch products filtered by category id (backend filtering)
-    const prodUrl = SHOP_API_BASE + "/products" +
+    const prodUrl =
+      SHOP_API_BASE +
+      "/products" +
       (categoryId ? "?category_id=" + encodeURIComponent(categoryId) : "");
 
     const res = await fetch(prodUrl);
@@ -195,22 +126,13 @@ function bindAddToCart() {
       var name = this.dataset.name || "";
       var price = this.dataset.price || "0";
       var image = this.dataset.image || "";
+      var productId = this.dataset.id || null;
 
       if (typeof addToCart === "function") {
-        const productId = this.dataset.id || null;
         addToCart(name, price, image, productId);
-        updateCartBubble();
       }
 
-      var originalHTML = this.innerHTML;
-      this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Added';
-      this.classList.add("added");
-
-      var self = this;
-      setTimeout(function () {
-        self.innerHTML = originalHTML;
-        self.classList.remove("added");
-      }, 1500);
+      refreshCartAfterAdd(this, name);
     });
   });
 }
@@ -233,7 +155,10 @@ function initTilt() {
       var ry = ((x - cx) / cx) * 2.5;
       this.style.transform =
         "translateY(-8px) perspective(700px) rotateX(" +
-        rx + "deg) rotateY(" + ry + "deg)";
+        rx +
+        "deg) rotateY(" +
+        ry +
+        "deg)";
     });
 
     card.addEventListener("mouseleave", function () {

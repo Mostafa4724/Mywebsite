@@ -23,6 +23,172 @@ function generateId(name) {
     .replace(/^-|-$/g, "");
 }
 
+// ==========================================================================
+// SHARED PRODUCT-CARD SYSTEM
+// --------------------------------------------------------------------------
+// Single source of truth for how product cards are rendered on home.html and
+// catagory-species.html (and any future page). Both pages load /script.js, so
+// they share the exact same markup, sale logic, and navigation so the cards
+// look and behave identically everywhere.
+// ==========================================================================
+
+// A sale is considered ACTIVE when there's a valid lower sale price and we are
+// within the optional sale_start/sale_end window. This mirrors what cart,
+// buy-now and checkout use when picking the current price, so the price shown
+// on the card always matches what is charged.
+function isSaleActive(product) {
+  if (!product) return false;
+  const salePrice = Number(product.sale_price ?? 0);
+  const regularPrice = Number(product.price ?? 0);
+  const hasValidSalePrice = salePrice > 0 && regularPrice > salePrice;
+  if (!hasValidSalePrice) return false;
+
+  const now = new Date();
+
+  if (product.sale_start) {
+    const start = new Date(product.sale_start);
+    if (!Number.isNaN(start.getTime()) && now < start) return false;
+  }
+
+  if (product.sale_end) {
+    const end = new Date(product.sale_end);
+    if (!Number.isNaN(end.getTime()) && now > end) return false;
+  }
+
+  return true;
+}
+
+// Returns the current displayed/charged price for a product (sale price when
+// the sale is active, otherwise the regular price). Kept in sync with the
+// price used by addToCart / checkout so the card price always matches.
+function getDisplayPrice(product) {
+  const saleActive = isSaleActive(product);
+  const salePrice = Number(product.sale_price ?? 0);
+  const regularPrice = Number(product.price ?? 0);
+  return saleActive && salePrice > 0 ? salePrice : regularPrice;
+}
+
+// Builds the HTML string for a product card, producing the SAME structure that
+// home.css was designed for (so home.html keeps its exact styling):
+//
+//   .product-card
+//     a.product-card-link          (whole info area clickable -> product.html?id=..)
+//       img
+//       h3                          (title)
+//       .price-row                  (current price + optional original price)
+//         p.price
+//         p.original-price
+//       .sale-info                  (sale chip + discount, only when sale active)
+//         span.sale-chip
+//         span.sale-discount
+//     button.add-to-cart-btn        (sibling, add to cart)
+//
+// catagory-species.css includes matching rules for this same structure so the
+// category cards look and behave identically to the home cards.
+// Returns: { html, image, displayPrice, onSale, outOfStock }
+function buildProductCard(product, index) {
+  const image =
+    product.image && product.image !== ""
+      ? SHOP_API_BASE + "/uploads/products/" + product.image
+      : "https://picsum.photos/300/250?random=" + product.id;
+
+  const originalPrice = Number(product.price || 0);
+  const salePrice = Number(product.sale_price || 0);
+  const saleActive = isSaleActive(product);
+  const displayPrice = saleActive && salePrice > 0 ? salePrice : originalPrice;
+  const discountPercent =
+    saleActive && originalPrice > 0
+      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
+      : 0;
+
+  const stockStatus = (product.stock_status || "in").toLowerCase();
+  const outOfStock = stockStatus === "out";
+
+  // Price row: sale price + crossed-out original when sale active.
+  const priceHTML =
+    '<div class="price-row">' +
+    '<p class="price">$' +
+    displayPrice.toFixed(2) +
+    "</p>" +
+    (saleActive && product.sale_price
+      ? '<p class="original-price">$' + originalPrice.toFixed(2) + "</p>"
+      : "") +
+    "</div>";
+
+  // Sale info banner: sale chip (uses saved badge color/text) + discount.
+  const saleHTML =
+    saleActive && product.sale_price
+      ? '<div class="sale-info">' +
+        '<span class="sale-chip" style="background:' +
+        (product.sale_badge_color || "#dc2626") +
+        ';">' +
+        (product.sale_badge || "Sale") +
+        "</span>" +
+        '<span class="sale-discount">Save ' +
+        discountPercent +
+        "%</span>" +
+        "</div>"
+      : "";
+
+  return {
+    image: image,
+    displayPrice: displayPrice,
+    onSale: saleActive && product.sale_price,
+    outOfStock: outOfStock,
+    html:
+      '<div class="product-card" data-name="' +
+      product.title +
+      '" data-price="' +
+      displayPrice +
+      '" data-image="' +
+      image +
+      '">' +
+      '<a href="product.html?id=' +
+      product.id +
+      '" class="product-card-link" style="text-decoration:none;color:inherit;">' +
+      '<img src="' +
+      image +
+      '" alt="' +
+      product.title +
+      '" loading="lazy" />' +
+      "<h3>" +
+      product.title +
+      "</h3>" +
+      priceHTML +
+      saleHTML +
+      "</a>" +
+      '<button class="add-to-cart-btn" data-id="' +
+      product.id +
+      '" data-name="' +
+      product.title +
+      '" data-price="' +
+      displayPrice +
+      '" data-image="' +
+      image +
+      '"' +
+      (outOfStock ? " disabled" : "") +
+      ">" +
+      (outOfStock
+        ? " Sold Out"
+        : " Add To Cart") +
+      "</button>" +
+      "</div>",
+  };
+}
+
+// Shared "add to cart" visual feedback used by product-card buttons on any page.
+function refreshCartAfterAdd(btn, name) {
+  var originalHTML = btn.innerHTML;
+  btn.innerHTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Added';
+  btn.classList.add("added");
+  setTimeout(function () {
+    btn.innerHTML = originalHTML;
+    btn.classList.remove("added");
+  }, 1500);
+  updateCartBubble();
+}
+
 function addToCart(name, price, image, productId) {
   console.log("addToCart called");
   console.log(name, price, image, productId);

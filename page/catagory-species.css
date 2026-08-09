@@ -521,6 +521,108 @@ img {
   pointer-events: none;
 }
 
+/* ======================================================================
+   SHARED PRODUCT-CARD LAYOUT (home + catagory-species)
+   ----------------------------------------------------------------------
+   Product cards now come from the shared renderer in /script.js
+   (buildProductCard), which produces the SAME markup home.html uses:
+     .product-card
+       a.product-card-link      (image + h3 + .price-row + .sale-info)
+       button.add-to-cart-btn   (sibling at the bottom)
+
+   These rules give catagory-species cards the same look and behavior as the
+   home cards while keeping the dark theme styling.
+   ====================================================================== */
+.product-card .product-card-link {
+  display: block;
+}
+
+.product-card .product-card-link img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: brightness(0.7) saturate(0.85);
+}
+
+.product-card:hover .product-card-link img {
+  transform: scale(1.1);
+  filter: brightness(0.55) saturate(1.1);
+}
+
+.product-card .product-card-link h3 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 18px 22px 6px;
+  line-height: 1.4;
+}
+
+.product-card .price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 22px 6px;
+  flex-wrap: wrap;
+}
+
+.product-card .price-row .price {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #60a5fa;
+  margin: 0;
+}
+
+.product-card .price-row .original-price {
+  font-size: 0.82rem;
+  color: var(--fg-muted);
+  text-decoration: line-through;
+  margin: 0;
+}
+
+.product-card .sale-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 22px 16px;
+  flex-wrap: wrap;
+}
+
+.product-card .sale-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1.5px solid currentColor;
+}
+
+.product-card .sale-discount {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+/* Pinned Add-to-Cart button on the bottom of the dark card. */
+.product-card > .add-to-cart-btn {
+  margin: auto 22px 22px !important;
+}
+
+.add-to-cart-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* ===== REVEAL ===== */
 .reveal {
   opacity: 0;

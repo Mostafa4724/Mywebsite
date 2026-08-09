@@ -1,5 +1,4 @@
-const SHOP_API_BASE = "http://127.0.0.1:5000";
-
+// SHOP_API_BASE is provided globally by /script.js (loaded first).
 const catGrid = document.getElementById("catGrid");
 
 const emojiFallback = ["🛍️", "🪞", "⌚", "🎒", "🧢", "📦", "🔋", "🏷️"];
