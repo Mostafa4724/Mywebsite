@@ -22,12 +22,20 @@
      exactly on the delivery pin. Otherwise fall back to a text address
      query. */
   function googleMapsUrl(loc) {
-    if (loc && typeof loc.lat === "number" && typeof loc.lng === "number" &&
-        !Number.isNaN(loc.lat) && !Number.isNaN(loc.lng) &&
-        (loc.lat !== DEFAULT_LAT || loc.lng !== DEFAULT_LNG)) {
-      return "https://www.google.com/maps?q=" + loc.lat + "," + loc.lng;
-    }
-    return "https://www.google.com/maps?q=" + encodeURIComponent((loc && loc.fullAddress) || "");
+      if (
+          loc &&
+          typeof loc.lat === "number" &&
+          typeof loc.lng === "number" &&
+          !Number.isNaN(loc.lat) &&
+          !Number.isNaN(loc.lng)
+      ) {
+          return `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
+      }
+
+      // Fallback if coordinates don't exist
+      return `https://www.google.com/maps?q=${encodeURIComponent(
+          (loc && loc.fullAddress) || ""
+      )}`;
   }
 
   /* ── Custom marker icon ── */
