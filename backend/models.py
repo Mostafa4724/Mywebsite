@@ -238,16 +238,98 @@ class Order(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
-    total = db.Column(db.Float)
-    status = db.Column(db.String(50))
-    payment = db.Column(db.String(50))
+
+    # Customer / shipping information (snapshot from checkout)
+    customer_name = db.Column(db.String(200))
+    customer_lastname = db.Column(db.String(200))
+    customer_email = db.Column(db.String(150))
+    customer_phone = db.Column(db.String(100))
+    customer_address = db.Column(db.String(300))
+    customer_architecture = db.Column(db.String(200))
+    customer_floor = db.Column(db.String(100))
+    customer_lat = db.Column(db.Float)
+    customer_lng = db.Column(db.Float)
+
+    # Payment
+    payment_method = db.Column(db.String(50), default="card")
+
+    # Pricing summary (computed server-side)
+    subtotal = db.Column(db.Float, default=0)
+    shipping = db.Column(db.Float, default=0)
+    tax = db.Column(db.Float, default=0)
+    discount = db.Column(db.Float, default=0)
+    total = db.Column(db.Float, default=0)
+
+    # Status
+    status = db.Column(db.String(50), default="pending")
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    items = db.relationship(
+        "OrderItem",
+        backref="order",
+        lazy=True,
+        cascade="all, delete-orphan"
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "customer_name": self.customer_name,
+            "customer_lastname": self.customer_lastname,
+            "customer_email": self.customer_email,
+            "customer_phone": self.customer_phone,
+            "customer_address": self.customer_address,
+            "customer_architecture": self.customer_architecture,
+            "customer_floor": self.customer_floor,
+            "customer_lat": self.customer_lat,
+            "customer_lng": self.customer_lng,
+            "payment_method": self.payment_method,
+            "subtotal": self.subtotal,
+            "shipping": self.shipping,
+            "tax": self.tax,
+            "discount": self.discount,
+            "total": self.total,
+            "status": self.status,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else None,
+            "items": [
+                item.to_dict()
+                for item in self.items
+            ],
+        }
 
 
 class OrderItem(db.Model):
     __tablename__ = "order_items"
 
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer)
+    order_id = db.Column(
+        db.Integer,
+        db.ForeignKey("orders.id"),
+        nullable=False
+    )
     product_id = db.Column(db.Integer)
-    quantity = db.Column(db.Integer)
-    price = db.Column(db.Float)
+
+    # Snapshot of the product at time of purchase
+    product_name = db.Column(db.String(200))
+    quantity = db.Column(db.Integer, default=1)
+    original_price = db.Column(db.Float, default=0)
+    sale_price = db.Column(db.Float, default=0)
+    unit_price = db.Column(db.Float, default=0)
+    discount = db.Column(db.Float, default=0)
+    total = db.Column(db.Float, default=0)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "order_id": self.order_id,
+            "product_id": self.product_id,
+            "product_name": self.product_name,
+            "quantity": self.quantity,
+            "original_price": self.original_price,
+            "sale_price": self.sale_price,
+            "unit_price": self.unit_price,
+            "discount": self.discount,
+            "total": self.total,
+        }

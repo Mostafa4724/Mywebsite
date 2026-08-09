@@ -1,17 +1,21 @@
 (function () {
   "use strict";
 
-  /* ── Delivery location data ── */
-  var deliveryLocation = {
-    lat: 39.7817,
-    lng: -89.6501,
-    name: "John Doe",
-    address: "742 Evergreen Terrace, Apt 4B",
-    city: "Springfield, IL 62704",
-    country: "United States",
-    fullAddress:
-      "742 Evergreen Terrace, Apt 4B, Springfield, IL 62704, United States"
-  };
+/* ── Delivery location data ──
+     Uses the real order's customer lat/lng + address when available (loaded
+     and exposed on window.__orderData by view-order.js). Falls back to a
+     neutral default if the order has no coordinates.
+     Because view-order.js loads the order asynchronously AFTER this module
+     initializes, this module must listen for the "order-loaded" event and
+     rebind the map to the real location when it arrives. */
+
+  var DEFAULT_LAT = 40.7128;
+  var DEFAULT_LNG = -74.006;
+
+  var inlineMap = null;
+  var inlineMarker = null;
+  var currentLocation = null;
+  var openInMapsEl = document.getElementById("openInMaps");
 
   /* ── Custom marker icon ── */
   var markerIcon = L.divIcon({
@@ -50,38 +54,96 @@
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     + ' &copy; <a href="https://carto.com/">CARTO</a>';
 
-  /* ── Inline compact map ── */
-  var inlineMap = L.map("deliveryMap", {
-    center: [deliveryLocation.lat, deliveryLocation.lng],
-    zoom: 15,
-    zoomControl: true,
-    attributionControl: true,
-    dragging: true,
-    scrollWheelZoom: false,
-    doubleClickZoom: false,
-    touchZoom: true
-  });
+  /* Build a location object from an order (or a default). */
+  function locationFromOrder(order) {
+    if (order) {
+      var customerLat = parseFloat(order.customer_lat);
+      var customerLng = parseFloat(order.customer_lng);
+      var hasCoords =
+        !Number.isNaN(customerLat) && !Number.isNaN(customerLng) &&
+        customerLat !== 0 && customerLng !== 0;
 
-  L.tileLayer(tileUrl, { attribution: tileAttrib, maxZoom: 19 }).addTo(
-    inlineMap
-  );
+      var fullName =
+        ((order.customer_name || "") + " " + (order.customer_lastname || "")).trim() ||
+        order.customer_email ||
+        "Customer";
 
-  var inlineMarker = L.marker(
-    [deliveryLocation.lat, deliveryLocation.lng],
-    { icon: markerIcon }
-  )
-    .addTo(inlineMap)
-    .bindPopup(buildPopupContent(deliveryLocation), {
-      className: "vo-map-popup",
-      maxWidth: 260,
-      closeButton: true,
-      autoPan: true
+      var addressParts = [
+        order.customer_address,
+        order.customer_architecture,
+        order.customer_floor ? "Floor " + order.customer_floor : ""
+      ].filter(function (p) { return p && String(p).trim(); });
+
+      return {
+        lat: hasCoords ? customerLat : DEFAULT_LAT,
+        lng: hasCoords ? customerLng : DEFAULT_LNG,
+        name: fullName,
+        address: addressParts.join(", ") || "Delivery address on file",
+        city: "",
+        country: "",
+        fullAddress: ([fullName].concat(addressParts)).join(", ") || "Delivery address on file"
+      };
+    }
+
+    return {
+      lat: DEFAULT_LAT,
+      lng: DEFAULT_LNG,
+      name: "Customer",
+      address: "Delivery address on file",
+      city: "",
+      country: "",
+      fullAddress: "Delivery address on file"
+    };
+  }
+
+  /* Initial creation of the inline map (uses whatever data is available). */
+  function ensureInlineMap() {
+    if (inlineMap) return;
+    inlineMap = L.map("deliveryMap", {
+      center: [currentLocation.lat, currentLocation.lng],
+      zoom: 15,
+      zoomControl: true,
+      attributionControl: true,
+      dragging: true,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: true
     });
 
-  /* Open popup after the drop animation finishes */
-  setTimeout(function () {
+    L.tileLayer(tileUrl, { attribution: tileAttrib, maxZoom: 19 }).addTo(
+      inlineMap
+    );
+
+    inlineMarker = L.marker(
+      [currentLocation.lat, currentLocation.lng],
+      { icon: markerIcon }
+    )
+      .addTo(inlineMap)
+      .bindPopup(buildPopupContent(currentLocation), {
+        className: "vo-map-popup",
+        maxWidth: 260,
+        closeButton: true,
+        autoPan: true
+      });
+
+    setTimeout(function () {
+      inlineMarker.openPopup();
+    }, 600);
+  }
+
+  /* Reposition the inline map + marker to the supplied location. */
+  function updateInlineMap(loc) {
+    if (!inlineMap) {
+      currentLocation = loc;
+      ensureInlineMap();
+      return;
+    }
+    currentLocation = loc;
+    inlineMap.setView([loc.lat, loc.lng], 15, { animate: true });
+    inlineMarker.setLatLng([loc.lat, loc.lng]);
+    inlineMarker.setPopupContent(buildPopupContent(loc));
     inlineMarker.openPopup();
-  }, 600);
+  }
 
   /* ── Expanded overlay map (lazy-init) ── */
   var expandedMap = null;
@@ -90,12 +152,15 @@
   function initExpandedMap() {
     if (expandedMap) {
       expandedMap.invalidateSize();
-      expandedMap.setView([deliveryLocation.lat, deliveryLocation.lng], 16);
+      expandedMap.setView([currentLocation.lat, currentLocation.lng], 16);
+      expandedMarker.setLatLng([currentLocation.lat, currentLocation.lng]);
+      expandedMarker.setPopupContent(buildPopupContent(currentLocation));
+      expandedMarker.openPopup();
       return;
     }
 
     expandedMap = L.map("deliveryMapExpanded", {
-      center: [deliveryLocation.lat, deliveryLocation.lng],
+      center: [currentLocation.lat, currentLocation.lng],
       zoom: 16,
       zoomControl: true,
       attributionControl: true
@@ -106,21 +171,28 @@
     );
 
     expandedMarker = L.marker(
-      [deliveryLocation.lat, deliveryLocation.lng],
+      [currentLocation.lat, currentLocation.lng],
       { icon: markerIcon }
     )
       .addTo(expandedMap)
-      .bindPopup(buildPopupContent(deliveryLocation), {
+      .bindPopup(buildPopupContent(currentLocation), {
         className: "vo-map-popup",
         maxWidth: 260,
         closeButton: true
       });
 
-    /* Let the container settle before opening the popup */
     setTimeout(function () {
       expandedMap.invalidateSize();
       expandedMarker.openPopup();
     }, 350);
+  }
+
+  /* Update the "Open in Google Maps" link to the current address. */
+  function updateOpenInMaps(loc) {
+    if (openInMapsEl) {
+      openInMapsEl.href =
+        "https://www.google.com/maps?q=" + encodeURIComponent(loc.fullAddress);
+    }
   }
 
   /* ── Overlay open / close ── */
@@ -128,38 +200,63 @@
   var mapExpandBtn = document.getElementById("mapExpandBtn");
   var mapOverlayClose = document.getElementById("mapOverlayClose");
 
-  mapExpandBtn.addEventListener("click", function () {
-    mapOverlay.classList.add("show");
-    setTimeout(initExpandedMap, 50);
-  });
+  if (mapExpandBtn) {
+    mapExpandBtn.addEventListener("click", function () {
+      mapOverlay.classList.add("show");
+      setTimeout(initExpandedMap, 50);
+    });
+  }
 
-  mapOverlayClose.addEventListener("click", function () {
-    mapOverlay.classList.remove("show");
-  });
-
-  mapOverlay.addEventListener("click", function (e) {
-    if (e.target === mapOverlay) {
+  if (mapOverlayClose) {
+    mapOverlayClose.addEventListener("click", function () {
       mapOverlay.classList.remove("show");
-    }
-  });
+    });
+  }
+
+  if (mapOverlay) {
+    mapOverlay.addEventListener("click", function (e) {
+      if (e.target === mapOverlay) {
+        mapOverlay.classList.remove("show");
+      }
+    });
+  }
 
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && mapOverlay.classList.contains("show")) {
+    if (e.key === "Escape" && mapOverlay && mapOverlay.classList.contains("show")) {
       mapOverlay.classList.remove("show");
     }
   });
-
-  /* ── "Open in Google Maps" link ── */
-  var openInMaps = document.getElementById("openInMaps");
-  openInMaps.href =
-    "https://www.google.com/maps?q="
-    + encodeURIComponent(deliveryLocation.fullAddress);
 
   /* ── Keep maps in sync on resize ── */
   window.addEventListener("resize", function () {
-    inlineMap.invalidateSize();
-    if (expandedMap && mapOverlay.classList.contains("show")) {
+    if (inlineMap) inlineMap.invalidateSize();
+    if (expandedMap && mapOverlay && mapOverlay.classList.contains("show")) {
       expandedMap.invalidateSize();
     }
   });
+
+  /* ── Boot ── */
+  // If the order data is already available (cached page), use it directly.
+  if (window.__orderData) {
+    currentLocation = locationFromOrder(window.__orderData);
+  } else {
+    currentLocation = locationFromOrder(null);
+  }
+
+  ensureInlineMap();
+  updateOpenInMaps(currentLocation);
+
+  // Rebinding when view-order.js finishes fetching the real order.
+  window.addEventListener("order-loaded", function (evt) {
+    var loc = locationFromOrder(evt.detail || {});
+    updateInlineMap(loc);
+    updateOpenInMaps(loc);
+  });
+  // Safety: if the event fired before this listener was registered.
+  if (window.__orderData) {
+    var loc = locationFromOrder(window.__orderData);
+    updateInlineMap(loc);
+    updateOpenInMaps(loc);
+  }
 })();
+

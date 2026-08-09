@@ -126,6 +126,29 @@ def migrate():
             "category_id",
             "INTEGER REFERENCES categories(id)"
         )
+        # ---- orders table ----
+        _ensure_column(conn, "orders", "customer_name", "VARCHAR(200)")
+        _ensure_column(conn, "orders", "customer_lastname", "VARCHAR(200)")
+        _ensure_column(conn, "orders", "customer_email", "VARCHAR(150)")
+        _ensure_column(conn, "orders", "customer_phone", "VARCHAR(100)")
+        _ensure_column(conn, "orders", "customer_address", "VARCHAR(300)")
+        _ensure_column(conn, "orders", "customer_architecture", "VARCHAR(200)")
+        _ensure_column(conn, "orders", "customer_floor", "VARCHAR(100)")
+        _ensure_column(conn, "orders", "customer_lat", "FLOAT")
+        _ensure_column(conn, "orders", "customer_lng", "FLOAT")
+        _ensure_column(conn, "orders", "payment_method", "VARCHAR(50)")
+        _ensure_column(conn, "orders", "subtotal", "FLOAT")
+        _ensure_column(conn, "orders", "shipping", "FLOAT")
+        _ensure_column(conn, "orders", "tax", "FLOAT")
+        _ensure_column(conn, "orders", "discount", "FLOAT")
+        _ensure_column(conn, "orders", "created_at", "DATETIME")
+        # ---- order_items table ----
+        _ensure_column(conn, "order_items", "product_name", "VARCHAR(200)")
+        _ensure_column(conn, "order_items", "original_price", "FLOAT")
+        _ensure_column(conn, "order_items", "sale_price", "FLOAT")
+        _ensure_column(conn, "order_items", "unit_price", "FLOAT")
+        _ensure_column(conn, "order_items", "discount", "FLOAT")
+        _ensure_column(conn, "order_items", "total", "FLOAT")
     # NOTE: SQLite's ALTER TABLE ADD COLUMN cannot add a UNIQUE column,
     # so the `name` column uniqueness for categories is enforced in code
     # (see categories.create_category) and by the app-level index below.

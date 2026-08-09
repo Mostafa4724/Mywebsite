@@ -699,8 +699,13 @@ function loadProductFromURL() {
 
 // ===== Home Page Init =====
 function initHomePage() {
-  // Handle Add to Cart buttons on home page
+  // Handle Add to Cart buttons on home page. The dynamic cards rendered by
+  // home.js (appendProductCard) already bind their own handler with the
+  // productId, so guard against double-binding here and always pass the id.
   document.querySelectorAll(".add-to-cart-btn").forEach((btn) => {
+    if (btn.dataset.homeBound) return;
+    btn.dataset.homeBound = "1";
+
     btn.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -708,23 +713,14 @@ function initHomePage() {
       const name = this.dataset.name || "";
       const price = this.dataset.price || "0";
       const image = this.dataset.image || "";
+      const productId = this.dataset.id || null;
 
-      addToCart(name, price, image);
-
-      // Visual feedback
-      const cartBubble = document.querySelector(".cart-bubble");
-      if (cartBubble) {
-        cartBubble.style.transform = "scale(1.3)";
-        setTimeout(() => {
-          cartBubble.style.transform = "scale(1)";
-        }, 200);
-      }
-
-      alert(`"${name}" has been added to your cart!`);
+      addToCart(name, price, image, productId);
+      refreshCartAfterAdd(this, name);
     });
   });
 
-  // Shop Now button - smooth scroll to products section with animation
+  // Shop Now button
   const shopNowBtn = document.getElementById("shop-now-btn");
   if (shopNowBtn) {
     shopNowBtn.addEventListener("click", function (e) {
@@ -973,10 +969,12 @@ if (confirmBtn) {
 
 // ===== Place Order (server-side validation) =====
 // The frontend is NOT the final authority on order validity. This sends the
-// available checkout items to the backend, which re-validates that each product
-// still exists, is still available, has sufficient stock, and uses the current
-// price before creating the order.
-async function placeOrder() {
+// available checkout items (plus the customer's shipping/payment info) to the
+// backend, which re-validates that each product still exists, is still
+// available, has sufficient stock, and uses the current price before creating
+// the order. Customer info is gathered from the checkout form by
+// gatherCheckoutCustomer() (defined in checkout-form.js).
+async function placeOrder(extraData) {
   const items = await normalizeCartItems(getCheckoutItems());
   const availableItems = [];
 
@@ -1000,11 +998,36 @@ async function placeOrder() {
     };
   }
 
+  let customer = {};
+  if (typeof gatherCheckoutCustomer === "function") {
+    try {
+      customer = gatherCheckoutCustomer() || {};
+    } catch (err) {
+      console.error("Failed to gather customer info", err);
+    }
+  } else if (extraData && extraData.customer) {
+    customer = extraData.customer;
+  }
+
+  let paymentMethod = "card";
+  const selectedPayment = document.querySelector(
+    'input[name="payment"]:checked'
+  );
+  if (selectedPayment) {
+    paymentMethod = selectedPayment.value;
+  } else if (extraData && extraData.payment_method) {
+    paymentMethod = extraData.payment_method;
+  }
+
   try {
     const response = await fetch(`${SHOP_API_BASE}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: availableItems }),
+      body: JSON.stringify({
+        items: availableItems,
+        customer: customer,
+        payment_method: paymentMethod,
+      }),
     });
     const data = await response.json();
     return data;

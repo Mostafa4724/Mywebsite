@@ -172,8 +172,9 @@
               />
             </div>
             <div class="orders-filters">
-              <select id="statusFilter">
+<select id="statusFilter">
                 <option value="all">All Status</option>
+                <option value="pending">Pending</option>
                 <option value="processing">Processing</option>
                 <option value="shipped">Shipped</option>
                 <option value="delivered">Delivered</option>
@@ -204,111 +205,8 @@
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="ordersTableBody">
-                <tr data-status="shipped">
-                  <td><strong>#ORD-1204</strong></td>
-                  <td>John Doe</td>
-                  <td>Premium Sneakers</td>
-                  <td>Apr 12, 2024</td>
-                  <td class="table-amount">$189.00</td>
-                  <td>
-                    <span class="dash-order-status shipped">Shipped</span>
-                  </td>
-                  <td class="table-actions">
-                    <a class="btn-text" href="view-order.html">View</a>
-                  </td>
-                </tr>
-                <tr data-status="delivered">
-                  <td><strong>#ORD-1203</strong></td>
-                  <td>Sarah Miller</td>
-                  <td>Leather Jacket</td>
-                  <td>Apr 11, 2024</td>
-                  <td class="table-amount">$249.99</td>
-                  <td>
-                    <span class="dash-order-status delivered">Delivered</span>
-                  </td>
-                  <td class="table-actions">
-                    <button class="btn-text">View</button
-                  </td>
-                </tr>
-                <tr data-status="processing">
-                  <td><strong>#ORD-1202</strong></td>
-                  <td>Mike Chen</td>
-                  <td>Cotton T-Shirt x3</td>
-                  <td>Apr 10, 2024</td>
-                  <td class="table-amount">$89.97</td>
-                  <td>
-                    <span class="dash-order-status processing">Processing</span>
-                  </td>
-                  <td class="table-actions">
-                    <button class="btn-text">View</button
-                  </td>
-                </tr>
-                <tr data-status="delivered">
-                  <td><strong>#ORD-1201</strong></td>
-                  <td>Emily Jones</td>
-                  <td>Running Shoes</td>
-                  <td>Apr 9, 2024</td>
-                  <td class="table-amount">$129.99</td>
-                  <td>
-                    <span class="dash-order-status delivered">Delivered</span>
-                  </td>
-                  <td class="table-actions">
-                    <button class="btn-text">View</button
-                  </td>
-                </tr>
-                <tr data-status="cancelled">
-                  <td><strong>#ORD-1200</strong></td>
-                  <td>David Brown</td>
-                  <td>Winter Beanie</td>
-                  <td>Apr 8, 2024</td>
-                  <td class="table-amount">$34.00</td>
-                  <td>
-                    <span class="dash-order-status cancelled">Cancelled</span>
-                  </td>
-                  <td class="table-actions">
-                    <button class="btn-text">View</button
-                  </td>
-                </tr>
-                <tr data-status="shipped">
-                  <td><strong>#ORD-1199</strong></td>
-                  <td>Lisa Wang</td>
-                  <td>Yoga Mat, Water Bottle</td>
-                  <td>Apr 7, 2024</td>
-                  <td class="table-amount">$64.50</td>
-                  <td>
-                    <span class="dash-order-status shipped">Shipped</span>
-                  </td>
-                  <td class="table-actions">
-                    <button class="btn-text">View</button
-                  </td>
-                </tr>
-                <tr data-status="processing">
-                  <td><strong>#ORD-1198</strong></td>
-                  <td>James Wilson</td>
-                  <td>Denim Jacket</td>
-                  <td>Apr 6, 2024</td>
-                  <td class="table-amount">$179.00</td>
-                  <td>
-                    <span class="dash-order-status processing">Processing</span>
-                  </td>
-                  <td class="table-actions">
-                    <button class="btn-text">View</button
-                  </td>
-                </tr>
-                <tr data-status="delivered">
-                  <td><strong>#ORD-1197</strong></td>
-                  <td>Amy Taylor</td>
-                  <td>Sunglasses, Cap</td>
-                  <td>Apr 5, 2024</td>
-                  <td class="table-amount">$58.00</td>
-                  <td>
-                    <span class="dash-order-status delivered">Delivered</span>
-                  </td>
-                  <td class="table-actions">
-                    <button class="btn-text">View</button
-                  </td>
-                </tr>
+<tbody id="ordersTableBody">
+                <!-- Orders are loaded from the backend by admin/orders.js -->
               </tbody>
             </table>
           </div>
@@ -326,6 +224,7 @@
       </div>
     </div>
 
-    <script src="../script.js"></script>
+<script src="../script.js"></script>
+    <script src="orders.js"></script>
   </body>
 </html>

@@ -53,6 +53,30 @@ if (cvvInput) {
   });
 }
 
+// ===== Gather Customer Info from the Checkout Form =====
+// Reads the shipping/payment fields so they can be sent to the backend with
+// the order and stored in the database (used by placeOrder in /script.js).
+function gatherCheckoutCustomer() {
+  function val(selector) {
+    const el = document.querySelector(selector);
+    return el ? el.value.trim() : "";
+  }
+
+  const customer = {
+    firstName: val('.form-section input[placeholder="John"]'),
+    lastName: val('.form-section input[placeholder="Doe"]'),
+    email: val('.form-section input[placeholder="john@example.com"]'),
+    phone: val('.form-section input[type="tel"]'),
+    address: val('.form-section input[placeholder*="123 Main Street"]'),
+    architecture: val('.form-section input[placeholder*="Modern"]'),
+    floor: val('.form-section input[placeholder*="3rd Floor"]'),
+    lat: val("#mapLat"),
+    lng: val("#mapLng"),
+  };
+
+  return customer;
+}
+
 // ===== Confirm Button =====
 var confirmBtn = document.querySelector(".checkout-btn-primary");
 if (confirmBtn) {
