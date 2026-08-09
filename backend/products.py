@@ -21,17 +21,40 @@ from flask import current_app
 
 from flask import Blueprint, request, jsonify
 
-from models import Product
+from models import Product, Category
 from database import db
 from security import admin_required
 from models import Review
 
 products_bp = Blueprint("products", __name__)
 
+
+def _resolve_category(category_id, category_name):
+    """Resolve a category by id (falling back to name) and return it."""
+    if category_id:
+        category = Category.query.get(category_id)
+        if category:
+            return category
+    if category_name:
+        category = Category.query.filter(
+            db.func.lower(Category.name) == category_name.strip().lower()
+        ).first()
+        if category:
+            return category
+    return None
+
+
 @products_bp.route("/products", methods=["GET"])
 def get_products():
 
-    products = Product.query.all()
+    category_id = request.args.get("category_id", type=int)
+
+    query = Product.query
+
+    if category_id:
+        query = query.filter(Product.category_id == category_id)
+
+    products = query.all()
 
     return jsonify({
 
@@ -128,12 +151,25 @@ def add_product():
     sale_enabled = _parse_bool(data.get("sale_enabled"))
 
     if sale_price is not None and sale_price < price_value:
-
         sale_enabled = True
 
     if sale_price is None and data.get("sale_enabled") in {"true", "1", 1, True}:
-
         sale_enabled = True
+
+    category_name = (data.get("category") or "").strip()
+    category_id = data.get("category_id")
+
+    category = None
+    if category_id:
+        try:
+            category = Category.query.get(int(category_id))
+        except (TypeError, ValueError):
+            category = None
+
+    if category is None and category_name:
+        category = Category.query.filter(
+            db.func.lower(Category.name) == category_name.lower()
+        ).first()
 
     product = Product(
 
@@ -141,7 +177,8 @@ def add_product():
         title=data.get("title"),
         description=data.get("description"),
         brand=data.get("brand"),
-        category=data.get("category"),
+        category=category.name if category else (category_name or None),
+        category_id=category.id if category else None,
 
         # Pricing
         price=price_value,
@@ -210,7 +247,30 @@ def edit_product(id):
 
     product.description = data.get("description",product.description)
 
-    product.category = data.get("category",product.category)
+    category_name = (data.get("category") or product.category or "").strip()
+    category_id = data.get("category_id")
+
+    category = None
+    if category_id:
+        try:
+            category = Category.query.get(int(category_id))
+        except (TypeError, ValueError):
+            category = None
+
+    if category is None and category_name and (
+        data.get("category") is not None or data.get("category_id") is not None
+    ):
+        category = Category.query.filter(
+            db.func.lower(Category.name) == category_name.lower()
+        ).first()
+
+    if category is not None:
+        product.category = category.name
+        product.category_id = category.id
+    elif data.get("category_id") is not None:
+        # Explicitly clearing the category
+        product.category_id = None
+        product.category = category_name or None
 
     product.price = float(
 

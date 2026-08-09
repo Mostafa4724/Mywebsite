@@ -27,6 +27,31 @@ from datetime import datetime
 from database import db
 
 
+class Category(db.Model):
+    __tablename__ = "categories"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    products = db.relationship(
+        "Product",
+        backref="category_ref",
+        lazy=True
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "created_at": self.created_at,
+            "product_count": len(self.products)
+        }
+
+
 class Product(db.Model):
     __tablename__ = "products"
 
@@ -37,6 +62,11 @@ class Product(db.Model):
     description = db.Column(db.Text)
     brand = db.Column(db.String(100))
     category = db.Column(db.String(100))
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("categories.id"),
+        nullable=True
+    )
 
     # Pricing
     price = db.Column(db.Float, nullable=False)
@@ -111,10 +141,11 @@ class Product(db.Model):
         return {
             "id": self.id,
 
-            "title": self.title,
+"title": self.title,
             "description": self.description,
             "brand": self.brand,
             "category": self.category,
+            "category_id": self.category_id,
 
             "price": self.price,
             "cost": self.cost,

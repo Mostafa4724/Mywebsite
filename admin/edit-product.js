@@ -1,6 +1,122 @@
 (function () {
   "use strict";
 
+  var CATEGORY_API = "http://127.0.0.1:5000/categories";
+  var ADD_CATEGORY_VALUE = "__add_category__";
+  var categorySelect = document.getElementById("prodCategory");
+  var addCategoryModal = document.getElementById("addCategoryModal");
+  var addCategoryClose = document.getElementById("addCategoryClose");
+  var cancelCategoryBtn = document.getElementById("cancelCategoryBtn");
+  var saveCategoryBtn = document.getElementById("saveCategoryBtn");
+  var newCategoryName = document.getElementById("newCategoryName");
+  var newCategoryError = document.getElementById("newCategoryError");
+
+  // Load categories into the dropdown
+  function loadCategories(selectAfter) {
+    fetch(CATEGORY_API)
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.success) return;
+
+        categorySelect.innerHTML = "";
+        categorySelect.innerHTML +=
+          '<option value="" disabled selected>Select category</option>';
+
+        data.categories.forEach(function (cat) {
+          var opt = document.createElement("option");
+          opt.value = String(cat.id);
+          opt.dataset.name = cat.name;
+          opt.textContent = cat.name;
+          categorySelect.appendChild(opt);
+        });
+
+        var addOpt = document.createElement("option");
+        addOpt.value = ADD_CATEGORY_VALUE;
+        addOpt.textContent = "+ Add Category";
+        categorySelect.appendChild(addOpt);
+
+        if (selectAfter) {
+          categorySelect.value = String(selectAfter.id);
+        }
+      })
+      .catch(function (err) { console.error("Failed to load categories", err); });
+  }
+
+  function closeAddCategoryModal() {
+    if (!addCategoryModal) return;
+    if (addCategoryModal.hasAttribute("hidden")) {
+      addCategoryModal.setAttribute("hidden", "");
+    }
+    addCategoryModal.classList.remove("show");
+    addCategoryModal.style.display = "none";
+  }
+
+  function createCategory() {
+    if (!newCategoryName || !newCategoryError) return;
+    var name = newCategoryName.value.trim();
+    if (!name) {
+      newCategoryError.textContent = "Category name is required.";
+      return;
+    }
+    newCategoryError.textContent = "";
+    saveCategoryBtn.disabled = true;
+    saveCategoryBtn.textContent = "Saving...";
+
+    fetch(CATEGORY_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name })
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.success) {
+          newCategoryError.textContent = data.message || "Could not create category.";
+          return;
+        }
+        loadCategories(data.category);
+        closeAddCategoryModal();
+        showToast('Category "' + data.category.name + '" created!');
+      })
+      .catch(function (err) {
+        console.error(err);
+        newCategoryError.textContent = "Failed to connect. Please try again.";
+      })
+      .then(function () {
+        saveCategoryBtn.disabled = false;
+        saveCategoryBtn.textContent = "Add Category";
+      });
+  }
+
+  if (categorySelect) {
+    categorySelect.addEventListener("change", function () {
+      if (this.value === ADD_CATEGORY_VALUE) {
+        if (addCategoryModal) {
+          newCategoryName.value = "";
+          newCategoryError.textContent = "";
+          if (addCategoryModal.hasAttribute("hidden")) addCategoryModal.removeAttribute("hidden");
+          else addCategoryModal.classList.add("show");
+          addCategoryModal.style.display = "flex";
+        }
+        this.value = "";
+      }
+    });
+  }
+  if (addCategoryClose) addCategoryClose.addEventListener("click", closeAddCategoryModal);
+  if (cancelCategoryBtn) cancelCategoryBtn.addEventListener("click", closeAddCategoryModal);
+  if (saveCategoryBtn) saveCategoryBtn.addEventListener("click", createCategory);
+  if (addCategoryModal) {
+    addCategoryModal.addEventListener("click", function (e) {
+      if (e.target === addCategoryModal) closeAddCategoryModal();
+    });
+  }
+  if (newCategoryName) {
+    newCategoryName.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); createCategory(); }
+    });
+  }
+
+  loadCategories();
+
   /* ============================
      Sample Product Data (simulating loaded data)
      ============================ */

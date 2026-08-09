@@ -56,7 +56,7 @@
       <div class="breadcrumb reveal">
         <a href="Catagory.html">Category</a>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        <span>Footwear</span>
+        <span id="crumbName">Loading...</span>
       </div>
 
       <!-- HERO -->
@@ -65,194 +65,32 @@
           <div class="fw-hero-text">
             <div class="fw-hero-eyebrow">
               <span class="pulse-dot"></span>
-              482 Products
+              <span id="heroCount">0 Products</span>
             </div>
             <h1 class="fw-hero-title">
-              <span class="highlight">Footwear</span>
+              <span class="highlight" id="heroTitle">Loading...</span>
             </h1>
-            <p class="fw-hero-desc">
-              Sneakers, boots, sandals, and limited-edition drops from the brands you love.
+            <p class="fw-hero-desc" id="heroDesc">
+              Browse curated products in this category.
             </p>
-            <div class="fw-hero-tags">
-              <span class="fw-tag">Sneakers</span>
-              <span class="fw-tag">Boots</span>
-              <span class="fw-tag">Sandals</span>
-              <span class="fw-tag">Loafers</span>
-              <span class="fw-tag">Limited</span>
-            </div>
+            <div class="fw-hero-tags" id="heroTags"></div>
           </div>
           <div class="fw-hero-preview">
             <div class="preview-float preview-float--1">
-              <img src="https://picsum.photos/seed/fw-hero1/320/400.jpg" alt="Shoe preview" loading="lazy" />
+              <img src="https://picsum.photos/seed/fw-hero1/320/400.jpg" alt="Preview" loading="lazy" />
             </div>
             <div class="preview-float preview-float--2">
-              <img src="https://picsum.photos/seed/fw-hero2/280/340.jpg" alt="Shoe preview" loading="lazy" />
+              <img src="https://picsum.photos/seed/fw-hero2/280/340.jpg" alt="Preview" loading="lazy" />
             </div>
             <div class="preview-float preview-float--3">
-              <img src="https://picsum.photos/seed/fw-hero3/240/280.jpg" alt="Shoe preview" loading="lazy" />
+              <img src="https://picsum.photos/seed/fw-hero3/240/280.jpg" alt="Preview" loading="lazy" />
             </div>
           </div>
         </div>
       </section>
 
       <!-- PRODUCT GRID -->
-      <div class="product-grid" id="productGrid">
-
-        <div class="product-card reveal reveal-d1" data-type="sneakers" data-price="129.99" data-name="Air Max Pulse">
-          <div class="product-card__img">
-            <span class="product-card__num">01</span>
-            <img src="https://picsum.photos/seed/fw-airmax/600/500.jpg" alt="Air Max Pulse" loading="lazy" />
-            <span class="product-card__badge">New</span>
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Sneakers</span>
-            <h3 class="product-card__name">Air Max Pulse</h3>
-            <div class="product-card__bottom">
-              <span class="product-card__price">$129.99</span>
-              <button class="add-to-cart-btn" data-name="Air Max Pulse" data-price="129.99" data-image="https://picsum.photos/seed/fw-airmax/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-card reveal reveal-d2" data-type="boots" data-price="189.99" data-name="Urban Trail Boot">
-          <div class="product-card__img">
-            <span class="product-card__num">02</span>
-            <img src="https://picsum.photos/seed/fw-boot1/600/500.jpg" alt="Urban Trail Boot" loading="lazy" />
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Boots</span>
-            <h3 class="product-card__name">Urban Trail Boot</h3>
-            <div class="product-card__bottom">
-              <span class="product-card__price">$189.99</span>
-              <button class="add-to-cart-btn" data-name="Urban Trail Boot" data-price="189.99" data-image="https://picsum.photos/seed/fw-boot1/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-card reveal reveal-d3" data-type="sneakers" data-price="94.99" data-name="Cloud Runner Pro">
-          <div class="product-card__img">
-            <span class="product-card__num">03</span>
-            <img src="https://picsum.photos/seed/fw-cloud/600/500.jpg" alt="Cloud Runner Pro" loading="lazy" />
-            <span class="product-card__badge sale">-20%</span>
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Sneakers</span>
-            <h3 class="product-card__name">Cloud Runner Pro</h3>
-            <div class="product-card__bottom">
-              <div class="product-card__pricing">
-                <span class="product-card__price sale-price">$94.99</span>
-                <span class="product-card__old-price">$119.99</span>
-              </div>
-              <button class="add-to-cart-btn" data-name="Cloud Runner Pro" data-price="94.99" data-image="https://picsum.photos/seed/fw-cloud/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-card reveal reveal-d4" data-type="sandals" data-price="64.99" data-name="Coast Slide">
-          <div class="product-card__img">
-            <span class="product-card__num">04</span>
-            <img src="https://picsum.photos/seed/fw-sandal1/600/500.jpg" alt="Coast Slide" loading="lazy" />
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Sandals</span>
-            <h3 class="product-card__name">Coast Slide</h3>
-            <div class="product-card__bottom">
-              <span class="product-card__price">$64.99</span>
-              <button class="add-to-cart-btn" data-name="Coast Slide" data-price="64.99" data-image="https://picsum.photos/seed/fw-sandal1/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-card reveal reveal-d5" data-type="loafers" data-price="149.99" data-name="Classic Suede Loafer">
-          <div class="product-card__img">
-            <span class="product-card__num">05</span>
-            <img src="https://picsum.photos/seed/fw-loafer1/600/500.jpg" alt="Classic Suede Loafer" loading="lazy" />
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Loafers</span>
-            <h3 class="product-card__name">Classic Suede Loafer</h3>
-            <div class="product-card__bottom">
-              <span class="product-card__price">$149.99</span>
-              <button class="add-to-cart-btn" data-name="Classic Suede Loafer" data-price="149.99" data-image="https://picsum.photos/seed/fw-loafer1/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-card reveal reveal-d6" data-type="sneakers" data-price="159.99" data-name="Retro High Top">
-          <div class="product-card__img">
-            <span class="product-card__num">06</span>
-            <img src="https://picsum.photos/seed/fw-retro/600/500.jpg" alt="Retro High Top" loading="lazy" />
-            <span class="product-card__badge hot">Hot</span>
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Sneakers</span>
-            <h3 class="product-card__name">Retro High Top</h3>
-            <div class="product-card__bottom">
-              <span class="product-card__price">$159.99</span>
-              <button class="add-to-cart-btn" data-name="Retro High Top" data-price="159.99" data-image="https://picsum.photos/seed/fw-retro/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-card reveal reveal-d7" data-type="boots" data-price="219.99" data-name="Storm Chelsea Boot">
-          <div class="product-card__img">
-            <span class="product-card__num">07</span>
-            <img src="https://picsum.photos/seed/fw-chelsea/600/500.jpg" alt="Storm Chelsea Boot" loading="lazy" />
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Boots</span>
-            <h3 class="product-card__name">Storm Chelsea Boot</h3>
-            <div class="product-card__bottom">
-              <span class="product-card__price">$219.99</span>
-              <button class="add-to-cart-btn" data-name="Storm Chelsea Boot" data-price="219.99" data-image="https://picsum.photos/seed/fw-chelsea/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-card reveal reveal-d8" data-type="sandals" data-price="79.99" data-name="Strap Sport Sandal">
-          <div class="product-card__img">
-            <span class="product-card__num">08</span>
-            <img src="https://picsum.photos/seed/fw-strap/600/500.jpg" alt="Strap Sport Sandal" loading="lazy" />
-            <span class="product-card__badge sale">-15%</span>
-          </div>
-          <div class="product-card__body">
-            <span class="product-card__type">Sandals</span>
-            <h3 class="product-card__name">Strap Sport Sandal</h3>
-            <div class="product-card__bottom">
-              <div class="product-card__pricing">
-                <span class="product-card__price sale-price">$79.99</span>
-                <span class="product-card__old-price">$94.99</span>
-              </div>
-              <button class="add-to-cart-btn" data-name="Strap Sport Sandal" data-price="79.99" data-image="https://picsum.photos/seed/fw-strap/600/500.jpg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      <div class="product-grid" id="productGrid"></div>
     </main>
 
     <footer>

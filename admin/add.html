@@ -246,7 +246,7 @@
                         placeholder="e.g. Nike"
                       />
                     </div>
-                    <div class="ap-field">
+<div class="ap-field">
                       <label for="prodCategory"
                         >Category <span class="req">*</span></label
                       >
@@ -254,12 +254,6 @@
                         <option value="" disabled selected>
                           Select category
                         </option>
-                        <option value="footwear">Footwear</option>
-                        <option value="apparel">Apparel</option>
-                        <option value="accessories">Accessories</option>
-                        <option value="sports">Sports & Fitness</option>
-                        <option value="home">Home & Living</option>
-                        <option value="electronics">Electronics</option>
                       </select>
                     </div>
                   </div>
@@ -900,6 +894,27 @@
             <path d="M20 6L9 17l-5-5" />
           </svg>
           <span id="apToastMsg">Product saved successfully!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="admin-modal-overlay" id="addCategoryModal" hidden>
+      <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="addCategoryTitle">
+        <div class="admin-modal-head">
+          <h3 id="addCategoryTitle">Add Category</h3>
+          <button type="button" class="admin-modal-close" id="addCategoryClose" aria-label="Close">&times;</button>
+        </div>
+        <div class="admin-modal-body">
+          <div class="form-field">
+            <label for="newCategoryName">Category Name <span class="req">*</span></label>
+            <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
+            <span class="form-error" id="newCategoryError"></span>
+          </div>
+        </div>
+        <div class="admin-modal-foot">
+          <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancel</button>
+          <button type="button" class="btn-primary" id="saveCategoryBtn">Add Category</button>
         </div>
       </div>
     </div>
