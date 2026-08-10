@@ -1,0 +1,556 @@
+/* ============================================
+   LOGIN / AUTH PAGE STYLES
+   Cool & Cold — White + Sky Blue Line Art
+   ============================================ */
+
+/* --- Design Tokens --- */
+:root {
+  --bg: #ffffff;
+  --fg: #152238;
+  --fg-secondary: #364d66;
+  --fg-muted: #8298ae;
+  --accent-login: #0b3361;
+  --accent-login-hover: #1d508a;
+  --accent-login-glow: rgba(37, 99, 168, 0.12);
+  --accent-register: #0b3b65;
+  --accent-register-hover: #2a9dd4;
+  --accent-register-glow: rgba(56, 178, 232, 0.12);
+  --sky: #7ec8f0;
+  --sky-pale: #dff1fc;
+  --line-color: rgba(14, 96, 147, 0.298);
+  --line-faint: rgba(77, 180, 240, 0.04);
+  --card-bg: #ffffff;
+  --card-border: rgba(77, 180, 240, 0.14);
+  --input-bg: #f8fafc;
+  --input-border: #d4dde8;
+  --input-focus: #38b2e8;
+  --error: #cc3d4a;
+  --success: #1f8a4e;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+  --font-ui: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  --transition: 0.25s ease;
+}
+
+/* --- Reset --- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* --- Body: white base + dot graph vertices + circle outlines --- */
+body {
+  font-family: var(--font-ui);
+  background-color: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image:
+    /* Dot graph — visible dots at each grid vertex */
+    radial-gradient(circle, rgba(14, 96, 147, 0.18) 1.5px, transparent 1.5px),
+    /* Circle outline — top right area */
+    radial-gradient(circle, transparent 46%, rgba(14, 96, 147, 0.298) 46%, rgba(77,180,240,0.07) 48%, transparent 48%),
+    /* Circle outline — bottom left area */
+    radial-gradient(circle, transparent 44%, rgba(14, 96, 147, 0.298) 44%, rgba(77,180,240,0.055) 46%, transparent 46%),
+    /* Circle outline — right middle */
+    radial-gradient(circle, transparent 47%, rgba(14, 96, 147, 0.298) 47%, rgba(77,180,240,0.06) 49%, transparent 49%),
+    /* Smaller circle outline — left upper */
+    radial-gradient(circle, transparent 43%, rgba(14, 96, 147, 0.298) 43%, rgba(77,180,240,0.065) 45.5%, transparent 45.5%);
+  background-size:
+    60px 60px,
+    150px 150px,
+    220px 220px,
+    110px 110px,
+    80px 80px;
+  background-position:
+    0 0,
+    calc(100% - 190px) 6%,
+    10% calc(100% - 220px),
+    calc(100% - 70px) 52%,
+    6% 18%;
+  background-repeat:
+    repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat;
+}
+
+/* --- Scattered circle outlines via box-shadow ("shapes made of lines") --- */
+body::before {
+  content: '';
+  position: fixed;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line-color);
+  top: 8%;
+  left: 4%;
+  pointer-events: none;
+  z-index: 0;
+  box-shadow:
+    190px -40px 0 -8px rgba(14, 96, 147, 0.298),
+    480px 20px 0 18px rgba(14, 96, 147, 0.298),
+    820px -70px 0 -14px rgba(14, 96, 147, 0.298),
+    1120px 40px 0 4px rgba(14, 96, 147, 0.298),
+    -30px 210px 0 22px rgba(14, 96, 147, 0.298),
+    240px 175px 0 -4px rgba(14, 96, 147, 0.298),
+    580px 215px 0 -11px rgba(14, 96, 147, 0.298),
+    880px 160px 0 10px rgba(14, 96, 147, 0.298),
+    1220px 240px 0 -7px rgba(14, 96, 147, 0.298),
+    110px 410px 0 0px rgba(14, 96, 147, 0.298),
+    370px 385px 0 -16px rgba(14, 96, 147, 0.298),
+    690px 430px 0 28px rgba(14, 96, 147, 0.298),
+    980px 395px 0 -2px rgba(14, 96, 147, 0.298),
+    -15px 610px 0 12px rgba(14, 96, 147, 0.298),
+    290px 585px 0 -10px rgba(14, 96, 147, 0.298),
+    560px 625px 0 6px rgba(14, 96, 147, 0.298),
+    840px 595px 0 -4px rgba(14, 96, 147, 0.298),
+    1130px 640px 0 0px rgba(14, 96, 147, 0.298);
+  animation: driftCircles 35s ease-in-out infinite alternate;
+}
+
+@keyframes driftCircles {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(14px, 10px); }
+}
+
+/* --- Large faint background circles for depth --- */
+body::after {
+  content: '';
+  position: fixed;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  border: 1px solid rgba(14, 96, 147, 0.298);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+  box-shadow:
+    -340px -240px 0 130px rgba(77,180,240,0.02),
+    300px 190px 0 -40px rgba(77,180,240,0.035),
+    -180px 280px 0 -55px rgba(77,180,240,0.03);
+  animation: breatheLarge 14s ease-in-out infinite alternate;
+}
+
+@keyframes breatheLarge {
+  0%   { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 1;   transform: translate(-50%, -50%) scale(1.03); }
+}
+
+/* --- Auth Card --- */
+.auth-box {
+  position: relative;
+  z-index: 1;
+  max-width: 430px;
+  width: 100%;
+  margin: 48px 20px;
+  padding: 44px 40px 40px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 0 1px rgba(77,180,240,0.02),
+    0 1px 3px rgba(20,34,56,0.04),
+    0 6px 16px rgba(20,34,56,0.05),
+    0 20px 48px rgba(77,180,240,0.04);
+  animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: box-shadow var(--transition);
+}
+
+.auth-box:hover {
+  box-shadow:
+    0 0 0 1px rgba(77,180,240,0.03),
+    0 1px 3px rgba(20,34,56,0.04),
+    0 8px 24px rgba(20,34,56,0.06),
+    0 24px 56px rgba(77,180,240,0.055);
+}
+
+@keyframes cardEnter {
+  0%   { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Top accent bar — color shifts with mode --- */
+.auth-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--accent-login);
+  transition: background var(--transition), left var(--transition), right var(--transition);
+}
+
+.auth-box.mode-register::before {
+  background: var(--accent-register);
+  left: 16px;
+  right: 16px;
+}
+
+/* --- Diamond decoration (line shape) near card corner --- */
+.auth-box::after {
+  content: '';
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(77, 180, 240, 0.1);
+  transform: rotate(45deg);
+  top: -10px;
+  left: -10px;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 2px;
+  animation: diamondFloat 10s ease-in-out infinite alternate;
+}
+
+@keyframes diamondFloat {
+  0%   { transform: rotate(45deg) translate(0, 0); opacity: 0.6; }
+  100% { transform: rotate(45deg) translate(4px, 4px); opacity: 1; }
+}
+
+/* --- Title --- */
+#authTitle {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 400;
+  color: var(--fg);
+  margin-bottom: 32px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* --- Tabs --- */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 30px;
+  background: var(--input-bg);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--card-border);
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 10px 16px;
+  font-family: var(--font-ui);
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--fg-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
+  letter-spacing: 0.01em;
+}
+
+.auth-tabs button:hover {
+  color: var(--fg-secondary);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* LOGIN tab active — dark blue */
+.auth-tabs #loginTab.active {
+  color: #fff;
+  background: var(--accent-login);
+  font-weight: 600;
+  box-shadow: 0 1px 6px rgba(37, 99, 168, 0.18);
+}
+
+/* REGISTER tab active — sky blue */
+.auth-tabs #registerTab.active {
+  color: #fff;
+  background: var(--accent-register);
+  font-weight: 600;
+  box-shadow: 0 1px 6px rgba(56, 178, 232, 0.18);
+}
+
+.auth-tabs button:focus-visible {
+  outline: 2px solid var(--accent-register);
+  outline-offset: 2px;
+}
+
+/* --- Labels --- */
+.auth-box label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  margin-bottom: 6px;
+  transition: color var(--transition);
+}
+
+/* --- Inputs --- */
+.auth-box input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin: 0 0 22px 0;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  color: var(--fg);
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition:
+    border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
+  -webkit-appearance: none;
+}
+
+.auth-box input::placeholder {
+  color: var(--fg-muted);
+  opacity: 0.4;
+}
+
+.auth-box input:hover {
+  border-color: #b8c6d4;
+  background: #fff;
+}
+
+.auth-box input:focus {
+  border-color: var(--input-focus);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(56, 178, 232, 0.1);
+}
+
+/* --- Submit Button — LOGIN (dark blue, icy) --- */
+#submitButton {
+  display: block;
+  width: 100%;
+  padding: 13px 20px;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(180deg, #2e6db5 0%, var(--accent-login) 100%);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background var(--transition),
+    transform 0.12s ease,
+    box-shadow var(--transition);
+  box-shadow:
+    0 2px 10px var(--accent-login-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  margin-top: 6px;
+}
+
+/* Ice-highlight sheen */
+#submitButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+#submitButton:hover {
+  background: linear-gradient(180deg, #3680c8 0%, var(--accent-login-hover) 100%);
+  box-shadow: 0 4px 20px rgba(37, 99, 168, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+#submitButton:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* --- Submit Button — REGISTER (sky blue, icy) --- */
+.auth-box.mode-register #submitButton {
+  display: block;
+  width: 100%;
+  padding: 13px 20px;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(180deg, #2e6db5 0%, var(--accent-login) 100%);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background var(--transition),
+    transform 0.12s ease,
+    box-shadow var(--transition);
+  box-shadow:
+    0 2px 10px var(--accent-login-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  margin-top: 6px;
+}
+
+.auth-box.mode-register #submitButton:hover {
+  background: linear-gradient(180deg, #3680c8 0%, var(--accent-login-hover) 100%);
+  box-shadow: 0 4px 20px rgba(37, 99, 168, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+#submitButton:focus-visible {
+  outline: 2px solid var(--accent-register);
+  outline-offset: 3px;
+}
+
+/* Loading state */
+#submitButton.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+#submitButton.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.55s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Auth Message --- */
+#authMessage {
+  min-height: 24px;
+  margin-top: 18px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0;
+  transition: color var(--transition), opacity var(--transition);
+}
+
+#authMessage.visible {
+  opacity: 1;
+}
+
+#authMessage.error {
+  color: var(--error);
+}
+
+#authMessage.success {
+  color: var(--success);
+}
+
+/* --- Register Fields --- */
+#registerFields {
+  display: none;
+  overflow: hidden;
+}
+
+#registerFields.show {
+  display: block;
+  animation: fieldSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fieldSlideIn {
+  0%   { opacity: 0; transform: translateY(-8px); max-height: 0; }
+  100% { opacity: 1; transform: translateY(0); max-height: 120px; }
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sky);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6bb8e4;
+}
+
+/* --- Selection --- */
+::selection {
+  background: rgba(56, 178, 232, 0.18);
+  color: var(--fg);
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+  .auth-box {
+    margin: 20px 12px;
+    padding: 32px 24px 28px;
+  }
+
+  #authTitle {
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+  }
+
+  .auth-tabs button {
+    padding: 9px 10px;
+    font-size: 0.8rem;
+  }
+
+  .auth-box input {
+    padding: 11px 12px;
+    font-size: 0.88rem;
+    margin-bottom: 18px;
+  }
+
+  #submitButton {
+    padding: 12px 16px;
+    font-size: 0.84rem;
+  }
+
+  /* Hide diamond on small screens */
+  .auth-box::after {
+    display: none;
+  }
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
