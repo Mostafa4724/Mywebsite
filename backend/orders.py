@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 
 from models import Product, Order, OrderItem
 from database import db
-from security import user_required, admin_required
+from security import user_required, admin_required, current_user
 from flask_jwt_extended import get_jwt_identity
 
 orders_bp = Blueprint("orders", __name__)
@@ -222,8 +222,17 @@ def create_order():
 @orders_bp.route("/orders", methods=["GET"])
 @user_required
 def list_orders():
-    """Return all orders (most recent first) for the admin panel."""
-    orders = Order.query.order_by(Order.id.desc()).all()
+    """Admins see all orders; normal users see only their own orders."""
+    user = current_user()
+    if user.role == "admin":
+        orders = Order.query.order_by(Order.id.desc()).all()
+    else:
+        orders = (
+            Order.query
+            .filter_by(user_id=user.id)
+            .order_by(Order.id.desc())
+            .all()
+        )
     return jsonify({
         "success": True,
         "orders": [_order_to_dict(o) for o in orders]
@@ -233,13 +242,21 @@ def list_orders():
 @orders_bp.route("/orders/<int:order_id>", methods=["GET"])
 @user_required
 def get_order(order_id):
-    """Return a single order with its items."""
+    """Admins may view any order; users may view only their own."""
     order = Order.query.get(order_id)
     if order is None:
         return jsonify({
             "success": False,
             "message": "Order not found"
         }), 404
+
+    user = current_user()
+    if user.role != "admin" and order.user_id != user.id:
+        return jsonify({
+            "success": False,
+            "message": "You do not have permission to view this order."
+        }), 403
+
     return jsonify({
         "success": True,
         "order": _order_to_dict(order)

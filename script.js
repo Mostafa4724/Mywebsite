@@ -1,14 +1,47 @@
-// ===== LocalStorage Cart System =====
-function getCart() {
+// ===== Account-isolatated user's JWT subject.
+// This prevents User A's cart from appearing when User B logs into the
+// same browser. The backend remains the security authority for orders.
+function getCurrentAccountId() {
+    const token = sessionStorage.getItem("token");
+  if (!token) return null;
+
   try {
-    return JSON.parse(localStorage.getItem("shopping_cart")) || [];
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = payload + "=".repeat((4 - (payload.length % 4)) % 4);
+    const claims = JSON.parse(atob(padded));
+    return claims.sub != null ? String(claims.sub) : null;
+  } catch {
+    return null;
+  }
+}
+
+function getCartStorageKey() {
+  const accountId = getCurrentAccountId();
+  return accountId ? `shopping_cart_user_${accountId}` : null;
+}
+
+function getBuyNowStorageKey() {
+  const accountId = getCurrentAccountId();
+  return accountId ? `buy_now_checkout_user_${accountId}` : null;
+}
+
+function getCart() {
+  const key = getCartStorageKey();
+  if (!key) return [];
+  try {
+    return JSON.parse(sessionStorage.getItem(key)) || [];
   } catch {
     return [];
   }
 }
 
 function saveCart(cart) {
-  localStorage.setItem("shopping_cart", JSON.stringify(cart));
+  const key = getCartStorageKey();
+  if (key) {
+    sessionStorage.setItem(key, JSON.stringify(cart));
+  }
   updateCartBubble();
 }
 
@@ -418,7 +451,7 @@ function updateCartBubble() {
 
 }
 
-// ===== Render Cart Items from localStorage =====
+// ===== Render Cart Items from  =====
 async function renderCartItems() {
   const container = document.getElementById("cart-items");
   if (!container) return;
@@ -811,8 +844,14 @@ async function handleBuyNow() {
 
   // Store a dedicated Buy-Now payload. This does NOT touch the user's cart,
   // keeping the Buy Now and Cart checkout flows fully independent.
-  localStorage.setItem(
-    "buy_now_checkout",
+  const buyNowKey = getBuyNowStorageKey();
+  if (!buyNowKey) {
+    showMessage("Please log in before using Buy Now.");
+    return;
+  }
+
+  sessionStorage.setItem(
+    buyNowKey,
     JSON.stringify({
       id: String(product.id),
       productId: Number(product.id),
@@ -846,7 +885,8 @@ function initBuyNow() {
 // product purchase is not mixed with the ongoing cart.
 function getCheckoutItems() {
   try {
-    const buyNow = JSON.parse(localStorage.getItem("buy_now_checkout"));
+    const buyNowKey = getBuyNowStorageKey();
+    const buyNow = buyNowKey ? JSON.parse(sessionStorage.getItem(buyNowKey)) : null;
     if (buyNow && buyNow.productId) {
       return [{ ...buyNow, id: String(buyNow.productId) }];
     }
@@ -1022,7 +1062,7 @@ async function placeOrder(extraData) {
   try {
     const response = await fetch(`${SHOP_API_BASE}/orders`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + (localStorage.getItem("token") || "") },
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + (sessionStorage.getItem("token") || "") },
       body: JSON.stringify({
         items: availableItems,
         customer: customer,
@@ -1043,7 +1083,8 @@ async function placeOrder(extraData) {
 // Removes the consumed Buy-Now payload and/or purchased cart items after a
 // successful order so the next checkout starts fresh.
 function clearConsumedCheckout(placedItems) {
-  localStorage.removeItem("buy_now_checkout");
+  const buyNowKey = getBuyNowStorageKey();
+  if (buyNowKey) sessionStorage.removeItem(buyNowKey);
   if (placedItems && placedItems.length > 0) {
     const placedIds = new Set(placedItems.map((i) => String(i.product_id)));
     const cart = getCart().filter((item) => !placedIds.has(String(item.id)));
@@ -1053,10 +1094,10 @@ function clearConsumedCheckout(placedItems) {
 
 // ===== Init =====
 document.addEventListener("DOMContentLoaded", async function () {
-  // Cart page: render from localStorage. Visiting the cart page also clears any
-  // leftover Buy-Now payload so the two flows stay independent.
+  // Cart page
   if (document.querySelector(".cart-page")) {
-    localStorage.removeItem("buy_now_checkout");
+    const buyNowKey = getBuyNowStorageKey();
+    if (buyNowKey) sessionStorage.removeItem(buyNowKey);
     await renderCartItems();
   } else {
     setupQtyControls();
@@ -1220,7 +1261,7 @@ if (typeof setupPromoCode === "function") {
   //  DASHBOARD PAGES LOGIC
   // =============================================
   async function checkAdminAuth() {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       window.location.href = "login.html";
@@ -1235,8 +1276,8 @@ if (typeof setupPromoCode === "function") {
       });
 
       if (!response.ok) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("auth_user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("auth_user");
         window.location.href = "login.html";
         return false;
       }
@@ -1375,7 +1416,8 @@ if (typeof setupPromoCode === "function") {
       // The session is set below
     });
   }
-
+  const isLoginPage =
+    window.location.pathname.endsWith("login.html");
   // Patch: set session flag before redirect on login page
   if (isLoginPage) {
     const form = document.getElementById("adminForm");

@@ -16,6 +16,10 @@ class User(db.Model):
 
     password = db.Column(db.String(255), nullable=False)
 
+    # Google Identity Services subject. Nullable so existing password users
+    # continue to work; unique because one Google account maps to one shop user.
+    google_sub = db.Column(db.String(255), unique=True, nullable=True)
+
     role = db.Column(db.String(20), nullable=False, default="user")
 
 

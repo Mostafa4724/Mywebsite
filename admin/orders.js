@@ -162,7 +162,7 @@
   async function loadOrders() {
     if (!ordersTableBody) return;
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const response = await fetch(API_BASE + "/orders", {
           headers: {

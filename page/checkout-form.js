@@ -80,7 +80,7 @@ function gatherCheckoutCustomer() {
 // ===== Confirm Button =====
 var confirmBtn = document.querySelector(".checkout-btn-primary");
 if (confirmBtn) {
-  confirmBtn.addEventListener("click", async function () {
+confirmBtn.addEventListener("click", async function () {
     var formSection = document.querySelector(".checkout-form-sections");
     var inputs = formSection.querySelectorAll(
       "input[required], select[required]",
@@ -133,7 +133,7 @@ if (confirmBtn) {
       return;
     }
 
-    // The frontend is NOT the final authority on order validity. Send the
+// The frontend is NOT the final authority on order validity. Send the
     // available items to the backend, which re-validates products, prices and
     // stock before creating the order. Only show success if the server accepts.
     confirmBtn.disabled = true;
@@ -167,10 +167,5 @@ if (confirmBtn) {
     steps[1].querySelector(".step-num").innerHTML =
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
     steps[2].classList.add("active");
-
-    // Redirect to order confirmation page
-    setTimeout(function () {
-      window.location.href = "order-confirmation.html";
-    }, 1500);
   });
 }

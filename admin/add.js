@@ -18,7 +18,7 @@ const newCategoryError = document.getElementById("newCategoryError");
 
 function getAuthHeaders(json) {
     const headers = {
-        Authorization: "Bearer " + localStorage.getItem("token")
+        Authorization: "Bearer " + sessionStorage.getItem("token")
     };
     if (json) {
         headers["Content-Type"] = "application/json";

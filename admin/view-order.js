@@ -344,7 +344,7 @@
       elms.statusModal.classList.remove("show");
 
       try {
-          const token = localStorage.getItem("token");
+          const token = sessionStorage.getItem("token");
 
           const response = await fetch(
               API_BASE + "/orders/" + orderData.id + "/status",
@@ -473,7 +473,7 @@
     }
 
     try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
 
         const response = await fetch(
             API_BASE + "/orders/" + orderId,

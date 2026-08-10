@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Your Shop</title>
-  <link rel="stylesheet" href="Login.css">
+  <link rel="stylesheet" href="../stylle.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     .auth-box{max-width:430px;margin:60px auto;padding:28px;border-radius:16px}
     .auth-box input{display:block;width:100%;box-sizing:border-box;margin:7px 0 16px;padding:12px}
@@ -13,6 +14,10 @@
     .auth-tabs button{flex:1}
     #registerFields{display:none}
     #authMessage{min-height:24px}
+    .auth-divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:#777}
+    .auth-divider::before,.auth-divider::after{content:"";height:1px;background:#ddd;flex:1}
+    #googleSignIn{display:flex;justify-content:center;min-height:44px}
+    .google-help{font-size:12px;color:#777;text-align:center;margin-top:8px}
   </style>
 </head>
 <body>
@@ -38,6 +43,10 @@
       <button id="submitButton" type="submit">Login</button>
       <p id="authMessage" role="alert"></p>
     </form>
+
+    <div class="auth-divider"><span>OR</span></div>
+    <div id="googleSignIn"></div>
+    <p id="googleHelp" class="google-help"></p>
   </main>
   <script src="login.js"></script>
 </body>

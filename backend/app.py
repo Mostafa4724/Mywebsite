@@ -110,6 +110,7 @@ def migrate():
             "category_id",
             "INTEGER REFERENCES categories(id)"
         )
+        _ensure_column(conn, "users", "google_sub", "VARCHAR(255)")
         # ---- orders table ----
         _ensure_column(conn, "orders", "customer_name", "VARCHAR(200)")
         _ensure_column(conn, "orders", "customer_lastname", "VARCHAR(200)")
@@ -137,6 +138,10 @@ def migrate():
     # so the `name` column uniqueness for categories is enforced in code
     # (see categories.create_category) and by the app-level index below.
     with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub "
+            "ON users(google_sub) WHERE google_sub IS NOT NULL"
+        )
         indexes = [
             row[1]
             for row in conn.execute("PRAGMA index_list('categories')")

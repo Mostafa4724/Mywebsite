@@ -66,10 +66,10 @@
       ""
     ],
     "script.js": [
-      "// ===== LocalStorage Cart System =====",
+      "// =====  Cart System =====",
       "function getCart() {",
       "try {",
-      "return JSON.parse(localStorage.getItem(\"shopping_cart\")) || [];",
+      "return JSON.parse(sessionStorage.getItem(\"shopping_cart\")) || [];",
       "} catch {",
       "return [];",
       "}",
