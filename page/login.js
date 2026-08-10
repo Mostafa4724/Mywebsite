@@ -1,5 +1,6 @@
 const API_BASE = "http://127.0.0.1:5000";
 
+const authBox = document.querySelector(".auth-box");
 const form = document.getElementById("authForm");
 const title = document.getElementById("authTitle");
 const registerFields = document.getElementById("registerFields");
@@ -18,18 +19,46 @@ function setMode(next) {
   const register = mode === "register";
   title.textContent = register ? "Create account" : "Login";
   submitButton.textContent = register ? "Create account" : "Login";
-  registerFields.style.display = register ? "block" : "none";
+  
+  // --- Button Design Changes (Add/Remove CSS classes) ---
+  loginTab.classList.toggle("active", !register);
+  registerTab.classList.toggle("active", register);
+  authBox.classList.toggle("mode-register", register);
+
+  if (register) {
+    registerFields.style.display = "block";
+    void registerFields.offsetWidth;
+    registerFields.classList.add("show");
+  } else {
+    registerFields.classList.remove("show");
+    registerFields.style.display = "none";
+  }
+
   username.required = register;
+  
+  message.className = "";
   message.textContent = "";
 }
+
+// Initialize tab state on load
+loginTab.classList.add("active");
 
 loginTab.addEventListener("click", () => setMode("login"));
 registerTab.addEventListener("click", () => setMode("register"));
 
+function showMessage(text, type) {
+  message.textContent = text;
+  message.className = "visible " + type;
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  message.textContent = "Please wait...";
+  
+  // --- Button Loading State Design ---
+  submitButton.classList.add("loading");
   submitButton.disabled = true;
+  message.className = "";
+  message.textContent = "Please wait...";
 
   try {
     const body = mode === "register"
@@ -45,23 +74,29 @@ form.addEventListener("submit", async (event) => {
     const data = await response.json();
 
     if (!response.ok || !data.success || !data.token) {
-      message.textContent = data.message || "Authentication failed.";
+      showMessage(data.message || "Authentication failed.", "error");
       return;
     }
 
+    showMessage("Success! Redirecting...", "success");
     sessionStorage.setItem("token", data.token);
     sessionStorage.setItem("auth_user", JSON.stringify(data.user));
 
-    // Backend decides the role; frontend only chooses the appropriate UI.
-    if (data.user.role === "admin") {
-      window.location.href = "../admin/dashboard.html";
-    } else {
-      window.location.href = "../page/home.html";
-    }
+    // Brief pause so the user sees the success message
+    setTimeout(() => {
+      if (data.user.role === "admin") {
+        window.location.href = "../admin/dashboard.html";
+      } else {
+        window.location.href = "../page/home.html";
+      }
+    }, 600);
+
   } catch (error) {
     console.error(error);
-    message.textContent = "Could not connect to the server.";
+    showMessage("Could not connect to the server.", "error");
   } finally {
+    // --- Remove Button Loading State Design ---
+    submitButton.classList.remove("loading");
     submitButton.disabled = false;
   }
 });
