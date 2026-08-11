@@ -10,6 +10,7 @@
   const previewGrid = document.getElementById("previewGrid");
   const uploadPlaceholder = document.getElementById("uploadPlaceholder");
   const uploadArea = document.getElementById("uploadArea");
+  const chooseImageBtn = document.getElementById("chooseImageBtn");
   const saleToggle = document.getElementById("saleToggle");
   const saleOverlay = document.getElementById("saleOverlay");
   const saleFields = document.getElementById("saleFields");
@@ -79,9 +80,21 @@
   }
 
   function imageUrl(value) {
-    if (!value) return "";
-    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
-    return API_BASE + "/uploads/products/" + encodeURIComponent(value);
+      if (!value) return "";
+
+      // Already a complete URL
+      if (/^https?:\/\//i.test(value) || value.startsWith("data:")) {
+          return value;
+      }
+
+      // Backend stores either:
+      // filename
+      // /uploads/products/filename
+      if (value.startsWith("/uploads/products/")) {
+          return API_BASE + value;
+      }
+
+      return API_BASE + "/uploads/products/" + encodeURIComponent(value);
   }
 
   async function responseJson(response) {
@@ -297,62 +310,279 @@
   }
 
   async function saveProduct() {
-    const name = document.getElementById("prodName").value.trim();
-    const description = document.getElementById("prodDesc").value.trim();
-    const categoryId = categorySelect.value;
-    const price = Number(priceInput.value);
-    const stock = Number(document.getElementById("prodStock").value);
-    const lowStock = Number(document.getElementById("prodLowStock").value || 0);
-    const salePrice = salePriceField.value === "" ? null : Number(salePriceField.value);
-    const selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
-    const selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
+      const name = document.getElementById("prodName").value.trim();
+      const description = document.getElementById("prodDesc").value.trim();
+      const categoryId = categorySelect.value;
 
-    if (!name) throw new Error("Please enter a product name.");
-    if (!description) throw new Error("Description is required.");
-    if (!categoryId || categoryId === "__add_category__") throw new Error("Please select a category.");
-    if (!Number.isFinite(price) || price < 0) throw new Error("Price is invalid.");
-    if (!Number.isInteger(stock) || stock < 0) throw new Error("Quantity is invalid.");
-    if (!Number.isInteger(lowStock) || lowStock < 0) throw new Error("Low stock threshold is invalid.");
-    if (saleToggle.checked && salePrice !== null && (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= price)) {
-      throw new Error("Sale price must be greater than 0 and lower than regular price.");
-    }
+      const price = Number(priceInput.value);
+      const stock = Number(document.getElementById("prodStock").value);
+      const lowStock = Number(
+          document.getElementById("prodLowStock").value || 0
+      );
 
-    const categoryOption = categorySelect.options[categorySelect.selectedIndex];
-    const body = new FormData();
-    body.append("title", name);
-    body.append("description", description);
-    body.append("brand", document.getElementById("prodBrand").value.trim());
-    body.append("category_id", categoryId);
-    body.append("category", categoryOption ? categoryOption.textContent : "");
-    body.append("price", String(price));
-    body.append("cost", String(Number(costInput.value) || 0));
-    body.append("tax_class", document.getElementById("prodTax").value || "standard");
-    body.append("stock", String(stock));
-    body.append("low_stock", String(lowStock));
-    body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
-    body.append("status", selectedStatus ? selectedStatus.value : "draft");
-    body.append("scheduled_date", selectedStatus && selectedStatus.value === "scheduled" ? (scheduleDate.value || "") : "");
-    body.append("sale_enabled", saleToggle.checked ? "true" : "false");
-    body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
-    body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
-    body.append("sale_end", saleToggle.checked ? saleEndDate.value : "");
-    body.append("sale_badge", saleBadge.value.trim());
-    body.append("sale_badge_color", selectedSaleColor);
-    body.append("tags", currentTags.join(","));
-    if (selectedNewImage) body.append("image", selectedNewImage.file);
+      const salePrice =
+          salePriceField.value === ""
+              ? null
+              : Number(salePriceField.value);
 
-    // Do not set Content-Type manually for FormData. The browser must add
-    // the multipart boundary itself; setting application/json here causes
-    // the backend to reject the request with HTTP 415.
-    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body
-    });
-    const data = await responseJson(response);
-    fillForm(data.product);
-    showToast("Product updated successfully!", "success");
-    setTimeout(() => { window.location.href = "admin_product.html"; }, 700);
+      const selectedStatus = document.querySelector(
+          'input[name="publishStatus"]:checked'
+      );
+
+      const selectedStockStatus = document.querySelector(
+          'input[name="stockStatus"]:checked'
+      );
+
+      // ========================================
+      // VALIDATION
+      // ========================================
+
+      if (!name) {
+          throw new Error("Please enter a product name.");
+      }
+
+      if (!description) {
+          throw new Error("Description is required.");
+      }
+
+      if (!categoryId || categoryId === "__add_category__") {
+          throw new Error("Please select a category.");
+      }
+
+      if (!Number.isFinite(price) || price < 0) {
+          throw new Error("Price is invalid.");
+      }
+
+      if (!Number.isInteger(stock) || stock < 0) {
+          throw new Error("Quantity is invalid.");
+      }
+
+      if (!Number.isInteger(lowStock) || lowStock < 0) {
+          throw new Error("Low stock threshold is invalid.");
+      }
+
+      if (
+          saleToggle.checked &&
+          salePrice !== null &&
+          (
+              !Number.isFinite(salePrice) ||
+              salePrice <= 0 ||
+              salePrice >= price
+          )
+      ) {
+          throw new Error(
+              "Sale price must be greater than 0 and lower than regular price."
+          );
+      }
+
+      // ========================================
+      // CATEGORY
+      // ========================================
+
+      const categoryOption =
+          categorySelect.options[categorySelect.selectedIndex];
+
+      // ========================================
+      // CREATE FORMDATA
+      // ========================================
+
+      const body = new FormData();
+
+      body.append("title", name);
+      body.append("description", description);
+
+      body.append(
+          "brand",
+          document.getElementById("prodBrand").value.trim()
+      );
+
+      body.append("category_id", categoryId);
+
+      body.append(
+          "category",
+          categoryOption ? categoryOption.textContent.trim() : ""
+      );
+
+      body.append("price", String(price));
+
+      body.append(
+          "cost",
+          String(Number(costInput.value) || 0)
+      );
+
+      body.append(
+          "tax_class",
+          document.getElementById("prodTax").value || "standard"
+      );
+
+      body.append("stock", String(stock));
+      body.append("low_stock", String(lowStock));
+
+      body.append(
+          "stock_status",
+          selectedStockStatus
+              ? selectedStockStatus.value
+              : ""
+      );
+
+      body.append(
+          "status",
+          selectedStatus
+              ? selectedStatus.value
+              : "draft"
+      );
+
+      body.append(
+          "scheduled_date",
+          selectedStatus &&
+          selectedStatus.value === "scheduled"
+              ? (scheduleDate.value || "")
+              : ""
+      );
+
+      // ========================================
+      // SALE
+      // ========================================
+
+      body.append(
+          "sale_enabled",
+          saleToggle.checked ? "true" : "false"
+      );
+
+      body.append(
+          "sale_price",
+          saleToggle.checked && salePrice !== null
+              ? String(salePrice)
+              : ""
+      );
+
+      body.append(
+          "sale_start",
+          saleToggle.checked
+              ? saleStartDate.value
+              : ""
+      );
+
+      body.append(
+          "sale_end",
+          saleToggle.checked
+              ? saleEndDate.value
+              : ""
+      );
+
+      body.append(
+          "sale_badge",
+          saleBadge.value.trim()
+      );
+
+      body.append(
+          "sale_badge_color",
+          selectedSaleColor
+      );
+
+      // ========================================
+      // TAGS
+      // ========================================
+
+      body.append(
+          "tags",
+          currentTags.join(",")
+      );
+
+      // ========================================
+      // IMAGE
+      // ========================================
+
+      console.log(
+          "selectedNewImage:",
+          selectedNewImage
+      );
+
+      if (
+          selectedNewImage &&
+          selectedNewImage.file instanceof File
+      ) {
+          console.log(
+              "Uploading new image:",
+              selectedNewImage.file.name
+          );
+
+          body.append(
+              "image",
+              selectedNewImage.file,
+              selectedNewImage.file.name
+          );
+      } else {
+          console.log(
+              "No new image selected. Keeping existing image."
+          );
+      }
+
+      // ========================================
+      // DEBUG FORMDATA
+      // ========================================
+
+      console.log("========== PRODUCT UPDATE ==========");
+
+      for (const [key, value] of body.entries()) {
+
+          if (value instanceof File) {
+              console.log(
+                  key,
+                  "FILE:",
+                  value.name,
+                  value.type,
+                  value.size
+              );
+          } else {
+              console.log(key, value);
+          }
+      }
+
+      console.log("====================================");
+
+      // ========================================
+      // SEND UPDATE
+      // ========================================
+
+      const response = await fetch(
+          `${API_BASE}/admin/products/${productId}`,
+          {
+              method: "PUT",
+              headers: authHeaders(),
+              body: body
+          }
+      );
+
+      // ========================================
+      // HANDLE RESPONSE
+      // ========================================
+
+      const data = await responseJson(response);
+
+      console.log(
+          "Server updated product:",
+          data.product
+      );
+
+      // ========================================
+      // UPDATE LOCAL FORM WITH SERVER DATA
+      // ========================================
+
+      fillForm(data.product);
+
+      showToast(
+          "Product updated successfully!",
+          "success"
+      );
+
+      // ========================================
+      // GO BACK TO ADMIN PRODUCTS
+      // ========================================
+
+      setTimeout(() => {
+          window.location.href = "admin_product.html";
+      }, 700);
   }
 
   async function deleteProduct() {
@@ -403,24 +633,95 @@
 
     document.querySelectorAll(".suggested-tag").forEach(btn => btn.addEventListener("click", () => addTag(btn.dataset.tag)));
 
-    uploadArea.addEventListener("click", e => {
-      // Only open the native file picker for a real user click.  Programmatic
-      // clicks (for example during image preview rendering) are ignored.
-      if (e.isTrusted && !e.target.closest("button")) imageInput.click();
-    });
-    imageInput.addEventListener("change", () => {
-      const file = imageInput.files && imageInput.files[0];
-      if (!file) return;
-      if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return showToast("Use PNG, JPG or WebP.", "warn");
-      if (file.size > 5 * 1024 * 1024) return showToast("Image must be 5MB or smaller.", "warn");
-      const reader = new FileReader();
-      reader.onload = e => {
-        selectedNewImage = { file, preview: e.target.result };
-        renderImage();
-        markDirty();
-      };
-      reader.readAsDataURL(file);
-    });
+    // Open the native file picker only from an explicit user click.
+    // Keeping this on a real button avoids Chrome's "user activation" warning.
+    // ========================================
+    // PRODUCT IMAGE UPLOAD
+    // ========================================
+
+    // ========================================
+    // IMAGE PICKER
+    // ========================================
+
+    if (chooseImageBtn && imageInput) {
+
+        chooseImageBtn.onclick = function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            console.log("USER CLICKED CHOOSE IMAGE");
+
+            // Directly triggered by the button click.
+            imageInput.click();
+        };
+
+        imageInput.onchange = function (event) {
+
+            console.log("FILE INPUT CHANGED");
+            console.log("FILES:", event.target.files);
+
+            if (!event.target.files || event.target.files.length === 0) {
+                console.log("NO FILE SELECTED");
+                selectedNewImage = null;
+                return;
+            }
+
+            const file = event.target.files[0];
+
+            console.log("SELECTED FILE:", file);
+            console.log("NAME:", file.name);
+            console.log("TYPE:", file.type);
+            console.log("SIZE:", file.size);
+
+            const allowedTypes = [
+                "image/png",
+                "image/jpeg",
+                "image/webp"
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                imageInput.value = "";
+                selectedNewImage = null;
+
+                showToast(
+                    "Use PNG, JPG or WebP.",
+                    "warn"
+                );
+
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                imageInput.value = "";
+                selectedNewImage = null;
+
+                showToast(
+                    "Image must be 5MB or smaller.",
+                    "warn"
+                );
+
+                return;
+            }
+
+            selectedNewImage = {
+                file: file,
+                preview: URL.createObjectURL(file)
+            };
+
+            console.log(
+                "NEW IMAGE:",
+                selectedNewImage
+            );
+
+            renderImage();
+            markDirty();
+
+            showToast(
+                "New image selected. Click Update Product to save it.",
+                "success"
+            );
+        };
+    }
 
     form.addEventListener("submit", async e => {
       e.preventDefault();
@@ -499,6 +800,14 @@
       addVariantBtn.disabled = true;
       addVariantBtn.title = "Variants are not supported by the current database schema";
     }
+  }
+  console.log("IMAGE ELEMENT:", imageInput);
+  console.log("CHOOSE BUTTON:", chooseImageBtn);
+
+  if (imageInput) {
+      console.log("IMAGE INPUT TYPE:", imageInput.type);
+      console.log("IMAGE INPUT MULTIPLE:", imageInput.multiple);
+      console.log("IMAGE INPUT ACCEPT:", imageInput.accept);
   }
 
   setupEvents();

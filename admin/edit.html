@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Product - Admin Panel</title>
-    <link rel="stylesheet" href="../stylle.css" />
     <link rel="stylesheet" href="edit-product.css" />
+    <link rel="stylesheet" href="../stylle.css" />
   </head>
   <body class="admin-body">
     <aside class="admin-sidebar" id="adminSidebar">
@@ -202,13 +202,17 @@
                 </div>
                 <div class="ap-upload-area" id="uploadArea">
                   <input
-                    type="file"
-                    id="imageInput"
-                    accept="image/png,image/jpeg,image/webp"
-                    multiple
-                    hidden
-                  />
+                      type="file"
+                      id="imageInput"
+                      name="image"
+                  >
                   <div class="ap-preview-grid" id="previewGrid"></div>
+                  <button
+                      type="button"
+                      id="chooseImageBtn"
+                  >
+                      Choose Image
+                  </button>
                   <div class="upload-placeholder" id="uploadPlaceholder">
                     <div class="upload-icon">
                       <svg

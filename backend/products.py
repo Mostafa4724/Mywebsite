@@ -350,20 +350,28 @@ def edit_product(id):
     product.sale_badge_color = (value("sale_badge_color", product.sale_badge_color) or "").strip() or None
     product.tags = (value("tags", product.tags) or "").strip()
 
+    # Image replacement is optional. The existing image stays in the database
+    # unless a new file was actually selected by the admin.
     image = request.files.get("image")
-    if image and image.filename:
+    if image is not None and image.filename:
         allowed = {"png", "jpg", "jpeg", "webp"}
         filename = secure_filename(image.filename)
         extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
         if extension not in allowed:
             return jsonify(success=False, message="Image must be PNG, JPG or WebP."), 400
+
         image.seek(0, os.SEEK_END)
         size = image.tell()
         image.seek(0)
+        if size <= 0:
+            return jsonify(success=False, message="The selected image is empty."), 400
         if size > 5 * 1024 * 1024:
             return jsonify(success=False, message="Image must be 5MB or smaller."), 400
+
+        upload_folder = current_app.config["UPLOAD_FOLDER"]
+        os.makedirs(upload_folder, exist_ok=True)
         stored_name = f"{uuid.uuid4()}_{filename}"
-        image.save(os.path.join(current_app.config["UPLOAD_FOLDER"], stored_name))
+        image.save(os.path.join(upload_folder, stored_name))
         product.image = stored_name
     # If no new image was supplied, the existing image remains untouched.
 
