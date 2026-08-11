@@ -140,14 +140,9 @@
   var confirmBtn = document.getElementById("confirmPayBtn");
 
   if (confirmBtn) {
-    confirmBtn.addEventListener("click", function () {
+    confirmBtn.addEventListener("click", async function () {
       // All fields that need blur-triggered validation
-      var fieldsToCheck = [
-        phoneInput,
-        cardNumberInput,
-        expiryInput,
-        cvvInput
-      ];
+      var fieldsToCheck = [phoneInput, cardNumberInput, expiryInput, cvvInput];
 
       // Trigger blur on each field to run its validation
       fieldsToCheck.forEach(function (field) {
@@ -170,7 +165,7 @@
       }
 
       // Small delay for all blur handlers to finish
-      setTimeout(function () {
+      setTimeout(async function () {
         var errorEls = document.querySelectorAll(".field-error.visible");
         var inputErrors = document.querySelectorAll(".input-error");
 
@@ -183,8 +178,20 @@
           return;
         }
 
-        // All valid — proceed
-        window.location.href = "order-confirmation.html";
+        // All valid — place the order
+        if (typeof placeOrder === "function") {
+          const result = await placeOrder();
+          if (result && result.success && result.order) {
+            // Store the order ID for retrieval on order confirmation page
+            sessionStorage.setItem("lastOrderId", result.order.id);
+            window.location.href = "order-confirmation.html";
+          } else {
+            alert(result.message || "Failed to place order. Please try again.");
+          }
+        } else {
+          // Fallback if placeOrder is not available
+          window.location.href = "order-confirmation.html";
+        }
       }, 120);
     });
   }
