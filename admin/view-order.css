@@ -64,7 +64,7 @@
   text-decoration: none;
   font-size: 0.88rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 
 .sidebar-link:hover {
@@ -107,7 +107,7 @@
   font-weight: 500;
   width: 100%;
   text-align: left;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
   font-family: inherit;
   cursor: pointer;
   border: none;
@@ -295,7 +295,7 @@
   color: #fff;
   position: relative;
   z-index: 2;
-  transition: all 0.4s ease;
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
 .vo-tl-step.completed .vo-tl-dot {
@@ -377,7 +377,7 @@
   border: 1.5px solid #e2e8f0;
   background: #f8fafc;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
   font-family: inherit;
 }
 
@@ -435,7 +435,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.25s ease;
+  transition: opacity 0.25s ease;
 }
 
 .vo-status-btn-icon.processing-icon { background: #fef3c7; color: #d97706; }
@@ -446,7 +446,7 @@
 .vo-status-btn-text strong { display: block; font-size: 0.9rem; color: #0f1724; margin-bottom: 2px; }
 .vo-status-btn-text span { font-size: 0.78rem; color: #94a3b8; }
 
-.vo-status-btn-arrow { color: #94a3b8; flex-shrink: 0; transition: all 0.2s; }
+.vo-status-btn-arrow { color: #94a3b8; flex-shrink: 0; transition: color 0.2s ease, transform 0.2s ease; }
 .vo-status-btn.available .vo-status-btn-arrow { color: #2563eb; }
 .vo-status-btn.available:hover .vo-status-btn-arrow { transform: translateX(3px); }
 
@@ -547,7 +547,7 @@
   font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 
 .vo-back-btn:hover { color: #0f1724; background: #f1f5f9; }
@@ -564,7 +564,7 @@
   border: 1.5px solid #e2e8f0;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s ease, border-color 0.2s ease;
   font-family: inherit;
 }
 
@@ -582,11 +582,31 @@
   border: 1.5px solid #fca5a5;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s ease, border-color 0.2s ease;
   font-family: inherit;
 }
 
 .vo-btn-danger-outline:hover { background: #fef2f2; border-color: #ef4444; }
+
+/* ── Toast backdrop (blur layer behind the toast) ── */
+.vo-toast-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 36, 0.3);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.vo-toast-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 
 .vo-toast {
   position: fixed;
@@ -605,17 +625,27 @@
   z-index: 999;
   transform: translateY(100px);
   opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 
-.vo-toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
-.vo-toast svg { color: #22c55e; flex-shrink: 0; }
+.vo-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
 
+.vo-toast svg {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+/* ── Modal overlay (fixed: no transition on backdrop-filter) ── */
 .vo-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 36, 0.55);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   z-index: 200;
   display: flex;
@@ -623,11 +653,14 @@
   justify-content: center;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.25s ease;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
   padding: 20px;
 }
 
-.vo-modal-overlay.show { opacity: 1; visibility: visible; }
+.vo-modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
 
 .vo-modal {
   background: #fff;
@@ -641,7 +674,9 @@
   box-shadow: 0 25px 60px rgba(15, 23, 36, 0.2);
 }
 
-.vo-modal-overlay.show .vo-modal { transform: scale(1) translateY(0); }
+.vo-modal-overlay.show .vo-modal {
+  transform: scale(1) translateY(0);
+}
 
 .vo-modal-icon { margin-bottom: 16px; color: #2563eb; }
 .vo-modal-icon-danger { color: #d97706; }
@@ -675,7 +710,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s ease;
   font-family: inherit;
 }
 
@@ -690,7 +725,7 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
   font-family: inherit;
 }
 
@@ -737,6 +772,6 @@
   .vo-modal-actions { flex-direction: column; }
 }
 
-/* ── Added: icon colors for placed & confirmed ── */
+/* ── Icon colors for placed & confirmed ── */
 .vo-status-btn-icon.placed-icon { background: #f1f5f9; color: #475569; }
 .vo-status-btn-icon.confirmed-icon { background: #dcfce7; color: #16a34a; }

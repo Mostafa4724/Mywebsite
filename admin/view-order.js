@@ -26,7 +26,6 @@
     delivered: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
   };
 
-  // Statuses that exist only as visual steps — never sent to the API
   var nonActionable = { placed: true, confirmed: true };
 
   var elms = {};
@@ -69,6 +68,7 @@
     elms.lockedNotice = $("lockedNotice");
     elms.toast = $("voToast");
     elms.toastMsg = $("voToastMsg");
+    elms.toastBackdrop = $("voToastBackdrop");
     elms.statusModal = $("statusModal");
     elms.statusModalTitle = $("statusModalTitle");
     elms.statusModalDesc = $("statusModalDesc");
@@ -125,6 +125,7 @@
     }
 
     [elms.statusModal, elms.refundModal].forEach(function (modal) {
+      if (!modal) return;
       modal.addEventListener("click", function (e) {
         if (e.target === modal) {
           modal.classList.remove("show");
@@ -277,12 +278,8 @@
 
     if (elms.lockedNotice) elms.lockedNotice.style.display = "none";
 
-    // Only actionable statuses are used for index comparison
-    // placed & confirmed are visual-only — never sent to the API
     var actionableFlow = statusFlow.filter(function (s) { return !nonActionable[s]; });
     var currentIdx = actionableFlow.indexOf(status);
-    // For "pending" (not in actionableFlow), currentIdx stays -1
-    // so the first actionable status (processing) becomes "next"
 
     statusFlow.forEach(function (s, idx) {
       var cfg = statusConfig[s];
@@ -291,7 +288,6 @@
       var isPast, isCurrent, isNext;
 
       if (isNonActionable) {
-        // Placed & confirmed are always shown as Done for any existing order
         isPast = true;
         isCurrent = false;
         isNext = false;
@@ -324,9 +320,11 @@
         tagHtml + arrowHtml;
 
       if (isNext) {
-        btn.addEventListener("click", function () {
-          openStatusModal(s);
-        });
+        (function (targetStatus) {
+          btn.addEventListener("click", function () {
+            openStatusModal(targetStatus);
+          });
+        })(s);
       }
       elms.statusControl.appendChild(btn);
     });
@@ -340,47 +338,43 @@
     elms.statusModalWarning.style.display = "block";
     elms.statusModal.classList.add("show");
   }
+
   async function updateStatus(newStatus) {
-      elms.statusModal.classList.remove("show");
+    elms.statusModal.classList.remove("show");
 
-      try {
-          const token = sessionStorage.getItem("token");
+    try {
+      const token = sessionStorage.getItem("token");
 
-          const response = await fetch(
-              API_BASE + "/orders/" + orderData.id + "/status",
-              {
-                  method: "PUT",
-                  headers: {
-                      "Content-Type": "application/json",
-                      "Authorization": `Bearer ${token}`
-                  },
-                  body: JSON.stringify({ status: newStatus })
-              }
-          );
+      const response = await fetch(
+        API_BASE + "/orders/" + orderData.id + "/status",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ status: newStatus })
+        }
+      );
 
-          const data = await response.json();
+      const data = await response.json();
 
-          if (data.success) {
-              orderData = data.order;
-              renderStatusBadge();
-              renderTimeline();
-              renderStatusControl();
-              showToast(
-                  "Order marked as " + statusConfig[newStatus].label,
-                  "success"
-              );
-          } else {
-              showToast(
-                  data.message || "Failed to update status",
-                  "warn"
-              );
-          }
-      } catch (err) {
-          console.error("Failed to update status", err);
-          showToast("Failed to update status.", "warn");
+      if (data.success) {
+        orderData = data.order;
+        window.__orderData = orderData;
+        renderStatusBadge();
+        renderTimeline();
+        renderStatusControl();
+        showToast("Order marked as " + statusConfig[newStatus].label, "success");
+      } else {
+        showToast(data.message || "Failed to update status", "warn");
       }
+    } catch (err) {
+      console.error("Failed to update status", err);
+      showToast("Failed to update status.", "warn");
+    }
 
-      pendingStatus = null;
+    pendingStatus = null;
   }
 
   var toastTimer = null;
@@ -397,7 +391,11 @@
       icon.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
     }
     elms.toast.classList.add("show");
-    toastTimer = setTimeout(function () { elms.toast.classList.remove("show"); }, 3000);
+    if (elms.toastBackdrop) elms.toastBackdrop.classList.add("show");
+    toastTimer = setTimeout(function () {
+      elms.toast.classList.remove("show");
+      if (elms.toastBackdrop) elms.toastBackdrop.classList.remove("show");
+    }, 3000);
   }
 
   function renderCustomer() {
@@ -468,52 +466,52 @@
 
     if (!orderId) {
       document.querySelector(".admin-content").innerHTML =
-        '<div class="dash-card" style="padding:40px;text-align:center;color:#ef4444;">No order selected. <a href="orders.html">Back to Orders</a></div>';
+        '<div class="vo-card" style="padding:40px;text-align:center;color:#ef4444;">No order selected. <a href="orders.html">Back to Orders</a></div>';
       return;
     }
 
     try {
-        const token = sessionStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
-        const response = await fetch(
-            API_BASE + "/orders/" + orderId,
-            {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            }
-        );
-
-        const data = await response.json();
-
-        if (!data.success) {
-            document.querySelector(".admin-content").innerHTML =
-                '<div class="dash-card" style="padding:40px;text-align:center;color:#ef4444;">' +
-                (data.message || "Order not found") +
-                ' <a href="orders.html">Back to Orders</a></div>';
-            return;
+      const response = await fetch(
+        API_BASE + "/orders/" + orderId,
+        {
+          headers: {
+            "Authorization": "Bearer " + token
+          }
         }
+      );
 
-        orderData = data.order;
-        window.__orderData = orderData;
+      const data = await response.json();
 
-        window.dispatchEvent(
-            new CustomEvent("order-loaded", { detail: orderData })
-        );
+      if (!data.success) {
+        document.querySelector(".admin-content").innerHTML =
+          '<div class="vo-card" style="padding:40px;text-align:center;color:#ef4444;">' +
+          (data.message || "Order not found") +
+          ' <a href="orders.html">Back to Orders</a></div>';
+        return;
+      }
 
-        renderHeader();
-        renderCustomer();
-        renderItems();
-        renderSummary();
-        renderStatusBadge();
-        renderTimeline();
-        renderStatusControl();
+      orderData = data.order;
+      window.__orderData = orderData;
+
+      window.dispatchEvent(
+        new CustomEvent("order-loaded", { detail: orderData })
+      );
+
+      renderHeader();
+      renderCustomer();
+      renderItems();
+      renderSummary();
+      renderStatusBadge();
+      renderTimeline();
+      renderStatusControl();
 
     } catch (err) {
-        console.error("Failed to load order", err);
+      console.error("Failed to load order", err);
 
-        document.querySelector(".admin-content").innerHTML =
-            '<div class="dash-card" style="padding:40px;text-align:center;color:#ef4444;">Failed to load order. Is the server running?</div>';
+      document.querySelector(".admin-content").innerHTML =
+        '<div class="vo-card" style="padding:40px;text-align:center;color:#ef4444;">Failed to load order. Is the server running?</div>';
     }
   }
 
