@@ -648,23 +648,6 @@
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
 }
 
-@media (max-width: 640px) {
-  .map-locate-btn {
-    padding: 7px 10px;
-    font-size: 0.72rem;
-  }
-  .map-locate-btn span {
-    display: none;
-  }
-  .map-locate-btn {
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    justify-content: center;
-    border-radius: 50%;
-  }
-}
-
 /* Leaflet Overrides */
 .custom-map-marker {
   background: none !important;
@@ -751,5 +734,189 @@
 
   .map-container {
     height: 200px;
+  }
+
+  .map-locate-btn {
+    padding: 7px 10px;
+    font-size: 0.72rem;
+  }
+
+  .map-locate-btn span {
+    display: none;
+  }
+
+  .map-locate-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+}
+
+/* ============================================================
+   NEW STYLES — Validation, Error States, Payment Info Boxes,
+   Loading Spinner, Checkout Notes
+   ============================================================ */
+
+/* ===== Field Error Messages ===== */
+.field-error {
+  display: none;
+  color: #ef4444;
+  font-size: 0.78rem;
+  margin-top: 2px;
+  padding-left: 2px;
+  line-height: 1.4;
+}
+
+.field-error.visible {
+  display: block;
+}
+
+/* ===== Input Validation States ===== */
+.input-error {
+  border-color: #ef4444 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+  outline: none !important;
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.input-valid {
+  border-color: #22c55e !important;
+}
+
+/* ===== Map Error State (applied via JS) ===== */
+.map-container.input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+/* ===== Loading Spinner for Confirm Button ===== */
+@keyframes adminSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.checkout-btn-primary[disabled] {
+  pointer-events: none;
+  cursor: not-allowed !important;
+}
+
+/* ===== Bank Transfer Info Box ===== */
+.bank-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 22px;
+  margin-top: 16px;
+  animation: slideDown 0.25s ease;
+}
+
+.bank-info-box h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #0f1724;
+}
+
+.bank-info-box p {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0 0 14px;
+  line-height: 1.6;
+}
+
+.bank-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.88rem;
+}
+
+.bank-detail-row:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.bank-detail-row span {
+  color: #64748b;
+}
+
+.bank-detail-row strong {
+  color: #0f1724;
+  font-weight: 600;
+}
+
+.bank-note {
+  margin-top: 14px !important;
+  margin-bottom: 0 !important;
+  font-size: 0.82rem !important;
+  color: #94a3b8 !important;
+  font-style: italic;
+  line-height: 1.5 !important;
+}
+
+/* ===== Cash on Delivery Info Box ===== */
+.cod-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 22px;
+  margin-top: 16px;
+  animation: slideDown 0.25s ease;
+}
+
+.cod-info-box h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #0f1724;
+}
+
+.cod-info-box p {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0 0 8px;
+  line-height: 1.6;
+}
+
+.cod-note {
+  font-size: 0.82rem !important;
+  color: #94a3b8 !important;
+  font-style: italic;
+  margin-bottom: 0 !important;
+}
+
+/* ===== Checkout Note (unavailable items excluded) ===== */
+.checkout-note {
+  color: #f59e0b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px 0 0;
+}
+
+/* ===== Responsive additions for new elements ===== */
+@media (max-width: 640px) {
+  .bank-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 8px 0;
+  }
+
+  .bank-info-box,
+  .cod-info-box {
+    padding: 16px;
   }
 }

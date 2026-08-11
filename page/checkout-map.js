@@ -1,5 +1,7 @@
 // ===== Leaflet Map Initialization =====
 (function () {
+  "use strict";
+
   var mapContainer = document.getElementById("mapContainer");
   var mapOverlay = document.getElementById("mapOverlay");
   var mapLatInput = document.getElementById("mapLat");
@@ -10,6 +12,7 @@
 
   if (!mapContainer) return;
 
+  // Initialize the map centered on a default location
   var map = L.map("checkoutMap", {
     center: [40.7128, -74.006],
     zoom: 13,
@@ -17,12 +20,14 @@
     attributionControl: true,
   });
 
+  // OpenStreetMap tile layer
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
   }).addTo(map);
 
+  // Custom marker icon
   var markerIcon = L.divIcon({
     className: "custom-map-marker",
     html: '<svg width="28" height="28" viewBox="0 0 24 24" fill="#2563eb" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3" fill="#fff" stroke="none"/></svg>',
@@ -33,6 +38,7 @@
 
   var marker = null;
 
+  // Hide the overlay with a fade-out animation
   function hideOverlay() {
     if (mapOverlay && mapOverlay.style.display !== "none") {
       mapOverlay.style.opacity = "0";
@@ -43,6 +49,7 @@
     }
   }
 
+  // Place or move the marker and store coordinates in hidden inputs
   function placeMarker(latlng) {
     var lat = latlng.lat;
     var lng = latlng.lng;
@@ -59,8 +66,13 @@
     coordsText.textContent = lat.toFixed(6) + ", " + lng.toFixed(6);
     mapCoords.style.display = "flex";
 
+    // Clear any error styling on the map container
     mapContainer.style.borderColor = "";
     mapContainer.style.boxShadow = "";
+
+    // Clear map error message if present
+    var mapError = document.getElementById("mapError");
+    if (mapError) mapError.classList.remove("visible");
   }
 
   // Click on map to place marker
@@ -127,11 +139,12 @@
             locateBtn.querySelector("span").textContent = "My Location";
           }, 2500);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
   }
 
+  // Fix map not rendering correctly if container was hidden on load
   setTimeout(function () {
     map.invalidateSize();
   }, 500);
