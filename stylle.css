@@ -6414,3 +6414,38 @@ footer {
   font-weight: 500;
   margin-top: 4px;
 }
+
+
+/* Dynamic admin products page */
+.admin-products-message {
+  grid-column: 1 / -1;
+  padding: 40px 20px;
+  text-align: center;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 18px;
+}
+
+.product-admin-id {
+  display: block;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-bottom: 7px;
+}
+
+.product-admin-sale {
+  display: inline-block;
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.product-admin-price .product-admin-original-price {
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-left: 5px;
+}

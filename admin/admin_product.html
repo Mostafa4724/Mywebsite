@@ -186,150 +186,9 @@
           </button>
         </div>
 
-        <div class="products-grid">
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodA/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock in-stock">In Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Premium Running Shoes</h4>
-              <span class="product-category">Footwear</span
-              ><span class="product-admin-price">$129.99</span>
-              <p class="product-admin-stock-text">Stock: 48 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <a class="btn-text" href="edit.html">Edit</a
-              ><button class="btn-text danger">Delete</button>
-            </div>
-          </div>
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodB/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock in-stock">In Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Cotton Crew Socks</h4>
-              <span class="product-category">Accessories</span
-              ><span class="product-admin-price">$29.99</span>
-              <p class="product-admin-stock-text">Stock: 156 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <button class="btn-text">Edit</button
-              ><button class="btn-text danger">Delete</button>
-            </div>
-          </div>
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodC/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock low-stock">Low Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Leather Wallet</h4>
-              <span class="product-category">Accessories</span
-              ><span class="product-admin-price">$60.00</span>
-              <p class="product-admin-stock-text">Stock: 5 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <button class="btn-text">Edit</button
-              ><button class="btn-text danger">Delete</button>
-            </div>
-          </div>
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodD/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock in-stock">In Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Winter Jacket</h4>
-              <span class="product-category">Apparel</span
-              ><span class="product-admin-price">$219.00</span>
-              <p class="product-admin-stock-text">Stock: 32 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <button class="btn-text">Edit</button
-              ><button class="btn-text danger">Delete</button>
-            </div>
-          </div>
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodE/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock out-stock">Out of Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Denim Jacket</h4>
-              <span class="product-category">Apparel</span
-              ><span class="product-admin-price">$179.00</span>
-              <p class="product-admin-stock-text">Stock: 0 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <button class="btn-text">Edit</button
-              ><button class="btn-text danger">Delete</button>
-            </div>
-          </div>
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodF/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock in-stock">In Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Yoga Mat</h4>
-              <span class="product-category">Sports</span
-              ><span class="product-admin-price">$45.00</span>
-              <p class="product-admin-stock-text">Stock: 89 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <button class="btn-text">Edit</button
-              ><button class="btn-text danger">Delete</button>
-            </div>
-          </div>
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodG/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock in-stock">In Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Sunglasses</h4>
-              <span class="product-category">Accessories</span
-              ><span class="product-admin-price">$39.00</span>
-              <p class="product-admin-stock-text">Stock: 67 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <button class="btn-text">Edit</button
-              ><button class="btn-text danger">Delete</button>
-            </div>
-          </div>
-          <div class="product-admin-card">
-            <div class="product-admin-thumb">
-              <img
-                src="https://picsum.photos/seed/prodH/300/300.jpg"
-                alt="Product"
-              /><span class="product-stock low-stock">Low Stock</span>
-            </div>
-            <div class="product-admin-body">
-              <h4>Leather Belt</h4>
-              <span class="product-category">Accessories</span
-              ><span class="product-admin-price">$55.00</span>
-              <p class="product-admin-stock-text">Stock: 8 units</p>
-            </div>
-            <div class="product-admin-actions">
-              <button class="btn-text">Edit</button
-              ><button class="btn-text danger">Delete</button>
-            </div>
+        <div class="products-grid" id="adminProductsGrid">
+          <div class="admin-products-message" id="adminProductsMessage">
+            Loading products...
           </div>
         </div>
       </div>
@@ -379,5 +238,6 @@
     </div>
 
     <script src="../script.js"></script>
+    <script src="admin-products.js"></script>
   </body>
 </html>
