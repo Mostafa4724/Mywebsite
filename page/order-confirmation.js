@@ -1,8 +1,9 @@
 (function () {
   "use strict";
 
-  var API_BASE = "http://127.0.0.1:5000";
+  const API_BASE = "http://127.0.0.1:5000";
 
+  // Order data will be loaded from the backend
   var order = null;
   var isLoading = true;
   var loadError = null;
@@ -74,52 +75,6 @@
     { key: "shipped", label: "Shipped" },
     { key: "delivered", label: "Delivered" },
   ];
-
-  // ─── Sample order data for preview ───
-  var sampleOrder = {
-    id: "ORD-20250712-4821",
-    status: "processing",
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    customer_name: "Alex",
-    customer_lastname: "Morgan",
-    customer_email: "alex.morgan@email.com",
-    customer_phone: "+1 (555) 234-8901",
-    customer_address: "742 Evergreen Terrace",
-    customer_architecture: "Apt 3B, Springfield, IL 62704",
-    payment_method: "Visa •••• 4242",
-    subtotal: 189.97,
-    discount: 20.0,
-    shipping: 5.99,
-    tax: 13.48,
-    total: 189.44,
-    items: [
-      {
-        product_id: 101,
-        product_name: "Premium Wireless Headphones",
-        quantity: 1,
-        unit_price: 129.99,
-        total: 129.99,
-        image: null,
-      },
-      {
-        product_id: 205,
-        product_name: "USB-C Charging Cable (2-pack)",
-        quantity: 2,
-        unit_price: 14.99,
-        total: 29.98,
-        image: null,
-      },
-      {
-        product_id: 308,
-        product_name: "Leather Phone Case — Midnight Black",
-        quantity: 1,
-        unit_price: 30.0,
-        total: 30.0,
-        image: null,
-      },
-    ],
-  };
 
   function esc(s) {
     var d = document.createElement("div");
@@ -199,11 +154,7 @@
       h += '<div class="' + cls + '">';
       h +=
         '<div class="oc-tl-dot">' +
-        (done
-          ? checkSvg
-          : active
-            ? '<span class="oc-tl-pulse"></span>'
-            : "") +
+        (done ? checkSvg : active ? '<span class="oc-tl-pulse"></span>' : "") +
         "</div>";
       h +=
         '<div class="oc-tl-info"><strong>' +
@@ -257,10 +208,7 @@
         '" alt="' +
         esc(item.product_name) +
         '" /></div>';
-      h +=
-        '<div class="oc-item-info"><h4>' +
-        esc(item.product_name) +
-        "</h4>";
+      h += '<div class="oc-item-info"><h4>' + esc(item.product_name) + "</h4>";
       h +=
         '<p class="oc-item-qty">Qty: ' +
         item.quantity +
@@ -343,34 +291,35 @@
 
   async function loadOrder() {
     isLoading = true;
-    var orderIdStr = sessionStorage.getItem("lastOrderId");
+    const orderIdStr = sessionStorage.getItem("lastOrderId");
 
-    // ─── If no real order ID, use sample data for preview ───
     if (!orderIdStr) {
-      order = sampleOrder;
+      loadError = "No order found. Please complete your checkout first.";
       isLoading = false;
-      render();
+      showError();
       return;
     }
 
     try {
-      var token = sessionStorage.getItem("token");
-      var headers = { "Content-Type": "application/json" };
+      const token = sessionStorage.getItem("token");
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
       if (token) {
         headers["Authorization"] = "Bearer " + token;
       }
 
-      var response = await fetch(API_BASE + "/orders/" + orderIdStr, {
+      const response = await fetch(API_BASE + "/orders/" + orderIdStr, {
         headers: headers,
       });
 
-      var data = await response.json();
+      const data = await response.json();
 
       if (!response.ok || !data.success || !data.order) {
-        // ─── Fallback to sample if API fails ───
-        order = sampleOrder;
+        loadError = data.message || "Failed to load order details.";
         isLoading = false;
-        render();
+        showError();
         return;
       }
 
@@ -378,34 +327,34 @@
       isLoading = false;
       render();
 
+      // Auto-refresh order status every 30 seconds
       setInterval(refreshOrderStatus, 30000);
     } catch (err) {
-      console.error("Failed to load order, showing sample", err);
-      // ─── Fallback to sample on network error ───
-      order = sampleOrder;
+      console.error("Failed to load order", err);
+      loadError = "Unable to connect to the server. Please refresh the page.";
       isLoading = false;
-      render();
+      showError();
     }
   }
 
   async function refreshOrderStatus() {
     if (!order) return;
 
-    // Don't auto-refresh if we're showing sample data
-    if (order.id === sampleOrder.id) return;
-
     try {
-      var token = sessionStorage.getItem("token");
-      var headers = { "Content-Type": "application/json" };
+      const token = sessionStorage.getItem("token");
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
       if (token) {
         headers["Authorization"] = "Bearer " + token;
       }
 
-      var response = await fetch(API_BASE + "/orders/" + order.id, {
+      const response = await fetch(API_BASE + "/orders/" + order.id, {
         headers: headers,
       });
 
-      var data = await response.json();
+      const data = await response.json();
 
       if (data.success && data.order) {
         order = data.order;
@@ -416,7 +365,26 @@
     }
   }
 
-  // Load on DOM ready — only bind once
+  function showError() {
+    var container = document.getElementById("ocContainer");
+    if (!container) return;
+
+    var errorHtml =
+      '<div class="oc-card" style="padding:40px;text-align:center;color:#ef4444;">' +
+      '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 16px;display:block;opacity:0.5;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+      "<p>" +
+      loadError +
+      "</p>" +
+      '<a href="home.html" style="display:inline-block;margin-top:16px;color:#2563eb;text-decoration:underline;">← Back to Home</a>' +
+      "</div>";
+
+    container.innerHTML = errorHtml;
+  }
+
+  // Load order when page loads
+  document.addEventListener("DOMContentLoaded", loadOrder);
+
+  // Also try to load immediately if DOM is already ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", loadOrder);
   } else {
