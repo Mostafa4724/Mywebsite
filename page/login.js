@@ -19,7 +19,7 @@ function setMode(next) {
   const register = mode === "register";
   title.textContent = register ? "Create account" : "Login";
   submitButton.textContent = register ? "Create account" : "Login";
-  
+
   // --- Button Design Changes (Add/Remove CSS classes) ---
   loginTab.classList.toggle("active", !register);
   registerTab.classList.toggle("active", register);
@@ -35,7 +35,7 @@ function setMode(next) {
   }
 
   username.required = register;
-  
+
   message.className = "";
   message.textContent = "";
 }
@@ -53,7 +53,7 @@ function showMessage(text, type) {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  
+
   // --- Button Loading State Design ---
   submitButton.classList.add("loading");
   submitButton.disabled = true;
@@ -61,14 +61,19 @@ form.addEventListener("submit", async (event) => {
   message.textContent = "Please wait...";
 
   try {
-    const body = mode === "register"
-      ? { username: username.value.trim(), email: email.value.trim(), password: password.value }
-      : { email: email.value.trim(), password: password.value };
+    const body =
+      mode === "register"
+        ? {
+            username: username.value.trim(),
+            email: email.value.trim(),
+            password: password.value,
+          }
+        : { email: email.value.trim(), password: password.value };
 
     const response = await fetch(`${API_BASE}/${mode}`, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(body)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
@@ -90,7 +95,6 @@ form.addEventListener("submit", async (event) => {
         window.location.href = "../page/home.html";
       }
     }, 600);
-
   } catch (error) {
     console.error(error);
     showMessage("Could not connect to the server.", "error");
@@ -101,6 +105,26 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+// ===== Password Toggle =====
+const passwordToggle = document.getElementById("passwordToggle");
+if (passwordToggle) {
+  passwordToggle.addEventListener("click", function (e) {
+    e.preventDefault();
+    const isPassword = password.type === "password";
+    password.type = isPassword ? "text" : "password";
+
+    const eyeIcon = passwordToggle.querySelector(".eye-icon");
+    const eyeOffIcon = passwordToggle.querySelector(".eye-off-icon");
+
+    if (isPassword) {
+      eyeIcon.style.display = "none";
+      eyeOffIcon.style.display = "block";
+    } else {
+      eyeIcon.style.display = "block";
+      eyeOffIcon.style.display = "none";
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Sign in with Google (Google Identity Services)
@@ -110,7 +134,8 @@ const googleHelp = document.getElementById("googleHelp");
 
 async function handleGoogleCredentialResponse(response) {
   if (!response || !response.credential) {
-    if (googleHelp) googleHelp.textContent = "Google did not return a credential.";
+    if (googleHelp)
+      googleHelp.textContent = "Google did not return a credential.";
     return;
   }
 
@@ -120,12 +145,13 @@ async function handleGoogleCredentialResponse(response) {
     const apiResponse = await fetch(`${API_BASE}/google-login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credential: response.credential })
+      body: JSON.stringify({ credential: response.credential }),
     });
 
     const data = await apiResponse.json();
     if (!apiResponse.ok || !data.success || !data.token) {
-      if (googleHelp) googleHelp.textContent = data.message || "Google sign-in failed.";
+      if (googleHelp)
+        googleHelp.textContent = data.message || "Google sign-in failed.";
       return;
     }
 
@@ -159,7 +185,11 @@ async function initializeGoogleSignIn() {
     }
 
     const waitForGoogle = () => {
-      if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+      if (
+        !window.google ||
+        !window.google.accounts ||
+        !window.google.accounts.id
+      ) {
         setTimeout(waitForGoogle, 100);
         return;
       }
@@ -167,7 +197,7 @@ async function initializeGoogleSignIn() {
       window.google.accounts.id.initialize({
         client_id: config.client_id,
         callback: handleGoogleCredentialResponse,
-        ux_mode: "popup"
+        ux_mode: "popup",
       });
 
       window.google.accounts.id.renderButton(googleSignIn, {
@@ -176,7 +206,7 @@ async function initializeGoogleSignIn() {
         size: "large",
         text: "continue_with",
         shape: "rectangular",
-        width: 320
+        width: 320,
       });
 
       if (googleHelp) googleHelp.textContent = "";
@@ -185,7 +215,9 @@ async function initializeGoogleSignIn() {
     waitForGoogle();
   } catch (error) {
     console.error("Failed to initialize Google Sign-In:", error);
-    if (googleHelp) googleHelp.textContent = "Google Sign-In is unavailable while the server is offline.";
+    if (googleHelp)
+      googleHelp.textContent =
+        "Google Sign-In is unavailable while the server is offline.";
   }
 }
 
