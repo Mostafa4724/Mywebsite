@@ -234,6 +234,6 @@
     await loadCategories();
     await loadProducts();
   }
-
+  
   init();
 })();

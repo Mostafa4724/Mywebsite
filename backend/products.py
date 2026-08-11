@@ -229,116 +229,147 @@ def add_product():
 @products_bp.route("/admin/products/<int:id>", methods=["PUT"])
 @admin_required
 def edit_product(id):
-
+    """Update a product using the same database model used by Add Product."""
     product = Product.query.get(id)
-
     if product is None:
+        return jsonify(success=False, message="Product not found"), 404
 
-        return jsonify({
+    # The edit page sends multipart/form-data so it can optionally upload an image.
+    # Read the submitted fields directly from request.form.  Do not access
+    # request.json/request.get_json() here: Flask can reject a non-JSON request
+    # with HTTP 415 before the update is processed.
+    data = request.form.to_dict(flat=True)
 
-            "success":False,
+    def value(name, default=None):
+        return data.get(name, default)
 
-            "message":"Product not found"
+    title = (value("title", product.title) or "").strip()
+    description = (value("description", product.description) or "").strip()
+    brand = (value("brand", product.brand) or "").strip()
+    if not title:
+        return jsonify(success=False, message="Please enter a product name."), 400
+    if not description:
+        return jsonify(success=False, message="Description is required."), 400
 
-        }),404
+    try:
+        price = float(value("price", product.price))
+        cost = float(value("cost", product.cost or 0))
+        stock = int(value("stock", product.stock or 0))
+        low_stock = int(value("low_stock", product.low_stock or 0))
+    except (TypeError, ValueError):
+        return jsonify(success=False, message="Price, cost and quantity must be valid numbers."), 400
 
-    data = request.get_json()
+    if price < 0 or cost < 0 or stock < 0 or low_stock < 0:
+        return jsonify(success=False, message="Price, cost, quantity and low-stock threshold cannot be negative."), 400
 
-    product.title = data.get("title",product.title)
-
-    product.description = data.get("description",product.description)
-
-    category_name = (data.get("category") or product.category or "").strip()
-    category_id = data.get("category_id")
-
+    category_id_raw = value("category_id")
+    category_name = (value("category") or "").strip()
     category = None
-    if category_id:
+    if category_id_raw not in (None, "", "null"):
         try:
-            category = Category.query.get(int(category_id))
+            category = Category.query.get(int(category_id_raw))
         except (TypeError, ValueError):
             category = None
-
-    if category is None and category_name and (
-        data.get("category") is not None or data.get("category_id") is not None
-    ):
+        if category is None:
+            return jsonify(success=False, message="Selected category does not exist."), 400
+    elif category_name:
         category = Category.query.filter(
             db.func.lower(Category.name) == category_name.lower()
         ).first()
-
-    if category is not None:
-        product.category = category.name
-        product.category_id = category.id
-    elif data.get("category_id") is not None:
-        # Explicitly clearing the category
-        product.category_id = None
-        product.category = category_name or None
-
-    product.price = float(
-
-        data.get("price",product.price)
-
-    )
-
-    sale_price_value = data.get("sale_price")
-    if sale_price_value is not None and sale_price_value != "":
-        product.sale_price = float(sale_price_value)
+        if category is None:
+            return jsonify(success=False, message="Selected category does not exist."), 400
     else:
-        product.sale_price = product.sale_price
+        return jsonify(success=False, message="Please select a category."), 400
 
-    product.sale_enabled = bool(
-        data.get("sale_enabled", product.sale_enabled)
-    )
-
-    if product.sale_price is not None and product.sale_price > 0 and product.sale_price < product.price:
-        product.sale_enabled = True
-
-    product.stock = int(
-
-        data.get("stock",product.stock)
-
-    )
-
-    # Persist the admin's availability/out-of-stock control.
-    # `stock_status` is the field that determines whether a product is
-    # available ("in"/"low") or out of stock ("out"). If it is not provided,
-    # derive it from the stock quantity so the value stays consistent.
-    if data.get("stock_status"):
-        product.stock_status = data.get("stock_status")
+    sale_enabled = _parse_bool(value("sale_enabled", product.sale_enabled))
+    sale_price_raw = value("sale_price")
+    sale_price = None
+    if sale_enabled:
+        if sale_price_raw not in (None, ""):
+            try:
+                sale_price = float(sale_price_raw)
+            except (TypeError, ValueError):
+                return jsonify(success=False, message="Sale price is invalid."), 400
+        if sale_price is None:
+            return jsonify(success=False, message="Sale price is required when sale is enabled."), 400
+        if sale_price <= 0 or sale_price >= price:
+            return jsonify(success=False, message="Sale price must be greater than 0 and lower than the regular price."), 400
     else:
-        if product.stock <= 0:
-            product.stock_status = "out"
-        elif product.stock <= (product.low_stock or 0):
-            product.stock_status = "low"
+        sale_price = None
+
+    def parse_datetime_field(name):
+        raw = value(name)
+        if raw in (None, ""):
+            return None
+        try:
+            return datetime.fromisoformat(str(raw).replace("Z", "+00:00")).replace(tzinfo=None)
+        except ValueError:
+            raise ValueError(f"{name} is invalid.")
+
+    try:
+        sale_start = parse_datetime_field("sale_start") if sale_enabled else None
+        sale_end = parse_datetime_field("sale_end") if sale_enabled else None
+        scheduled_date = parse_datetime_field("scheduled_date") if value("status", product.status) == "scheduled" else None
+    except ValueError as exc:
+        return jsonify(success=False, message=str(exc)), 400
+
+    status = str(value("status", product.status or "draft")).strip().lower()
+    if status not in {"draft", "published", "scheduled"}:
+        return jsonify(success=False, message="Invalid publish status."), 400
+    if status == "scheduled" and scheduled_date is None:
+        return jsonify(success=False, message="A publish date is required for scheduled products."), 400
+
+    stock_status = value("stock_status")
+    if stock_status not in {"in", "low", "out"}:
+        if stock <= 0:
+            stock_status = "out"
+        elif stock <= low_stock:
+            stock_status = "low"
         else:
-            product.stock_status = "in"
+            stock_status = "in"
 
-    if data.get("low_stock") is not None:
-        product.low_stock = int(data.get("low_stock"))
+    # Update every product field that actually exists in the database schema.
+    product.title = title
+    product.description = description
+    product.brand = brand
+    product.category = category.name
+    product.category_id = category.id
+    product.price = price
+    product.cost = cost
+    product.sale_price = sale_price
+    product.stock = stock
+    product.low_stock = low_stock
+    product.stock_status = stock_status
+    product.tax_class = value("tax_class", product.tax_class or "standard")
+    product.status = status
+    product.scheduled_date = scheduled_date
+    product.sale_enabled = sale_enabled
+    product.sale_start = sale_start
+    product.sale_end = sale_end
+    product.sale_badge = (value("sale_badge", product.sale_badge) or "").strip() or None
+    product.sale_badge_color = (value("sale_badge_color", product.sale_badge_color) or "").strip() or None
+    product.tags = (value("tags", product.tags) or "").strip()
 
-    # Persist the publish status too so the admin panel's publish control
-    # (draft/published/scheduled) is saved correctly.
-    if data.get("status"):
-        product.status = data.get("status")
-
-    product.image = data.get(
-
-        "image",
-
-        product.image
-
-    )
+    image = request.files.get("image")
+    if image and image.filename:
+        allowed = {"png", "jpg", "jpeg", "webp"}
+        filename = secure_filename(image.filename)
+        extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        if extension not in allowed:
+            return jsonify(success=False, message="Image must be PNG, JPG or WebP."), 400
+        image.seek(0, os.SEEK_END)
+        size = image.tell()
+        image.seek(0)
+        if size > 5 * 1024 * 1024:
+            return jsonify(success=False, message="Image must be 5MB or smaller."), 400
+        stored_name = f"{uuid.uuid4()}_{filename}"
+        image.save(os.path.join(current_app.config["UPLOAD_FOLDER"], stored_name))
+        product.image = stored_name
+    # If no new image was supplied, the existing image remains untouched.
 
     db.session.commit()
 
-    return jsonify({
-
-        "success":True,
-
-        "message":"Product updated",
-
-        "product":product.to_dict()
-
-    })
+    return jsonify(success=True, message="Product updated", product=product.to_dict())
 
 @products_bp.route("/admin/products/<int:id>", methods=["DELETE"])
 @admin_required

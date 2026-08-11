@@ -1,945 +1,506 @@
 (function () {
   "use strict";
 
-  var CATEGORY_API = "http://127.0.0.1:5000/categories";
-  var ADD_CATEGORY_VALUE = "__add_category__";
-  var categorySelect = document.getElementById("prodCategory");
-  var addCategoryModal = document.getElementById("addCategoryModal");
-  var addCategoryClose = document.getElementById("addCategoryClose");
-  var cancelCategoryBtn = document.getElementById("cancelCategoryBtn");
-  var saveCategoryBtn = document.getElementById("saveCategoryBtn");
-  var newCategoryName = document.getElementById("newCategoryName");
-  var newCategoryError = document.getElementById("newCategoryError");
+  const API_BASE = "http://127.0.0.1:5000";
+  const token = () => sessionStorage.getItem("token") || "";
 
-  // Load categories into the dropdown
-  function loadCategories(selectAfter) {
-    fetch(CATEGORY_API)
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        if (!data.success) return;
+  const form = document.getElementById("editProductForm");
+  const categorySelect = document.getElementById("prodCategory");
+  const imageInput = document.getElementById("imageInput");
+  const previewGrid = document.getElementById("previewGrid");
+  const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+  const uploadArea = document.getElementById("uploadArea");
+  const saleToggle = document.getElementById("saleToggle");
+  const saleOverlay = document.getElementById("saleOverlay");
+  const saleFields = document.getElementById("saleFields");
+  const salePriceField = document.getElementById("salePriceField");
+  const saleStartDate = document.getElementById("saleStartDate");
+  const saleEndDate = document.getElementById("saleEndDate");
+  const saleBadge = document.getElementById("saleBadge");
+  const saleBadgePreview = document.getElementById("saleBadgePreview");
+  const discountPreview = document.getElementById("discountPreview");
+  const priceInput = document.getElementById("prodPrice");
+  const costInput = document.getElementById("prodCost");
+  const variantsList = document.getElementById("variantsList");
+  const addVariantBtn = document.getElementById("addVariantBtn");
+  const tagInput = document.getElementById("tagInput");
+  const tagsList = document.getElementById("tagsList");
+  const toast = document.getElementById("apToast");
+  const toastMsg = document.getElementById("apToastMsg");
+  const deleteModal = document.getElementById("deleteModal");
+  const deleteProductBtn = document.getElementById("deleteProductBtn");
+  const cancelDelete = document.getElementById("cancelDelete");
+  const confirmDelete = document.getElementById("confirmDelete");
+  const deleteProductName = document.getElementById("deleteProductName");
+  const unsavedModal = document.getElementById("unsavedModal");
+  const stayOnPage = document.getElementById("stayOnPage");
+  const leaveAnyway = document.getElementById("leaveAnyway");
+  const scheduledDate = document.getElementById("scheduledDate");
+  const scheduleDate = document.getElementById("scheduleDate");
 
-        categorySelect.innerHTML = "";
-        categorySelect.innerHTML +=
-          '<option value="" disabled selected>Select category</option>';
+  let productId = null;
+  let product = null;
+  let currentImage = "";
+  let selectedNewImage = null;
+  let currentTags = [];
+  let selectedSaleColor = "#ef4444";
+  let dirty = false;
+  let toastTimer = null;
 
-        data.categories.forEach(function (cat) {
-          var opt = document.createElement("option");
-          opt.value = String(cat.id);
-          opt.dataset.name = cat.name;
-          opt.textContent = cat.name;
-          categorySelect.appendChild(opt);
-        });
-
-        var addOpt = document.createElement("option");
-        addOpt.value = ADD_CATEGORY_VALUE;
-        addOpt.textContent = "+ Add Category";
-        categorySelect.appendChild(addOpt);
-
-        if (selectAfter) {
-          categorySelect.value = String(selectAfter.id);
-        }
-      })
-      .catch(function (err) { console.error("Failed to load categories", err); });
+  function authHeaders() {
+    const t = token();
+    return t ? { Authorization: "Bearer " + t } : {};
   }
 
-  function closeAddCategoryModal() {
-    if (!addCategoryModal) return;
-    if (addCategoryModal.hasAttribute("hidden")) {
-      addCategoryModal.setAttribute("hidden", "");
+  function showToast(message, type) {
+    if (!toast || !toastMsg) return;
+    clearTimeout(toastTimer);
+    toastMsg.textContent = message;
+    const icon = toast.querySelector("svg");
+    if (icon) icon.style.color = type === "warn" ? "#f59e0b" : "#22c55e";
+    toast.classList.add("show");
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 3500);
+  }
+
+  function setPageError(message) {
+    showToast(message, "warn");
+    const heading = document.querySelector(".topbar-title h2");
+    if (heading) heading.textContent = message;
+  }
+
+  function markDirty() { dirty = true; }
+
+  function toDateTimeLocal(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value).slice(0, 16);
+    const pad = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function imageUrl(value) {
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
+    return API_BASE + "/uploads/products/" + encodeURIComponent(value);
+  }
+
+  async function responseJson(response) {
+    const text = await response.text();
+    let data;
+    try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+    if (!response.ok || data.success === false) {
+      throw new Error(data.message || `Server returned ${response.status}`);
     }
-    addCategoryModal.classList.remove("show");
-    addCategoryModal.style.display = "none";
+    return data;
   }
 
-  function createCategory() {
-    if (!newCategoryName || !newCategoryError) return;
-    var name = newCategoryName.value.trim();
-    if (!name) {
-      newCategoryError.textContent = "Category name is required.";
-      return;
-    }
-    newCategoryError.textContent = "";
-    saveCategoryBtn.disabled = true;
-    saveCategoryBtn.textContent = "Saving...";
-
-    fetch(CATEGORY_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name })
-    })
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        if (!data.success) {
-          newCategoryError.textContent = data.message || "Could not create category.";
-          return;
-        }
-        loadCategories(data.category);
-        closeAddCategoryModal();
-        showToast('Category "' + data.category.name + '" created!');
-      })
-      .catch(function (err) {
-        console.error(err);
-        newCategoryError.textContent = "Failed to connect. Please try again.";
-      })
-      .then(function () {
-        saveCategoryBtn.disabled = false;
-        saveCategoryBtn.textContent = "Add Category";
-      });
-  }
-
-  if (categorySelect) {
-    categorySelect.addEventListener("change", function () {
-      if (this.value === ADD_CATEGORY_VALUE) {
-        if (addCategoryModal) {
-          newCategoryName.value = "";
-          newCategoryError.textContent = "";
-          if (addCategoryModal.hasAttribute("hidden")) addCategoryModal.removeAttribute("hidden");
-          else addCategoryModal.classList.add("show");
-          addCategoryModal.style.display = "flex";
-        }
-        this.value = "";
-      }
+  async function loadCategories(selectedId) {
+    const response = await fetch(API_BASE + "/categories");
+    const data = await responseJson(response);
+    categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
+    data.categories.forEach(cat => {
+      const option = document.createElement("option");
+      option.value = String(cat.id);
+      option.textContent = cat.name;
+      categorySelect.appendChild(option);
     });
-  }
-  if (addCategoryClose) addCategoryClose.addEventListener("click", closeAddCategoryModal);
-  if (cancelCategoryBtn) cancelCategoryBtn.addEventListener("click", closeAddCategoryModal);
-  if (saveCategoryBtn) saveCategoryBtn.addEventListener("click", createCategory);
-  if (addCategoryModal) {
-    addCategoryModal.addEventListener("click", function (e) {
-      if (e.target === addCategoryModal) closeAddCategoryModal();
-    });
-  }
-  if (newCategoryName) {
-    newCategoryName.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); createCategory(); }
-    });
-  }
-
-  loadCategories();
-
-  /* ============================
-     Sample Product Data (simulating loaded data)
-     ============================ */
-  var productData = {
-    name: "Premium Running Shoes",
-    brand: "Nike",
-    category: "footwear",
-    description:
-      "Engineered for peak performance, these premium running shoes feature a responsive ZoomX foam midsole that delivers explosive energy return with every stride. The lightweight Flyknit upper wraps your foot in a breathable, sock-like fit that adapts to your movement. A full-length carbon fiber plate provides propulsive stability, while the durable rubber outsole offers superior traction on both wet and dry surfaces. Ideal for marathon training, tempo runs, and race day.",
-    price: 129.99,
-    cost: 58.0,
-    tax: "standard",
-    status: "published",
-    stock: 75,
-    lowStock: 10,
-    stockStatus: "in",
-    tags: ["bestseller", "running", "new arrival"],
-    sale: {
-      enabled: true,
-      price: 99.99,
-      startDate: "2025-01-20T09:00",
-      endDate: "2025-02-15T23:59",
-      badge: "Winter Sale",
-      badgeColor: "#ef4444",
-    },
-    images: [
-      "https://picsum.photos/seed/shoe1/400/400.jpg",
-      "https://picsum.photos/seed/shoe2/400/400.jpg",
-      "https://picsum.photos/seed/shoe3/400/400.jpg",
-    ],
-    variants: [
-      { size: "m", color: "Black", stock: 25, price: 129.99 },
-      { size: "l", color: "White", stock: 30, price: 129.99 },
-      { size: "xl", color: "Navy", stock: 20, price: 139.99 },
-    ],
-  };
-
-  /* ============================
-     DOM References
-     ============================ */
-  var sidebar = document.getElementById("adminSidebar");
-  var menuToggle = document.getElementById("menuToggle");
-  var form = document.getElementById("editProductForm");
-  var uploadArea = document.getElementById("uploadArea");
-  var uploadPlaceholder = document.getElementById("uploadPlaceholder");
-  var imageInput = document.getElementById("imageInput");
-  var previewGrid = document.getElementById("previewGrid");
-  var variantsList = document.getElementById("variantsList");
-  var addVariantBtn = document.getElementById("addVariantBtn");
-  var saleToggle = document.getElementById("saleToggle");
-  var saleOverlay = document.getElementById("saleOverlay");
-  var saleFields = document.getElementById("saleFields");
-  var salePriceField = document.getElementById("salePriceField");
-  var saleStartDate = document.getElementById("saleStartDate");
-  var saleEndDate = document.getElementById("saleEndDate");
-  var saleBadge = document.getElementById("saleBadge");
-  var discountPreview = document.getElementById("discountPreview");
-  var saleBadgePreview = document.getElementById("saleBadgePreview");
-  var mockBadge = document.getElementById("mockBadge");
-  var mockRegular = document.getElementById("mockRegular");
-  var mockSalePrice = document.getElementById("mockSalePrice");
-  var profitCalc = document.getElementById("profitCalc");
-  var scheduledDateEl = document.getElementById("scheduledDate");
-  var tagInput = document.getElementById("tagInput");
-  var tagsList = document.getElementById("tagsList");
-  var tagsWrap = document.getElementById("tagsWrap");
-  var toast = document.getElementById("apToast");
-  var toastMsg = document.getElementById("apToastMsg");
-  var deleteModal = document.getElementById("deleteModal");
-  var unsavedModal = document.getElementById("unsavedModal");
-  var deleteProductBtn = document.getElementById("deleteProductBtn");
-  var cancelDelete = document.getElementById("cancelDelete");
-  var confirmDelete = document.getElementById("confirmDelete");
-  var deleteProductName = document.getElementById("deleteProductName");
-  var stayOnPage = document.getElementById("stayOnPage");
-  var leaveAnyway = document.getElementById("leaveAnyway");
-
-  /* ============================
-     State
-     ============================ */
-  var currentImages = [];
-  var currentTags = [];
-  var selectedSaleColor = "#ef4444";
-  var hasUnsavedChanges = false;
-
-  var sizeOptions = ["xs", "s", "m", "l", "xl", "xxl"];
-
-  /* ============================
-     Sidebar Toggle
-     ============================ */
-  menuToggle.addEventListener("click", function () {
-    sidebar.classList.toggle("open");
-  });
-
-  document.addEventListener("click", function (e) {
-    if (
-      window.innerWidth <= 768 &&
-      sidebar.classList.contains("open") &&
-      !sidebar.contains(e.target) &&
-      !menuToggle.contains(e.target)
-    ) {
-      sidebar.classList.remove("open");
-    }
-  });
-
-  /* ============================
-     Populate Form with Data
-     ============================ */
-  function populateForm() {
-    document.getElementById("prodName").value = productData.name;
-    document.getElementById("prodBrand").value = productData.brand;
-    document.getElementById("prodCategory").value = productData.category;
-    document.getElementById("prodDesc").value = productData.description;
-
-    document.getElementById("prodPrice").value = productData.price;
-    document.getElementById("prodCost").value = productData.cost;
-    document.getElementById("prodTax").value = productData.tax;
-
-    var statusRadio = document.querySelector(
-      'input[name="publishStatus"][value="' + productData.status + '"]',
-    );
-    if (statusRadio) statusRadio.checked = true;
-
-    document.getElementById("prodStock").value = productData.stock;
-    document.getElementById("prodLowStock").value = productData.lowStock;
-    var stockRadio = document.querySelector(
-      'input[name="stockStatus"][value="' + productData.stockStatus + '"]',
-    );
-    if (stockRadio) {
-      stockRadio.checked = true;
-      document.querySelectorAll(".ap-stock-chip").forEach(function (c) {
-        c.classList.remove("active");
-      });
-      stockRadio.closest(".ap-stock-chip").classList.add("active");
-    }
-
-    currentTags = productData.tags.slice();
-    renderTags();
-
-    currentImages = productData.images.slice();
-    renderImagePreviews();
-
-    renderVariants(productData.variants);
-
-    if (productData.sale.enabled) {
-      saleToggle.checked = true;
-      saleOverlay.style.display = "none";
-      saleFields.style.display = "block";
-      salePriceField.value = productData.sale.price;
-      saleStartDate.value = productData.sale.startDate;
-      saleEndDate.value = productData.sale.endDate;
-      saleBadge.value = productData.sale.badge;
-      selectedSaleColor = productData.sale.badgeColor;
-
-      document.querySelectorAll(".sale-color-btn").forEach(function (btn) {
-        btn.classList.toggle(
-          "active",
-          btn.getAttribute("data-color") === selectedSaleColor,
-        );
-      });
-
-      updateDiscountPreview();
-      updateBadgePreview();
-    }
-
-    updateCharCount("prodDesc", "descCount", 2000);
-    updateCharCount("saleBadge", "badgeCount", 20);
-    updateProfitCalc();
-
-    deleteProductName.textContent = productData.name;
-  }
-
-  /* ============================
-     Image Handling
-     ============================ */
-  function renderImagePreviews() {
-    previewGrid.innerHTML = "";
-    if (currentImages.length > 0) {
-      uploadPlaceholder.style.display = "none";
-      previewGrid.style.display = "grid";
-      currentImages.forEach(function (src, index) {
-        var item = document.createElement("div");
-        item.className = "ap-preview-item";
-        item.innerHTML =
-          '<img src="' +
-          src +
-          '" alt="Product image ' +
-          (index + 1) +
-          '" />' +
-          '<button type="button" class="ap-preview-remove" data-index="' +
-          index +
-          '" aria-label="Remove image">' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-          "</button>";
-        previewGrid.appendChild(item);
-      });
-
-      previewGrid
-        .querySelectorAll(".ap-preview-remove")
-        .forEach(function (btn) {
-          btn.addEventListener("click", function (e) {
-            e.stopPropagation();
-            var idx = parseInt(this.getAttribute("data-index"));
-            currentImages.splice(idx, 1);
-            renderImagePreviews();
-            markDirty();
-          });
-        });
-    } else {
-      uploadPlaceholder.style.display = "flex";
-      previewGrid.style.display = "none";
+    const add = document.createElement("option");
+    add.value = "__add_category__";
+    add.textContent = "+ Add Category";
+    categorySelect.appendChild(add);
+    if (selectedId !== null && selectedId !== undefined) {
+      categorySelect.value = String(selectedId);
     }
   }
 
-  uploadArea.addEventListener("click", function (e) {
-    if (e.target.closest(".ap-preview-remove")) return;
-    imageInput.click();
-  });
-
-  uploadArea.addEventListener("dragover", function (e) {
-    e.preventDefault();
-    uploadArea.classList.add("dragover");
-  });
-
-  uploadArea.addEventListener("dragleave", function () {
-    uploadArea.classList.remove("dragover");
-  });
-
-  uploadArea.addEventListener("drop", function (e) {
-    e.preventDefault();
-    uploadArea.classList.remove("dragover");
-    handleFiles(e.dataTransfer.files);
-  });
-
-  imageInput.addEventListener("change", function () {
-    handleFiles(this.files);
-    this.value = "";
-  });
-
-  function handleFiles(files) {
-    var remaining = 5 - currentImages.length;
-    if (remaining <= 0) {
-      showToast("Maximum 5 images allowed", "warn");
-      return;
-    }
-    var toProcess = Array.from(files).slice(0, remaining);
-    toProcess.forEach(function (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast(file.name + " exceeds 5MB limit", "warn");
-        return;
-      }
-      if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-        showToast(file.name + " is not a supported format", "warn");
-        return;
-      }
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        currentImages.push(e.target.result);
-        renderImagePreviews();
-        markDirty();
-      };
-      reader.readAsDataURL(file);
-    });
+  function parseTags(value) {
+    if (Array.isArray(value)) return value.map(String).map(s => s.trim()).filter(Boolean);
+    if (!value) return [];
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.map(String).map(s => s.trim()).filter(Boolean);
+    } catch (_) {}
+    return String(value).split(",").map(s => s.trim()).filter(Boolean);
   }
 
-  /* ============================
-     Variants
-     ============================ */
-  function renderVariants(variants) {
-    variantsList.innerHTML = "";
-    variants.forEach(function (v) {
-      addVariantRow(v.size, v.color, v.stock, v.price);
-    });
-  }
-
-  function addVariantRow(size, color, stock, price) {
-    size = size || "m";
-    color = color || "";
-    stock = stock !== undefined ? stock : "";
-    price = price !== undefined ? price : "";
-
-    var row = document.createElement("div");
-    row.className = "ap-variant-row";
-
-    var sizeOpts = sizeOptions
-      .map(function (s) {
-        return (
-          '<option value="' +
-          s +
-          '"' +
-          (s === size ? " selected" : "") +
-          ">" +
-          s.toUpperCase() +
-          "</option>"
-        );
-      })
-      .join("");
-
-    row.innerHTML =
-      '<div class="variant-field">' +
-      "<label>Size</label>" +
-      '<select class="variant-select">' +
-      sizeOpts +
-      "</select>" +
-      "</div>" +
-      '<div class="variant-field">' +
-      "<label>Color</label>" +
-      '<input type="text" class="variant-input" placeholder="e.g. Black" value="' +
-      escapeHtml(color) +
-      '" />' +
-      "</div>" +
-      '<div class="variant-field">' +
-      "<label>Stock</label>" +
-      '<input type="number" class="variant-input" placeholder="0" value="' +
-      stock +
-      '" min="0" />' +
-      "</div>" +
-      '<div class="variant-field">' +
-      "<label>Price</label>" +
-      '<div class="ap-input-prefix sm">' +
-      "<span>$</span>" +
-      '<input type="number" class="variant-input" placeholder="0.00" value="' +
-      price +
-      '" step="0.01" min="0" />' +
-      "</div>" +
-      "</div>" +
-      '<button type="button" class="variant-remove" aria-label="Remove variant">' +
-      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-      "</button>";
-
-    row.querySelector(".variant-remove").addEventListener("click", function () {
-      row.style.opacity = "0";
-      row.style.transform = "translateY(-8px)";
-      row.style.transition = "all 0.25s ease";
-      setTimeout(function () {
-        row.remove();
-        markDirty();
-      }, 250);
-    });
-
-    row.querySelectorAll("input, select").forEach(function (el) {
-      el.addEventListener("change", markDirty);
-      el.addEventListener("input", markDirty);
-    });
-
-    variantsList.appendChild(row);
-  }
-
-  addVariantBtn.addEventListener("click", function () {
-    if (variantsList.children.length >= 10) {
-      showToast("Maximum 10 variants allowed", "warn");
-      return;
-    }
-    addVariantRow();
-    markDirty();
-  });
-
-  /* ============================
-     Profit Calculation
-     ============================ */
-  var priceInput = document.getElementById("prodPrice");
-  var costInput = document.getElementById("prodCost");
-
-  function updateProfitCalc() {
-    var price = parseFloat(priceInput.value) || 0;
-    var cost = parseFloat(costInput.value) || 0;
-    if (cost > 0) {
-      profitCalc.style.display = "flex";
-      var profit = price - cost;
-      var margin = price > 0 ? (profit / price) * 100 : 0;
-      document.getElementById("profitValue").textContent =
-        "$" + profit.toFixed(2);
-      document.getElementById("marginValue").textContent =
-        margin.toFixed(1) + "%";
-
-      var profitEl = document.getElementById("profitValue");
-      var marginEl = document.getElementById("marginValue");
-      if (profit < 0) {
-        profitEl.style.color = "#ef4444";
-        marginEl.style.color = "#ef4444";
-      } else {
-        profitEl.style.color = "#16a34a";
-        marginEl.style.color = "#16a34a";
-      }
-    } else {
-      profitCalc.style.display = "none";
-    }
-  }
-
-  priceInput.addEventListener("input", function () {
-    updateProfitCalc();
-    updateDiscountPreview();
-    markDirty();
-  });
-  costInput.addEventListener("input", function () {
-    updateProfitCalc();
-    markDirty();
-  });
-
-  /* ============================
-     Sale & Discount
-     ============================ */
-  saleToggle.addEventListener("change", function () {
-    if (this.checked) {
-      saleOverlay.style.display = "none";
-      saleFields.style.display = "block";
-    } else {
-      saleOverlay.style.display = "block";
-      saleFields.style.display = "none";
-      discountPreview.style.display = "none";
-      saleBadgePreview.style.display = "none";
-    }
-    markDirty();
-  });
-
-  salePriceField.addEventListener("input", function () {
-    updateDiscountPreview();
-    markDirty();
-  });
-
-  saleBadge.addEventListener("input", function () {
-    updateCharCount("saleBadge", "badgeCount", 20);
-    updateBadgePreview();
-    markDirty();
-  });
-
-  function updateDiscountPreview() {
-    var regular = parseFloat(priceInput.value) || 0;
-    var sale = parseFloat(salePriceField.value) || 0;
-
-    if (sale > 0 && sale < regular) {
-      discountPreview.style.display = "flex";
-      var pct = ((regular - sale) / regular) * 100;
-      document.getElementById("discountPct").textContent =
-        Math.round(pct) + "%";
-      document.getElementById("discRegular").textContent =
-        "$" + regular.toFixed(2);
-      document.getElementById("discSale").textContent = "$" + sale.toFixed(2);
-      document.getElementById("discSave").textContent =
-        "$" + (regular - sale).toFixed(2);
-      updateBadgePreview();
-    } else {
-      discountPreview.style.display = "none";
-      saleBadgePreview.style.display = "none";
-    }
-  }
-
-  function updateBadgePreview() {
-    var regular = parseFloat(priceInput.value) || 0;
-    var sale = parseFloat(salePriceField.value) || 0;
-    var badgeText = saleBadge.value.trim() || "SALE";
-
-    if (sale > 0 && sale < regular) {
-      saleBadgePreview.style.display = "block";
-      mockBadge.textContent = badgeText.toUpperCase();
-      mockBadge.style.background = selectedSaleColor;
-      mockRegular.textContent = "$" + regular.toFixed(2);
-      mockSalePrice.textContent = "$" + sale.toFixed(2);
-      mockSalePrice.style.display = "inline";
-    }
-  }
-
-  document.querySelectorAll(".sale-color-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      document.querySelectorAll(".sale-color-btn").forEach(function (b) {
-        b.classList.remove("active");
-      });
-      this.classList.add("active");
-      selectedSaleColor = this.getAttribute("data-color");
-      updateBadgePreview();
-      markDirty();
-    });
-  });
-
-  /* ============================
-     Publish Status
-     ============================ */
-  document
-    .querySelectorAll('input[name="publishStatus"]')
-    .forEach(function (r) {
-      r.addEventListener("change", function () {
-        if (this.value === "scheduled") {
-          scheduledDateEl.style.display = "block";
-        } else {
-          scheduledDateEl.style.display = "none";
-        }
-        markDirty();
-      });
-    });
-
-  /* ============================
-     Stock Status Chips
-     ============================ */
-  document.querySelectorAll(".ap-stock-chip").forEach(function (chip) {
-    chip.addEventListener("click", function () {
-      document.querySelectorAll(".ap-stock-chip").forEach(function (c) {
-        c.classList.remove("active");
-      });
-      this.classList.add("active");
-      this.querySelector("input").checked = true;
-      markDirty();
-    });
-  });
-
-  /* ============================
-     Tags
-     ============================ */
   function renderTags() {
     tagsList.innerHTML = "";
-    currentTags.forEach(function (tag) {
-      var el = document.createElement("span");
-      el.className = "ap-tag";
-      el.innerHTML =
-        escapeHtml(tag) +
-        '<button type="button" class="ap-tag-remove" aria-label="Remove tag">&times;</button>';
-      el.querySelector(".ap-tag-remove").addEventListener("click", function () {
-        currentTags = currentTags.filter(function (t) {
-          return t !== tag;
-        });
+    currentTags.forEach((tag, index) => {
+      const el = document.createElement("span");
+      el.className = "tag";
+      el.textContent = tag;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "×";
+      button.addEventListener("click", () => {
+        currentTags.splice(index, 1);
         renderTags();
         markDirty();
       });
+      el.appendChild(button);
       tagsList.appendChild(el);
     });
   }
 
-  tagInput.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addTag();
-    }
-    if (e.key === "Backspace" && !this.value && currentTags.length) {
-      currentTags.pop();
-      renderTags();
-      markDirty();
-    }
-  });
-
-  tagInput.addEventListener("blur", function () {
-    if (this.value.trim()) addTag();
-  });
-
-  function addTag() {
-    var val = tagInput.value.replace(/,/g, "").trim().toLowerCase();
-    if (!val) return;
-    if (currentTags.indexOf(val) !== -1) {
-      showToast("Tag already exists", "warn");
-      tagInput.value = "";
-      return;
-    }
+  function addTag(value) {
+    const tag = String(value || "").trim().replace(/,$/, "");
+    if (!tag) return;
+    if (currentTags.includes(tag)) return;
     if (currentTags.length >= 10) {
       showToast("Maximum 10 tags allowed", "warn");
       return;
     }
-    currentTags.push(val);
-    tagInput.value = "";
+    currentTags.push(tag);
     renderTags();
     markDirty();
   }
 
-  document.querySelectorAll(".suggested-tag").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var tag = this.getAttribute("data-tag");
-      if (currentTags.indexOf(tag) !== -1) {
-        showToast("Tag already added", "warn");
-        return;
-      }
-      if (currentTags.length >= 10) {
-        showToast("Maximum 10 tags allowed", "warn");
-        return;
-      }
-      currentTags.push(tag);
-      renderTags();
-      markDirty();
-    });
-  });
-
-  /* ============================
-     Character Counts
-     ============================ */
-  function updateCharCount(inputId, countId, max) {
-    var len = document.getElementById(inputId).value.length;
-    document.getElementById(countId).textContent = len;
-  }
-
-  document.getElementById("prodDesc").addEventListener("input", function () {
-    updateCharCount("prodDesc", "descCount", 2000);
-    markDirty();
-  });
-
-  /* ============================
-     Track Unsaved Changes
-     ============================ */
-  function markDirty() {
-    hasUnsavedChanges = true;
-  }
-
-  form.querySelectorAll("input, select, textarea").forEach(function (el) {
-    el.addEventListener("change", markDirty);
-  });
-
-  var backLink = form.querySelector(".ap-cancel-btn");
-  if (backLink) {
-    backLink.addEventListener("click", function (e) {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        unsavedModal.classList.add("show");
-      }
-    });
-  }
-
-  leaveAnyway.addEventListener("click", function () {
-    unsavedModal.classList.remove("show");
-    window.location.href = "admin_product.html";
-  });
-
-  stayOnPage.addEventListener("click", function () {
-    unsavedModal.classList.remove("show");
-  });
-
-  window.addEventListener("beforeunload", function (e) {
-    if (hasUnsavedChanges) {
-      e.preventDefault();
-      e.returnValue = "";
-    }
-  });
-
-  /* ============================
-     Delete Product
-     ============================ */
-  deleteProductBtn.addEventListener("click", function () {
-    deleteModal.classList.add("show");
-  });
-
-  cancelDelete.addEventListener("click", function () {
-    deleteModal.classList.remove("show");
-  });
-
-  confirmDelete.addEventListener("click", function () {
-    deleteModal.classList.remove("show");
-    showToast("Product deleted successfully", "success");
-    setTimeout(function () {
-      window.location.href = "admin_product.html";
-    }, 1500);
-  });
-
-  [deleteModal, unsavedModal].forEach(function (modal) {
-    modal.addEventListener("click", function (e) {
-      if (e.target === modal) {
-        modal.classList.remove("show");
-      }
-    });
-  });
-
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") {
-      deleteModal.classList.remove("show");
-      unsavedModal.classList.remove("show");
-    }
-  });
-
-  /* ============================
-     Form Submission
-     ============================ */
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    form.querySelectorAll(".error").forEach(function (el) {
-      el.classList.remove("error");
-    });
-
-    var valid = true;
-
-    var requiredFields = [
-      { id: "prodName", msg: "Product name is required" },
-      { id: "prodCategory", msg: "Please select a category" },
-      { id: "prodDesc", msg: "Description is required" },
-      { id: "prodPrice", msg: "Regular price is required" },
-      { id: "prodStock", msg: "Stock quantity is required" },
-    ];
-
-    requiredFields.forEach(function (f) {
-      var el = document.getElementById(f.id);
-      if (!el.value.trim()) {
-        el.closest(".ap-field").classList.add("error");
-        if (!el.closest(".ap-field").querySelector(".error-msg")) {
-          var msg = document.createElement("span");
-          msg.className = "error-msg";
-          msg.textContent = f.msg;
-          el.closest(".ap-field").appendChild(msg);
-        }
-        valid = false;
-      }
-    });
-
-    if (saleToggle.checked && salePriceField.value) {
-      var regPrice = parseFloat(priceInput.value) || 0;
-      var salePrice = parseFloat(salePriceField.value) || 0;
-      if (salePrice >= regPrice) {
-        salePriceField.closest(".ap-field").classList.add("error");
-        if (!salePriceField.closest(".ap-field").querySelector(".error-msg")) {
-          var msg = document.createElement("span");
-          msg.className = "error-msg";
-          msg.textContent = "Sale price must be lower than regular price";
-          salePriceField.closest(".ap-field").appendChild(msg);
-        }
-        valid = false;
-      }
-    }
-
-    if (!valid) {
-      var firstError = form.querySelector(".error");
-      if (firstError) {
-        firstError.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-      showToast("Please fix the errors above", "warn");
+  function renderImage() {
+    previewGrid.innerHTML = "";
+    const src = selectedNewImage ? selectedNewImage.preview : imageUrl(currentImage);
+    if (!src) {
+      previewGrid.style.display = "none";
+      uploadPlaceholder.style.display = "flex";
       return;
     }
+    uploadPlaceholder.style.display = "none";
+    previewGrid.style.display = "grid";
+    const item = document.createElement("div");
+    item.className = "ap-preview-item";
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Product image";
+    item.appendChild(img);
+    const label = document.createElement("span");
+    label.style.cssText = "position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px";
+    label.textContent = selectedNewImage ? "New image" : "Current image";
+    item.appendChild(label);
+    previewGrid.appendChild(item);
+  }
 
-    var formData = {
-      name: document.getElementById("prodName").value,
-      brand: document.getElementById("prodBrand").value,
-      category: document.getElementById("prodCategory").value,
-      description: document.getElementById("prodDesc").value,
-      price: parseFloat(document.getElementById("prodPrice").value),
-      cost: parseFloat(document.getElementById("prodCost").value) || 0,
-      tax: document.getElementById("prodTax").value,
-      status: document.querySelector('input[name="publishStatus"]:checked')
-        .value,
-      stock: parseInt(document.getElementById("prodStock").value),
-      lowStock: parseInt(document.getElementById("prodLowStock").value) || 0,
-      stockStatus: document.querySelector('input[name="stockStatus"]:checked')
-        .value,
-      tags: currentTags,
-      sale: {
-        enabled: saleToggle.checked,
-        price: parseFloat(salePriceField.value) || 0,
-        startDate: saleStartDate.value,
-        endDate: saleEndDate.value,
-        badge: saleBadge.value,
-        badgeColor: selectedSaleColor,
-      },
-      images: currentImages,
-    };
+  function updateSalePreview() {
+    const regular = Number(priceInput.value) || 0;
+    const sale = Number(salePriceField.value) || 0;
+    const valid = sale > 0 && sale < regular;
+    if (discountPreview) {
+      discountPreview.style.display = valid && saleToggle.checked ? "flex" : "none";
+      if (valid) {
+        const pct = Math.round(((regular - sale) / regular) * 100);
+        const p = document.getElementById("discountPct");
+        const r = document.getElementById("discRegular");
+        const s = document.getElementById("discSale");
+        const save = document.getElementById("discSave");
+        if (p) p.textContent = pct + "%";
+        if (r) r.textContent = "$" + regular.toFixed(2);
+        if (s) s.textContent = "$" + sale.toFixed(2);
+        if (save) save.textContent = "$" + (regular - sale).toFixed(2);
+      }
+    }
+    if (saleBadgePreview) saleBadgePreview.style.display = valid && saleToggle.checked ? "block" : "none";
+    const mockBadge = document.getElementById("mockBadge");
+    const mockRegular = document.getElementById("mockRegular");
+    const mockSalePrice = document.getElementById("mockSalePrice");
+    if (mockBadge) {
+      mockBadge.textContent = (saleBadge.value.trim() || "SALE").toUpperCase();
+      mockBadge.style.background = selectedSaleColor;
+    }
+    if (mockRegular) mockRegular.textContent = "$" + regular.toFixed(2);
+    if (mockSalePrice) mockSalePrice.textContent = "$" + sale.toFixed(2);
+  }
 
-    formData.variants = [];
-    variantsList.querySelectorAll(".ap-variant-row").forEach(function (row) {
-      var selects = row.querySelectorAll(".variant-select");
-      var inputs = row.querySelectorAll(".variant-input");
-      formData.variants.push({
-        size: selects[0] ? selects[0].value : "",
-        color: inputs[0] ? inputs[0].value : "",
-        stock: inputs[1] ? parseInt(inputs[1].value) || 0 : 0,
-        price: inputs[2] ? parseFloat(inputs[2].value) || 0 : 0,
-      });
-    });
+  function setSaleState(enabled) {
+    saleToggle.checked = !!enabled;
+    saleOverlay.style.display = enabled ? "none" : "block";
+    saleFields.style.display = enabled ? "block" : "none";
+    updateSalePreview();
+  }
 
-    console.log("Updated product data:", formData);
+  function updateProfit() {
+    const price = Number(priceInput.value) || 0;
+    const cost = Number(costInput.value) || 0;
+    const box = document.getElementById("profitCalc");
+    if (!box) return;
+    if (cost > 0) {
+      box.style.display = "flex";
+      const profit = price - cost;
+      const margin = price ? (profit / price) * 100 : 0;
+      document.getElementById("profitValue").textContent = "$" + profit.toFixed(2);
+      document.getElementById("marginValue").textContent = margin.toFixed(1) + "%";
+    } else box.style.display = "none";
+  }
 
-    var now = new Date();
-    var options = {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    };
-    document.getElementById("lastModified").textContent =
-      now.toLocaleDateString("en-US", options);
+  function fillForm(p) {
+    product = p;
+    document.getElementById("prodName").value = p.title || "";
+    document.getElementById("prodBrand").value = p.brand || "";
+    document.getElementById("prodDesc").value = p.description || "";
+    document.getElementById("prodPrice").value = p.price ?? "";
+    document.getElementById("prodCost").value = p.cost ?? 0;
+    document.getElementById("prodTax").value = p.tax_class || "standard";
+    document.getElementById("prodStock").value = p.stock ?? 0;
+    document.getElementById("prodLowStock").value = p.low_stock ?? 10;
 
-    hasUnsavedChanges = false;
-    showToast("Product updated successfully!", "success");
-  });
+    const status = document.querySelector(`input[name="publishStatus"][value="${CSS.escape(p.status || "draft")}"]`);
+    if (status) status.checked = true;
+    if (p.status === "scheduled") scheduledDate.style.display = "block";
+    if (scheduleDate) scheduleDate.value = toDateTimeLocal(p.scheduled_date);
 
-  document
-    .getElementById("saveDraftBtn")
-    .addEventListener("click", function () {
-      var draftRadio = document.querySelector(
-        'input[name="publishStatus"][value="draft"]',
-      );
-      if (draftRadio) draftRadio.checked = true;
-      scheduledDateEl.style.display = "none";
+    const stockStatus = p.stock_status || (Number(p.stock) <= 0 ? "out" : Number(p.stock) <= Number(p.low_stock || 0) ? "low" : "in");
+    const stockRadio = document.querySelector(`input[name="stockStatus"][value="${CSS.escape(stockStatus)}"]`);
+    if (stockRadio) stockRadio.checked = true;
+    document.querySelectorAll(".ap-stock-chip").forEach(chip => chip.classList.toggle("active", chip.dataset.stock === stockStatus));
 
-      hasUnsavedChanges = false;
-      showToast("Draft saved successfully!", "success");
-    });
+    currentTags = parseTags(p.tags);
+    renderTags();
+    currentImage = p.image || "";
+    selectedNewImage = null;
+    renderImage();
 
-  /* ============================
-     Toast Notification
-     ============================ */
-  var toastTimer = null;
+    salePriceField.value = p.sale_price ?? "";
+    saleStartDate.value = toDateTimeLocal(p.sale_start);
+    saleEndDate.value = toDateTimeLocal(p.sale_end);
+    saleBadge.value = p.sale_badge || "";
+    selectedSaleColor = p.sale_badge_color || "#ef4444";
+    document.querySelectorAll(".sale-color-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.color === selectedSaleColor));
+    setSaleState(Boolean(p.sale_enabled));
 
-  function showToast(message, type) {
-    clearTimeout(toastTimer);
-    toastMsg.textContent = message;
+    const idStrong = document.querySelector(".ep-id-chip strong");
+    if (idStrong) idStrong.textContent = "#" + p.id;
+    const created = document.querySelector(".ep-created-date");
+    if (created) created.textContent = "Created: " + (p.created_at ? new Date(p.created_at).toLocaleDateString() : "—");
+    const modified = document.getElementById("lastModified");
+    if (modified) modified.textContent = p.updated_at ? new Date(p.updated_at).toLocaleString() : "—";
+    deleteProductName.textContent = p.title || "this product";
 
-    var icon = toast.querySelector("svg");
-    if (type === "warn") {
-      icon.style.color = "#f59e0b";
-      icon.innerHTML =
-        '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
-    } else {
-      icon.style.color = "#22c55e";
-      icon.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
+    updateProfit();
+    updateSalePreview();
+    dirty = false;
+  }
+
+  async function loadProduct() {
+    const params = new URLSearchParams(window.location.search);
+    const rawId = params.get("id");
+    productId = Number(rawId);
+    if (!rawId || !Number.isInteger(productId) || productId <= 0) {
+      setPageError("Product not found.");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE}/products/${productId}`);
+      const data = await responseJson(response);
+      await loadCategories(data.product.category_id);
+      fillForm(data.product);
+    } catch (error) {
+      console.error(error);
+      setPageError(error.message === "Product not found" ? "Product not found." : "Unable to load product. Please try again.");
+    }
+  }
+
+  async function saveProduct() {
+    const name = document.getElementById("prodName").value.trim();
+    const description = document.getElementById("prodDesc").value.trim();
+    const categoryId = categorySelect.value;
+    const price = Number(priceInput.value);
+    const stock = Number(document.getElementById("prodStock").value);
+    const lowStock = Number(document.getElementById("prodLowStock").value || 0);
+    const salePrice = salePriceField.value === "" ? null : Number(salePriceField.value);
+    const selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
+    const selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
+
+    if (!name) throw new Error("Please enter a product name.");
+    if (!description) throw new Error("Description is required.");
+    if (!categoryId || categoryId === "__add_category__") throw new Error("Please select a category.");
+    if (!Number.isFinite(price) || price < 0) throw new Error("Price is invalid.");
+    if (!Number.isInteger(stock) || stock < 0) throw new Error("Quantity is invalid.");
+    if (!Number.isInteger(lowStock) || lowStock < 0) throw new Error("Low stock threshold is invalid.");
+    if (saleToggle.checked && salePrice !== null && (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= price)) {
+      throw new Error("Sale price must be greater than 0 and lower than regular price.");
     }
 
-    toast.classList.add("show");
-    toastTimer = setTimeout(function () {
-      toast.classList.remove("show");
-    }, 3000);
+    const categoryOption = categorySelect.options[categorySelect.selectedIndex];
+    const body = new FormData();
+    body.append("title", name);
+    body.append("description", description);
+    body.append("brand", document.getElementById("prodBrand").value.trim());
+    body.append("category_id", categoryId);
+    body.append("category", categoryOption ? categoryOption.textContent : "");
+    body.append("price", String(price));
+    body.append("cost", String(Number(costInput.value) || 0));
+    body.append("tax_class", document.getElementById("prodTax").value || "standard");
+    body.append("stock", String(stock));
+    body.append("low_stock", String(lowStock));
+    body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
+    body.append("status", selectedStatus ? selectedStatus.value : "draft");
+    body.append("scheduled_date", selectedStatus && selectedStatus.value === "scheduled" ? (scheduleDate.value || "") : "");
+    body.append("sale_enabled", saleToggle.checked ? "true" : "false");
+    body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
+    body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
+    body.append("sale_end", saleToggle.checked ? saleEndDate.value : "");
+    body.append("sale_badge", saleBadge.value.trim());
+    body.append("sale_badge_color", selectedSaleColor);
+    body.append("tags", currentTags.join(","));
+    if (selectedNewImage) body.append("image", selectedNewImage.file);
+
+    // Do not set Content-Type manually for FormData. The browser must add
+    // the multipart boundary itself; setting application/json here causes
+    // the backend to reject the request with HTTP 415.
+    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body
+    });
+    const data = await responseJson(response);
+    fillForm(data.product);
+    showToast("Product updated successfully!", "success");
+    setTimeout(() => { window.location.href = "admin_product.html"; }, 700);
   }
 
-  /* ============================
-     Utility
-     ============================ */
-  function escapeHtml(str) {
-    var div = document.createElement("div");
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
+  async function deleteProduct() {
+    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
+      method: "DELETE",
+      headers: authHeaders()
+    });
+    await responseJson(response);
+    showToast("Product deleted successfully", "success");
+    dirty = false;
+    setTimeout(() => { window.location.href = "admin_product.html"; }, 700);
   }
 
-  /* ============================
-     Initialize
-     ============================ */
-  populateForm();
+  function setupEvents() {
+    document.querySelectorAll("input, select, textarea").forEach(el => el.addEventListener("input", markDirty));
+    document.querySelectorAll("input, select, textarea").forEach(el => el.addEventListener("change", markDirty));
+
+    priceInput.addEventListener("input", () => { updateProfit(); updateSalePreview(); });
+    costInput.addEventListener("input", updateProfit);
+    salePriceField.addEventListener("input", updateSalePreview);
+    saleBadge.addEventListener("input", updateSalePreview);
+
+    saleToggle.addEventListener("change", () => { setSaleState(saleToggle.checked); markDirty(); });
+
+    document.querySelectorAll(".sale-color-btn").forEach(btn => btn.addEventListener("click", () => {
+      selectedSaleColor = btn.dataset.color || selectedSaleColor;
+      document.querySelectorAll(".sale-color-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateSalePreview();
+      markDirty();
+    }));
+
+    document.querySelectorAll('input[name="publishStatus"]').forEach(r => r.addEventListener("change", () => {
+      scheduledDate.style.display = r.value === "scheduled" && r.checked ? "block" : "none";
+    }));
+
+    document.querySelectorAll('input[name="stockStatus"]').forEach(r => r.addEventListener("change", () => {
+      document.querySelectorAll(".ap-stock-chip").forEach(c => c.classList.toggle("active", c.dataset.stock === r.value && r.checked));
+    }));
+
+    tagInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+        addTag(tagInput.value);
+        tagInput.value = "";
+      }
+    });
+
+    document.querySelectorAll(".suggested-tag").forEach(btn => btn.addEventListener("click", () => addTag(btn.dataset.tag)));
+
+    uploadArea.addEventListener("click", e => {
+      // Only open the native file picker for a real user click.  Programmatic
+      // clicks (for example during image preview rendering) are ignored.
+      if (e.isTrusted && !e.target.closest("button")) imageInput.click();
+    });
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files && imageInput.files[0];
+      if (!file) return;
+      if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return showToast("Use PNG, JPG or WebP.", "warn");
+      if (file.size > 5 * 1024 * 1024) return showToast("Image must be 5MB or smaller.", "warn");
+      const reader = new FileReader();
+      reader.onload = e => {
+        selectedNewImage = { file, preview: e.target.result };
+        renderImage();
+        markDirty();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      try {
+        await saveProduct();
+      } catch (error) {
+        console.error(error);
+        showToast(error.message || "Unable to update product. Please try again.", "warn");
+      }
+    });
+
+    document.getElementById("saveDraftBtn")?.addEventListener("click", () => {
+      const draft = document.querySelector('input[name="publishStatus"][value="draft"]');
+      if (draft) draft.checked = true;
+      scheduledDate.style.display = "none";
+      form.requestSubmit();
+    });
+
+    deleteProductBtn.addEventListener("click", () => deleteModal.classList.add("show"));
+    cancelDelete.addEventListener("click", () => deleteModal.classList.remove("show"));
+    confirmDelete.addEventListener("click", async () => {
+      try { await deleteProduct(); }
+      catch (error) { console.error(error); deleteModal.classList.remove("show"); showToast(error.message || "Unable to delete product.", "warn"); }
+    });
+
+    const backLink = form.querySelector(".ap-cancel-btn");
+    backLink?.addEventListener("click", e => {
+      if (!dirty) return;
+      e.preventDefault();
+      unsavedModal.classList.add("show");
+    });
+    stayOnPage?.addEventListener("click", () => unsavedModal.classList.remove("show"));
+    leaveAnyway?.addEventListener("click", () => { dirty = false; window.location.href = "admin_product.html"; });
+    window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+    // Category creation uses the same API as Add Product.
+    categorySelect.addEventListener("change", async () => {
+      if (categorySelect.value !== "__add_category__") return;
+      categorySelect.value = product ? String(product.category_id || "") : "";
+      const modal = document.getElementById("addCategoryModal");
+      if (modal) { modal.removeAttribute("hidden"); modal.style.display = "flex"; }
+    });
+
+    const closeCategory = () => {
+      const modal = document.getElementById("addCategoryModal");
+      if (modal) { modal.setAttribute("hidden", ""); modal.style.display = "none"; }
+    };
+    document.getElementById("addCategoryClose")?.addEventListener("click", closeCategory);
+    document.getElementById("cancelCategoryBtn")?.addEventListener("click", closeCategory);
+    document.getElementById("saveCategoryBtn")?.addEventListener("click", async () => {
+      const input = document.getElementById("newCategoryName");
+      const errorEl = document.getElementById("newCategoryError");
+      const name = input.value.trim();
+      if (!name) { errorEl.textContent = "Category name is required."; return; }
+      try {
+        const response = await fetch(API_BASE + "/categories", {
+          method: "POST",
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+        const data = await responseJson(response);
+        await loadCategories(data.category.id);
+        closeCategory();
+        markDirty();
+        showToast(`Category "${data.category.name}" created!`, "success");
+      } catch (error) { errorEl.textContent = error.message; }
+    });
+
+    // Variants are not persisted by this database schema. Keep the existing UI
+    // visible, but never pretend that edits to it were saved to SQLite.
+    if (variantsList && addVariantBtn) {
+      const note = document.createElement("div");
+      note.style.cssText = "margin-top:10px;font-size:12px;opacity:.7";
+      note.textContent = "Variants are not stored in the current product database, so they are not included in updates.";
+      variantsList.parentElement?.appendChild(note);
+      addVariantBtn.disabled = true;
+      addVariantBtn.title = "Variants are not supported by the current database schema";
+    }
+  }
+
+  setupEvents();
+  loadProduct();
 })();
