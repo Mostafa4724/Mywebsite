@@ -1,5 +1,60 @@
 /* ===== Checkout Form Field Validation ===== */
 (function () {
+  // ── Payment Method Switching ─────────────────────────────
+
+  var paymentOptions = document.querySelectorAll(".payment-option");
+  var cardDetails = document.getElementById("cardDetails");
+  var transferInfo = document.getElementById("transferInfo");
+  var codInfo = document.getElementById("codInfo");
+
+  paymentOptions.forEach(function (option) {
+    option.addEventListener("click", function () {
+      // Remove selected class from all options
+      paymentOptions.forEach(function (opt) {
+        opt.classList.remove("selected");
+      });
+      // Add selected class to clicked option
+      this.classList.add("selected");
+
+      // Get the selected payment method
+      var paymentMethod = this.getAttribute("data-method");
+
+      // Show/hide payment details based on payment method
+      if (paymentMethod === "card") {
+        cardDetails.classList.add("visible");
+        if (transferInfo) transferInfo.style.display = "none";
+        if (codInfo) codInfo.style.display = "none";
+      } else if (paymentMethod === "transfer") {
+        cardDetails.classList.remove("visible");
+        if (transferInfo) transferInfo.style.display = "block";
+        if (codInfo) codInfo.style.display = "none";
+      } else if (paymentMethod === "cod") {
+        cardDetails.classList.remove("visible");
+        if (transferInfo) transferInfo.style.display = "none";
+        if (codInfo) codInfo.style.display = "block";
+      }
+    });
+  });
+
+  // Ensure correct details are visible on page load
+  var selectedPayment = document.querySelector('input[name="payment"]:checked');
+  if (selectedPayment) {
+    var paymentMethod = selectedPayment.value;
+    if (paymentMethod === "card") {
+      if (cardDetails) cardDetails.classList.add("visible");
+      if (transferInfo) transferInfo.style.display = "none";
+      if (codInfo) codInfo.style.display = "none";
+    } else if (paymentMethod === "transfer") {
+      if (cardDetails) cardDetails.classList.remove("visible");
+      if (transferInfo) transferInfo.style.display = "block";
+      if (codInfo) codInfo.style.display = "none";
+    } else if (paymentMethod === "cod") {
+      if (cardDetails) cardDetails.classList.remove("visible");
+      if (transferInfo) transferInfo.style.display = "none";
+      if (codInfo) codInfo.style.display = "block";
+    }
+  }
+
   // ── Phone: numbers only ──────────────────────────────────
 
   var phoneInput = document.getElementById("phoneInput");
@@ -141,8 +196,23 @@
 
   if (confirmBtn) {
     confirmBtn.addEventListener("click", async function () {
-      // All fields that need blur-triggered validation
-      var fieldsToCheck = [phoneInput, cardNumberInput, expiryInput, cvvInput];
+      // Get selected payment method
+      var selectedPayment = document.querySelector(
+        'input[name="payment"]:checked',
+      );
+      var paymentMethod = selectedPayment ? selectedPayment.value : "card";
+
+      // Fields to check depend on payment method
+      var fieldsToCheck = [phoneInput];
+
+      // Only validate card fields if card payment is selected
+      if (paymentMethod === "card") {
+        fieldsToCheck = fieldsToCheck.concat([
+          cardNumberInput,
+          expiryInput,
+          cvvInput,
+        ]);
+      }
 
       // Trigger blur on each field to run its validation
       fieldsToCheck.forEach(function (field) {
