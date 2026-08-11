@@ -408,6 +408,18 @@
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
+/* ── Small map locked state when expanded map is open ── */
+.vo-map-container.vo-map-locked {
+  pointer-events: none;
+  opacity: 0.4;
+  filter: grayscale(0.5);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.vo-map-container:not(.vo-map-locked) {
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .vo-map-container {

@@ -146,6 +146,33 @@
     inlineMarker.openPopup();
   }
 
+  /* ── Lock / Unlock inline map ── */
+  var inlineMapEl = document.getElementById("deliveryMap");
+
+  function lockInlineMap() {
+    if (!inlineMap) return;
+    inlineMap.dragging.disable();
+    inlineMap.touchZoom.disable();
+    inlineMap.scrollWheelZoom.disable();
+    inlineMap.doubleClickZoom.disable();
+    inlineMap.boxZoom.disable();
+    inlineMap.keyboard.disable();
+    if (inlineMap.tap) inlineMap.tap.disable();
+    if (inlineMapEl) inlineMapEl.classList.add("vo-map-locked");
+  }
+
+  function unlockInlineMap() {
+    if (!inlineMap) return;
+    inlineMap.dragging.enable();
+    inlineMap.touchZoom.enable();
+    inlineMap.scrollWheelZoom.disable();
+    inlineMap.doubleClickZoom.disable();
+    inlineMap.boxZoom.enable();
+    inlineMap.keyboard.enable();
+    if (inlineMap.tap) inlineMap.tap.enable();
+    if (inlineMapEl) inlineMapEl.classList.remove("vo-map-locked");
+  }
+
   var expandedMap = null;
   var expandedMarker = null;
 
@@ -200,6 +227,7 @@
   if (mapExpandBtn) {
     mapExpandBtn.addEventListener("click", function () {
       mapOverlay.classList.add("show");
+      lockInlineMap();
       setTimeout(initExpandedMap, 50);
     });
   }
@@ -207,6 +235,7 @@
   if (mapOverlayClose) {
     mapOverlayClose.addEventListener("click", function () {
       mapOverlay.classList.remove("show");
+      unlockInlineMap();
     });
   }
 
@@ -214,6 +243,7 @@
     mapOverlay.addEventListener("click", function (e) {
       if (e.target === mapOverlay) {
         mapOverlay.classList.remove("show");
+        unlockInlineMap();
       }
     });
   }
@@ -221,6 +251,7 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && mapOverlay && mapOverlay.classList.contains("show")) {
       mapOverlay.classList.remove("show");
+      unlockInlineMap();
     }
   });
 
