@@ -69,38 +69,44 @@
     if (heading) heading.textContent = message;
   }
 
-  function markDirty() { dirty = true; }
+  function markDirty() {
+    dirty = true;
+  }
 
   function toDateTimeLocal(value) {
     if (!value) return "";
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return String(value).slice(0, 16);
-    const pad = n => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   function imageUrl(value) {
-      if (!value) return "";
+    if (!value) return "";
 
-      // Already a complete URL
-      if (/^https?:\/\//i.test(value) || value.startsWith("data:")) {
-          return value;
-      }
+    // Already a complete URL
+    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) {
+      return value;
+    }
 
-      // Backend stores either:
-      // filename
-      // /uploads/products/filename
-      if (value.startsWith("/uploads/products/")) {
-          return API_BASE + value;
-      }
+    // Backend stores either:
+    // filename
+    // /uploads/products/filename
+    if (value.startsWith("/uploads/products/")) {
+      return API_BASE + value;
+    }
 
-      return API_BASE + "/uploads/products/" + encodeURIComponent(value);
+    return API_BASE + "/uploads/products/" + encodeURIComponent(value);
   }
 
   async function responseJson(response) {
     const text = await response.text();
     let data;
-    try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (_) {
+      data = {};
+    }
     if (!response.ok || data.success === false) {
       throw new Error(data.message || `Server returned ${response.status}`);
     }
@@ -110,8 +116,9 @@
   async function loadCategories(selectedId) {
     const response = await fetch(API_BASE + "/categories");
     const data = await responseJson(response);
-    categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
-    data.categories.forEach(cat => {
+    categorySelect.innerHTML =
+      '<option value="" disabled>Select category</option>';
+    data.categories.forEach((cat) => {
       const option = document.createElement("option");
       option.value = String(cat.id);
       option.textContent = cat.name;
@@ -127,13 +134,24 @@
   }
 
   function parseTags(value) {
-    if (Array.isArray(value)) return value.map(String).map(s => s.trim()).filter(Boolean);
+    if (Array.isArray(value))
+      return value
+        .map(String)
+        .map((s) => s.trim())
+        .filter(Boolean);
     if (!value) return [];
     try {
       const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.map(String).map(s => s.trim()).filter(Boolean);
+      if (Array.isArray(parsed))
+        return parsed
+          .map(String)
+          .map((s) => s.trim())
+          .filter(Boolean);
     } catch (_) {}
-    return String(value).split(",").map(s => s.trim()).filter(Boolean);
+    return String(value)
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
 
   function renderTags() {
@@ -156,7 +174,9 @@
   }
 
   function addTag(value) {
-    const tag = String(value || "").trim().replace(/,$/, "");
+    const tag = String(value || "")
+      .trim()
+      .replace(/,$/, "");
     if (!tag) return;
     if (currentTags.includes(tag)) return;
     if (currentTags.length >= 10) {
@@ -170,7 +190,9 @@
 
   function renderImage() {
     previewGrid.innerHTML = "";
-    const src = selectedNewImage ? selectedNewImage.preview : imageUrl(currentImage);
+    const src = selectedNewImage
+      ? selectedNewImage.preview
+      : imageUrl(currentImage);
     if (!src) {
       previewGrid.style.display = "none";
       uploadPlaceholder.style.display = "flex";
@@ -185,7 +207,8 @@
     img.alt = "Product image";
     item.appendChild(img);
     const label = document.createElement("span");
-    label.style.cssText = "position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px";
+    label.style.cssText =
+      "position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px";
     label.textContent = selectedNewImage ? "New image" : "Current image";
     item.appendChild(label);
     previewGrid.appendChild(item);
@@ -196,7 +219,8 @@
     const sale = Number(salePriceField.value) || 0;
     const valid = sale > 0 && sale < regular;
     if (discountPreview) {
-      discountPreview.style.display = valid && saleToggle.checked ? "flex" : "none";
+      discountPreview.style.display =
+        valid && saleToggle.checked ? "flex" : "none";
       if (valid) {
         const pct = Math.round(((regular - sale) / regular) * 100);
         const p = document.getElementById("discountPct");
@@ -209,7 +233,9 @@
         if (save) save.textContent = "$" + (regular - sale).toFixed(2);
       }
     }
-    if (saleBadgePreview) saleBadgePreview.style.display = valid && saleToggle.checked ? "block" : "none";
+    if (saleBadgePreview)
+      saleBadgePreview.style.display =
+        valid && saleToggle.checked ? "block" : "none";
     const mockBadge = document.getElementById("mockBadge");
     const mockRegular = document.getElementById("mockRegular");
     const mockSalePrice = document.getElementById("mockSalePrice");
@@ -237,8 +263,10 @@
       box.style.display = "flex";
       const profit = price - cost;
       const margin = price ? (profit / price) * 100 : 0;
-      document.getElementById("profitValue").textContent = "$" + profit.toFixed(2);
-      document.getElementById("marginValue").textContent = margin.toFixed(1) + "%";
+      document.getElementById("profitValue").textContent =
+        "$" + profit.toFixed(2);
+      document.getElementById("marginValue").textContent =
+        margin.toFixed(1) + "%";
     } else box.style.display = "none";
   }
 
@@ -253,15 +281,29 @@
     document.getElementById("prodStock").value = p.stock ?? 0;
     document.getElementById("prodLowStock").value = p.low_stock ?? 10;
 
-    const status = document.querySelector(`input[name="publishStatus"][value="${CSS.escape(p.status || "draft")}"]`);
+    const status = document.querySelector(
+      `input[name="publishStatus"][value="${CSS.escape(p.status || "draft")}"]`,
+    );
     if (status) status.checked = true;
     if (p.status === "scheduled") scheduledDate.style.display = "block";
     if (scheduleDate) scheduleDate.value = toDateTimeLocal(p.scheduled_date);
 
-    const stockStatus = p.stock_status || (Number(p.stock) <= 0 ? "out" : Number(p.stock) <= Number(p.low_stock || 0) ? "low" : "in");
-    const stockRadio = document.querySelector(`input[name="stockStatus"][value="${CSS.escape(stockStatus)}"]`);
+    const stockStatus =
+      p.stock_status ||
+      (Number(p.stock) <= 0
+        ? "out"
+        : Number(p.stock) <= Number(p.low_stock || 0)
+          ? "low"
+          : "in");
+    const stockRadio = document.querySelector(
+      `input[name="stockStatus"][value="${CSS.escape(stockStatus)}"]`,
+    );
     if (stockRadio) stockRadio.checked = true;
-    document.querySelectorAll(".ap-stock-chip").forEach(chip => chip.classList.toggle("active", chip.dataset.stock === stockStatus));
+    document
+      .querySelectorAll(".ap-stock-chip")
+      .forEach((chip) =>
+        chip.classList.toggle("active", chip.dataset.stock === stockStatus),
+      );
 
     currentTags = parseTags(p.tags);
     renderTags();
@@ -274,15 +316,25 @@
     saleEndDate.value = toDateTimeLocal(p.sale_end);
     saleBadge.value = p.sale_badge || "";
     selectedSaleColor = p.sale_badge_color || "#ef4444";
-    document.querySelectorAll(".sale-color-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.color === selectedSaleColor));
+    document
+      .querySelectorAll(".sale-color-btn")
+      .forEach((btn) =>
+        btn.classList.toggle("active", btn.dataset.color === selectedSaleColor),
+      );
     setSaleState(Boolean(p.sale_enabled));
 
     const idStrong = document.querySelector(".ep-id-chip strong");
     if (idStrong) idStrong.textContent = "#" + p.id;
     const created = document.querySelector(".ep-created-date");
-    if (created) created.textContent = "Created: " + (p.created_at ? new Date(p.created_at).toLocaleDateString() : "—");
+    if (created)
+      created.textContent =
+        "Created: " +
+        (p.created_at ? new Date(p.created_at).toLocaleDateString() : "—");
     const modified = document.getElementById("lastModified");
-    if (modified) modified.textContent = p.updated_at ? new Date(p.updated_at).toLocaleString() : "—";
+    if (modified)
+      modified.textContent = p.updated_at
+        ? new Date(p.updated_at).toLocaleString()
+        : "—";
     deleteProductName.textContent = p.title || "this product";
 
     updateProfit();
@@ -305,325 +357,279 @@
       fillForm(data.product);
     } catch (error) {
       console.error(error);
-      setPageError(error.message === "Product not found" ? "Product not found." : "Unable to load product. Please try again.");
+      setPageError(
+        error.message === "Product not found"
+          ? "Product not found."
+          : "Unable to load product. Please try again.",
+      );
     }
   }
 
   async function saveProduct() {
-      const name = document.getElementById("prodName").value.trim();
-      const description = document.getElementById("prodDesc").value.trim();
-      const categoryId = categorySelect.value;
+    const name = document.getElementById("prodName").value.trim();
+    const description = document.getElementById("prodDesc").value.trim();
+    const categoryId = categorySelect.value;
 
-      const price = Number(priceInput.value);
-      const stock = Number(document.getElementById("prodStock").value);
-      const lowStock = Number(
-          document.getElementById("prodLowStock").value || 0
+    const price = Number(priceInput.value);
+    const stock = Number(document.getElementById("prodStock").value);
+    const lowStock = Number(document.getElementById("prodLowStock").value || 0);
+
+    const salePrice =
+      salePriceField.value === "" ? null : Number(salePriceField.value);
+
+    const selectedStatus = document.querySelector(
+      'input[name="publishStatus"]:checked',
+    );
+
+    const selectedStockStatus = document.querySelector(
+      'input[name="stockStatus"]:checked',
+    );
+
+    // ========================================
+    // VALIDATION
+    // ========================================
+
+    if (!name) {
+      throw new Error("Please enter a product name.");
+    }
+
+    if (!description) {
+      throw new Error("Description is required.");
+    }
+
+    if (!categoryId || categoryId === "__add_category__") {
+      throw new Error("Please select a category.");
+    }
+
+    if (!Number.isFinite(price) || price < 0) {
+      throw new Error("Price is invalid.");
+    }
+
+    if (!Number.isInteger(stock) || stock < 0) {
+      throw new Error("Quantity is invalid.");
+    }
+
+    if (!Number.isInteger(lowStock) || lowStock < 0) {
+      throw new Error("Low stock threshold is invalid.");
+    }
+
+    if (
+      saleToggle.checked &&
+      salePrice !== null &&
+      (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= price)
+    ) {
+      throw new Error(
+        "Sale price must be greater than 0 and lower than regular price.",
       );
+    }
 
-      const salePrice =
-          salePriceField.value === ""
-              ? null
-              : Number(salePriceField.value);
+    // ========================================
+    // CATEGORY
+    // ========================================
 
-      const selectedStatus = document.querySelector(
-          'input[name="publishStatus"]:checked'
-      );
+    const categoryOption = categorySelect.options[categorySelect.selectedIndex];
 
-      const selectedStockStatus = document.querySelector(
-          'input[name="stockStatus"]:checked'
-      );
+    // ========================================
+    // CREATE FORMDATA
+    // ========================================
 
-      // ========================================
-      // VALIDATION
-      // ========================================
+    const body = new FormData();
 
-      if (!name) {
-          throw new Error("Please enter a product name.");
-      }
+    body.append("title", name);
+    body.append("description", description);
 
-      if (!description) {
-          throw new Error("Description is required.");
-      }
+    body.append("brand", document.getElementById("prodBrand").value.trim());
 
-      if (!categoryId || categoryId === "__add_category__") {
-          throw new Error("Please select a category.");
-      }
+    body.append("category_id", categoryId);
 
-      if (!Number.isFinite(price) || price < 0) {
-          throw new Error("Price is invalid.");
-      }
+    body.append(
+      "category",
+      categoryOption ? categoryOption.textContent.trim() : "",
+    );
 
-      if (!Number.isInteger(stock) || stock < 0) {
-          throw new Error("Quantity is invalid.");
-      }
+    body.append("price", String(price));
 
-      if (!Number.isInteger(lowStock) || lowStock < 0) {
-          throw new Error("Low stock threshold is invalid.");
-      }
+    body.append("cost", String(Number(costInput.value) || 0));
 
-      if (
-          saleToggle.checked &&
-          salePrice !== null &&
-          (
-              !Number.isFinite(salePrice) ||
-              salePrice <= 0 ||
-              salePrice >= price
-          )
-      ) {
-          throw new Error(
-              "Sale price must be greater than 0 and lower than regular price."
-          );
-      }
+    body.append(
+      "tax_class",
+      document.getElementById("prodTax").value || "standard",
+    );
 
-      // ========================================
-      // CATEGORY
-      // ========================================
+    body.append("stock", String(stock));
+    body.append("low_stock", String(lowStock));
 
-      const categoryOption =
-          categorySelect.options[categorySelect.selectedIndex];
+    body.append(
+      "stock_status",
+      selectedStockStatus ? selectedStockStatus.value : "",
+    );
 
-      // ========================================
-      // CREATE FORMDATA
-      // ========================================
+    body.append("status", selectedStatus ? selectedStatus.value : "draft");
 
-      const body = new FormData();
+    body.append(
+      "scheduled_date",
+      selectedStatus && selectedStatus.value === "scheduled"
+        ? scheduleDate.value || ""
+        : "",
+    );
 
-      body.append("title", name);
-      body.append("description", description);
+    // ========================================
+    // SALE
+    // ========================================
 
-      body.append(
-          "brand",
-          document.getElementById("prodBrand").value.trim()
-      );
+    body.append("sale_enabled", saleToggle.checked ? "true" : "false");
 
-      body.append("category_id", categoryId);
+    body.append(
+      "sale_price",
+      saleToggle.checked && salePrice !== null ? String(salePrice) : "",
+    );
 
-      body.append(
-          "category",
-          categoryOption ? categoryOption.textContent.trim() : ""
-      );
+    body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
 
-      body.append("price", String(price));
+    body.append("sale_end", saleToggle.checked ? saleEndDate.value : "");
 
-      body.append(
-          "cost",
-          String(Number(costInput.value) || 0)
-      );
+    body.append("sale_badge", saleBadge.value.trim());
 
-      body.append(
-          "tax_class",
-          document.getElementById("prodTax").value || "standard"
-      );
+    body.append("sale_badge_color", selectedSaleColor);
 
-      body.append("stock", String(stock));
-      body.append("low_stock", String(lowStock));
+    // ========================================
+    // TAGS
+    // ========================================
 
-      body.append(
-          "stock_status",
-          selectedStockStatus
-              ? selectedStockStatus.value
-              : ""
-      );
+    body.append("tags", currentTags.join(","));
 
-      body.append(
-          "status",
-          selectedStatus
-              ? selectedStatus.value
-              : "draft"
-      );
+    // ========================================
+    // IMAGE
+    // ========================================
 
-      body.append(
-          "scheduled_date",
-          selectedStatus &&
-          selectedStatus.value === "scheduled"
-              ? (scheduleDate.value || "")
-              : ""
-      );
+    console.log("selectedNewImage:", selectedNewImage);
 
-      // ========================================
-      // SALE
-      // ========================================
+    if (selectedNewImage && selectedNewImage.file instanceof File) {
+      console.log("Uploading new image:", selectedNewImage.file.name);
 
-      body.append(
-          "sale_enabled",
-          saleToggle.checked ? "true" : "false"
-      );
+      body.append("image", selectedNewImage.file, selectedNewImage.file.name);
+    } else {
+      console.log("No new image selected. Keeping existing image.");
+    }
 
-      body.append(
-          "sale_price",
-          saleToggle.checked && salePrice !== null
-              ? String(salePrice)
-              : ""
-      );
+    // ========================================
+    // DEBUG FORMDATA
+    // ========================================
 
-      body.append(
-          "sale_start",
-          saleToggle.checked
-              ? saleStartDate.value
-              : ""
-      );
+    console.log("========== PRODUCT UPDATE ==========");
 
-      body.append(
-          "sale_end",
-          saleToggle.checked
-              ? saleEndDate.value
-              : ""
-      );
-
-      body.append(
-          "sale_badge",
-          saleBadge.value.trim()
-      );
-
-      body.append(
-          "sale_badge_color",
-          selectedSaleColor
-      );
-
-      // ========================================
-      // TAGS
-      // ========================================
-
-      body.append(
-          "tags",
-          currentTags.join(",")
-      );
-
-      // ========================================
-      // IMAGE
-      // ========================================
-
-      console.log(
-          "selectedNewImage:",
-          selectedNewImage
-      );
-
-      if (
-          selectedNewImage &&
-          selectedNewImage.file instanceof File
-      ) {
-          console.log(
-              "Uploading new image:",
-              selectedNewImage.file.name
-          );
-
-          body.append(
-              "image",
-              selectedNewImage.file,
-              selectedNewImage.file.name
-          );
+    for (const [key, value] of body.entries()) {
+      if (value instanceof File) {
+        console.log(key, "FILE:", value.name, value.type, value.size);
       } else {
-          console.log(
-              "No new image selected. Keeping existing image."
-          );
+        console.log(key, value);
       }
+    }
 
-      // ========================================
-      // DEBUG FORMDATA
-      // ========================================
+    console.log("====================================");
 
-      console.log("========== PRODUCT UPDATE ==========");
+    // ========================================
+    // SEND UPDATE
+    // ========================================
 
-      for (const [key, value] of body.entries()) {
+    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: body,
+    });
 
-          if (value instanceof File) {
-              console.log(
-                  key,
-                  "FILE:",
-                  value.name,
-                  value.type,
-                  value.size
-              );
-          } else {
-              console.log(key, value);
-          }
-      }
+    // ========================================
+    // HANDLE RESPONSE
+    // ========================================
 
-      console.log("====================================");
+    const data = await responseJson(response);
 
-      // ========================================
-      // SEND UPDATE
-      // ========================================
+    console.log("Server updated product:", data.product);
 
-      const response = await fetch(
-          `${API_BASE}/admin/products/${productId}`,
-          {
-              method: "PUT",
-              headers: authHeaders(),
-              body: body
-          }
-      );
+    // ========================================
+    // UPDATE LOCAL FORM WITH SERVER DATA
+    // ========================================
 
-      // ========================================
-      // HANDLE RESPONSE
-      // ========================================
+    fillForm(data.product);
 
-      const data = await responseJson(response);
+    showToast("Product updated successfully!", "success");
 
-      console.log(
-          "Server updated product:",
-          data.product
-      );
+    // ========================================
+    // GO BACK TO ADMIN PRODUCTS
+    // ========================================
 
-      // ========================================
-      // UPDATE LOCAL FORM WITH SERVER DATA
-      // ========================================
-
-      fillForm(data.product);
-
-      showToast(
-          "Product updated successfully!",
-          "success"
-      );
-
-      // ========================================
-      // GO BACK TO ADMIN PRODUCTS
-      // ========================================
-
-      setTimeout(() => {
-          window.location.href = "admin_product.html";
-      }, 700);
+    setTimeout(() => {
+      window.location.href = "admin_product.html";
+    }, 700);
   }
 
   async function deleteProduct() {
     const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
       method: "DELETE",
-      headers: authHeaders()
+      headers: authHeaders(),
     });
     await responseJson(response);
     showToast("Product deleted successfully", "success");
     dirty = false;
-    setTimeout(() => { window.location.href = "admin_product.html"; }, 700);
+    setTimeout(() => {
+      window.location.href = "admin_product.html";
+    }, 700);
   }
 
   function setupEvents() {
-    document.querySelectorAll("input, select, textarea").forEach(el => el.addEventListener("input", markDirty));
-    document.querySelectorAll("input, select, textarea").forEach(el => el.addEventListener("change", markDirty));
+    document
+      .querySelectorAll("input, select, textarea")
+      .forEach((el) => el.addEventListener("input", markDirty));
+    document
+      .querySelectorAll("input, select, textarea")
+      .forEach((el) => el.addEventListener("change", markDirty));
 
-    priceInput.addEventListener("input", () => { updateProfit(); updateSalePreview(); });
+    priceInput.addEventListener("input", () => {
+      updateProfit();
+      updateSalePreview();
+    });
     costInput.addEventListener("input", updateProfit);
     salePriceField.addEventListener("input", updateSalePreview);
     saleBadge.addEventListener("input", updateSalePreview);
 
-    saleToggle.addEventListener("change", () => { setSaleState(saleToggle.checked); markDirty(); });
-
-    document.querySelectorAll(".sale-color-btn").forEach(btn => btn.addEventListener("click", () => {
-      selectedSaleColor = btn.dataset.color || selectedSaleColor;
-      document.querySelectorAll(".sale-color-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      updateSalePreview();
+    saleToggle.addEventListener("change", () => {
+      setSaleState(saleToggle.checked);
       markDirty();
-    }));
+    });
 
-    document.querySelectorAll('input[name="publishStatus"]').forEach(r => r.addEventListener("change", () => {
-      scheduledDate.style.display = r.value === "scheduled" && r.checked ? "block" : "none";
-    }));
+    document.querySelectorAll(".sale-color-btn").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        selectedSaleColor = btn.dataset.color || selectedSaleColor;
+        document
+          .querySelectorAll(".sale-color-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        updateSalePreview();
+        markDirty();
+      }),
+    );
 
-    document.querySelectorAll('input[name="stockStatus"]').forEach(r => r.addEventListener("change", () => {
-      document.querySelectorAll(".ap-stock-chip").forEach(c => c.classList.toggle("active", c.dataset.stock === r.value && r.checked));
-    }));
+    document.querySelectorAll('input[name="publishStatus"]').forEach((r) =>
+      r.addEventListener("change", () => {
+        scheduledDate.style.display =
+          r.value === "scheduled" && r.checked ? "block" : "none";
+      }),
+    );
 
-    tagInput.addEventListener("keydown", e => {
+    document.querySelectorAll('input[name="stockStatus"]').forEach((r) =>
+      r.addEventListener("change", () => {
+        document
+          .querySelectorAll(".ap-stock-chip")
+          .forEach((c) =>
+            c.classList.toggle(
+              "active",
+              c.dataset.stock === r.value && r.checked,
+            ),
+          );
+      }),
+    );
+
+    tagInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === ",") {
         e.preventDefault();
         addTag(tagInput.value);
@@ -631,7 +637,11 @@
       }
     });
 
-    document.querySelectorAll(".suggested-tag").forEach(btn => btn.addEventListener("click", () => addTag(btn.dataset.tag)));
+    document
+      .querySelectorAll(".suggested-tag")
+      .forEach((btn) =>
+        btn.addEventListener("click", () => addTag(btn.dataset.tag)),
+      );
 
     // Open the native file picker only from an explicit user click.
     // Keeping this on a real button avoids Chrome's "user activation" warning.
@@ -644,170 +654,184 @@
     // ========================================
 
     if (chooseImageBtn && imageInput) {
+      chooseImageBtn.addEventListener("click", function () {
+        console.log("CHOOSE IMAGE CLICKED");
+        imageInput.click();
+      });
 
-        chooseImageBtn.onclick = function (event) {
-            event.preventDefault();
-            event.stopPropagation();
+      imageInput.addEventListener("change", function () {
+        console.log("========== IMAGE TEST ==========");
+        console.log("Files:", imageInput.files);
+        console.log("Number of files:", imageInput.files.length);
 
-            console.log("USER CLICKED CHOOSE IMAGE");
+        if (imageInput.files.length === 0) {
+          console.log("❌ NO FILE SELECTED");
+          return;
+        }
 
-            // Directly triggered by the button click.
-            imageInput.click();
+        const file = imageInput.files[0];
+
+        console.log("✅ FILE SELECTED");
+        console.log("Name:", file.name);
+        console.log("Type:", file.type);
+        console.log("Size:", file.size);
+
+        const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
+
+        if (!allowedTypes.includes(file.type)) {
+          imageInput.value = "";
+          showToast("Use PNG, JPG or WebP.", "warn");
+          return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          imageInput.value = "";
+          showToast("Image must be 5MB or smaller.", "warn");
+          return;
+        }
+
+        selectedNewImage = {
+          file: file,
+          preview: URL.createObjectURL(file),
         };
 
-        imageInput.onchange = function (event) {
+        console.log("selectedNewImage:", selectedNewImage);
 
-            console.log("FILE INPUT CHANGED");
-            console.log("FILES:", event.target.files);
-
-            if (!event.target.files || event.target.files.length === 0) {
-                console.log("NO FILE SELECTED");
-                selectedNewImage = null;
-                return;
-            }
-
-            const file = event.target.files[0];
-
-            console.log("SELECTED FILE:", file);
-            console.log("NAME:", file.name);
-            console.log("TYPE:", file.type);
-            console.log("SIZE:", file.size);
-
-            const allowedTypes = [
-                "image/png",
-                "image/jpeg",
-                "image/webp"
-            ];
-
-            if (!allowedTypes.includes(file.type)) {
-                imageInput.value = "";
-                selectedNewImage = null;
-
-                showToast(
-                    "Use PNG, JPG or WebP.",
-                    "warn"
-                );
-
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-                imageInput.value = "";
-                selectedNewImage = null;
-
-                showToast(
-                    "Image must be 5MB or smaller.",
-                    "warn"
-                );
-
-                return;
-            }
-
-            selectedNewImage = {
-                file: file,
-                preview: URL.createObjectURL(file)
-            };
-
-            console.log(
-                "NEW IMAGE:",
-                selectedNewImage
-            );
-
-            renderImage();
-            markDirty();
-
-            showToast(
-                "New image selected. Click Update Product to save it.",
-                "success"
-            );
-        };
+        renderImage();
+        markDirty();
+        showToast("New image selected!", "success");
+        console.log("================================");
+      });
     }
 
-    form.addEventListener("submit", async e => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
       try {
         await saveProduct();
       } catch (error) {
         console.error(error);
-        showToast(error.message || "Unable to update product. Please try again.", "warn");
+        showToast(
+          error.message || "Unable to update product. Please try again.",
+          "warn",
+        );
       }
     });
 
     document.getElementById("saveDraftBtn")?.addEventListener("click", () => {
-      const draft = document.querySelector('input[name="publishStatus"][value="draft"]');
+      const draft = document.querySelector(
+        'input[name="publishStatus"][value="draft"]',
+      );
       if (draft) draft.checked = true;
       scheduledDate.style.display = "none";
       form.requestSubmit();
     });
 
-    deleteProductBtn.addEventListener("click", () => deleteModal.classList.add("show"));
-    cancelDelete.addEventListener("click", () => deleteModal.classList.remove("show"));
+    deleteProductBtn.addEventListener("click", () =>
+      deleteModal.classList.add("show"),
+    );
+    cancelDelete.addEventListener("click", () =>
+      deleteModal.classList.remove("show"),
+    );
     confirmDelete.addEventListener("click", async () => {
-      try { await deleteProduct(); }
-      catch (error) { console.error(error); deleteModal.classList.remove("show"); showToast(error.message || "Unable to delete product.", "warn"); }
+      try {
+        await deleteProduct();
+      } catch (error) {
+        console.error(error);
+        deleteModal.classList.remove("show");
+        showToast(error.message || "Unable to delete product.", "warn");
+      }
     });
 
     const backLink = form.querySelector(".ap-cancel-btn");
-    backLink?.addEventListener("click", e => {
+    backLink?.addEventListener("click", (e) => {
       if (!dirty) return;
       e.preventDefault();
       unsavedModal.classList.add("show");
     });
-    stayOnPage?.addEventListener("click", () => unsavedModal.classList.remove("show"));
-    leaveAnyway?.addEventListener("click", () => { dirty = false; window.location.href = "admin_product.html"; });
-    window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+    stayOnPage?.addEventListener("click", () =>
+      unsavedModal.classList.remove("show"),
+    );
+    leaveAnyway?.addEventListener("click", () => {
+      dirty = false;
+      window.location.href = "admin_product.html";
+    });
+    window.addEventListener("beforeunload", (e) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
 
     // Category creation uses the same API as Add Product.
     categorySelect.addEventListener("change", async () => {
       if (categorySelect.value !== "__add_category__") return;
       categorySelect.value = product ? String(product.category_id || "") : "";
       const modal = document.getElementById("addCategoryModal");
-      if (modal) { modal.removeAttribute("hidden"); modal.style.display = "flex"; }
+      if (modal) {
+        modal.removeAttribute("hidden");
+        modal.style.display = "flex";
+      }
     });
 
     const closeCategory = () => {
       const modal = document.getElementById("addCategoryModal");
-      if (modal) { modal.setAttribute("hidden", ""); modal.style.display = "none"; }
+      if (modal) {
+        modal.setAttribute("hidden", "");
+        modal.style.display = "none";
+      }
     };
-    document.getElementById("addCategoryClose")?.addEventListener("click", closeCategory);
-    document.getElementById("cancelCategoryBtn")?.addEventListener("click", closeCategory);
-    document.getElementById("saveCategoryBtn")?.addEventListener("click", async () => {
-      const input = document.getElementById("newCategoryName");
-      const errorEl = document.getElementById("newCategoryError");
-      const name = input.value.trim();
-      if (!name) { errorEl.textContent = "Category name is required."; return; }
-      try {
-        const response = await fetch(API_BASE + "/categories", {
-          method: "POST",
-          headers: { ...authHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify({ name })
-        });
-        const data = await responseJson(response);
-        await loadCategories(data.category.id);
-        closeCategory();
-        markDirty();
-        showToast(`Category "${data.category.name}" created!`, "success");
-      } catch (error) { errorEl.textContent = error.message; }
-    });
+    document
+      .getElementById("addCategoryClose")
+      ?.addEventListener("click", closeCategory);
+    document
+      .getElementById("cancelCategoryBtn")
+      ?.addEventListener("click", closeCategory);
+    document
+      .getElementById("saveCategoryBtn")
+      ?.addEventListener("click", async () => {
+        const input = document.getElementById("newCategoryName");
+        const errorEl = document.getElementById("newCategoryError");
+        const name = input.value.trim();
+        if (!name) {
+          errorEl.textContent = "Category name is required.";
+          return;
+        }
+        try {
+          const response = await fetch(API_BASE + "/categories", {
+            method: "POST",
+            headers: { ...authHeaders(), "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          const data = await responseJson(response);
+          await loadCategories(data.category.id);
+          closeCategory();
+          markDirty();
+          showToast(`Category "${data.category.name}" created!`, "success");
+        } catch (error) {
+          errorEl.textContent = error.message;
+        }
+      });
 
     // Variants are not persisted by this database schema. Keep the existing UI
     // visible, but never pretend that edits to it were saved to SQLite.
     if (variantsList && addVariantBtn) {
       const note = document.createElement("div");
       note.style.cssText = "margin-top:10px;font-size:12px;opacity:.7";
-      note.textContent = "Variants are not stored in the current product database, so they are not included in updates.";
+      note.textContent =
+        "Variants are not stored in the current product database, so they are not included in updates.";
       variantsList.parentElement?.appendChild(note);
       addVariantBtn.disabled = true;
-      addVariantBtn.title = "Variants are not supported by the current database schema";
+      addVariantBtn.title =
+        "Variants are not supported by the current database schema";
     }
   }
   console.log("IMAGE ELEMENT:", imageInput);
   console.log("CHOOSE BUTTON:", chooseImageBtn);
 
   if (imageInput) {
-      console.log("IMAGE INPUT TYPE:", imageInput.type);
-      console.log("IMAGE INPUT MULTIPLE:", imageInput.multiple);
-      console.log("IMAGE INPUT ACCEPT:", imageInput.accept);
+    console.log("IMAGE INPUT TYPE:", imageInput.type);
+    console.log("IMAGE INPUT MULTIPLE:", imageInput.multiple);
+    console.log("IMAGE INPUT ACCEPT:", imageInput.accept);
   }
 
   setupEvents();
