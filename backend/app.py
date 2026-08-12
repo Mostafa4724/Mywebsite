@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash
 from models import User
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from config import Config
+import sqlite3
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
@@ -84,7 +85,7 @@ def uploaded_file(filename):
 from flask import send_from_directory
 
 
-import sqlite3
+
 
 from categories import categories_bp
 

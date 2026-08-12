@@ -1459,7 +1459,7 @@ if (typeof setupPromoCode === "function") {
     uploadArea.addEventListener('click', (e) => {
       if (e.target.closest('.preview-remove') || e.target.closest('.preview-add-more')) return;
       if (uploadedImages.length >= MAX_IMAGES) return;
-      imageInput.click();
+      
     });
 
     uploadArea.addEventListener('dragover', (e) => {
@@ -1545,7 +1545,7 @@ if (typeof setupPromoCode === "function") {
         '<span>Add More</span>';
       addMore.addEventListener('click', (e) => {
         e.stopPropagation();
-        imageInput.click();
+        
       });
       previewGrid.appendChild(addMore);
     }
