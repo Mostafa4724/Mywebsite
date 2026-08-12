@@ -480,24 +480,14 @@ def create_order():
 
         db.session.add(
             OrderItem(
-
                 order_id=order.id,
-
                 product_id=product.id,
-
                 product_name=product.title,
 
+                # SAVE THE PRODUCT IMAGE INTO THE ORDER ITEM
+                image=product.image,
+
                 quantity=qty,
-
-                original_price=original_price,
-
-                sale_price=sale_price,
-
-                unit_price=unit_price,
-
-                discount=line_discount,
-
-                total=line_total,
             )
         )
 

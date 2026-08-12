@@ -108,6 +108,48 @@
     },
   ];
 
+  function getProductImage(image, productId) {
+
+      if (image) {
+
+          var imagePath = String(image).trim();
+
+          // Already a complete URL
+          if (
+              imagePath.startsWith("http://") ||
+              imagePath.startsWith("https://")
+          ) {
+              return imagePath;
+          }
+
+          // Already contains uploads path
+          if (
+              imagePath.startsWith("/uploads/")
+          ) {
+              return API_BASE + imagePath;
+          }
+
+          if (
+              imagePath.startsWith("uploads/")
+          ) {
+              return API_BASE + "/" + imagePath;
+          }
+
+          // Only filename
+          return (
+              API_BASE +
+              "/uploads/products/" +
+              imagePath
+          );
+      }
+
+      // Fallback image
+      return (
+          "https://picsum.photos/seed/ord" +
+          (productId || "product") +
+          "/200/200.jpg"
+      );
+  }
 
   function esc(s) {
 
@@ -390,22 +432,20 @@
         h += '<div class="oc-item">';
 
         h +=
-          '<div class="oc-item-img"><img src="' +
-          (
-            item.image
-              ? API_BASE +
-                "/uploads/products/" +
-                item.image
-              : "https://picsum.photos/seed/ord" +
-                (
-                  item.product_id ||
-                  item.id
-                ) +
-                "/200/200.jpg"
-          ) +
-          '" alt="' +
-          esc(item.product_name) +
-          '" /></div>';
+          '<div class="oc-item-img">' +
+            '<img src="' +
+              API_BASE +
+              '/uploads/products/' +
+              encodeURIComponent(item.image) +
+              '" alt="' +
+              esc(
+                display(
+                  item.product_name,
+                  "Product"
+                )
+              ) +
+              '" />' +
+          '</div>';
 
         h +=
           '<div class="oc-item-info">' +
@@ -851,6 +891,7 @@
       );
     }
   }
+
 
 
   if (

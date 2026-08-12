@@ -597,10 +597,13 @@ class OrderItem(db.Model):
         db.Integer
     )
 
-    # Snapshot of product at purchase time
-
     product_name = db.Column(
         db.String(200)
+    )
+
+    # ADD THIS
+    image = db.Column(
+        db.String(500)
     )
 
     quantity = db.Column(
@@ -645,6 +648,9 @@ class OrderItem(db.Model):
 
             "product_name": self.product_name,
 
+            # ADD THIS
+            "image": self.image,
+
             "quantity": self.quantity,
 
             "original_price": self.original_price,
@@ -656,5 +662,4 @@ class OrderItem(db.Model):
             "discount": self.discount,
 
             "total": self.total,
-
         }
