@@ -350,6 +350,10 @@ def edit_product(id):
     product.sale_badge_color = (value("sale_badge_color", product.sale_badge_color) or "").strip() or None
     product.tags = (value("tags", product.tags) or "").strip()
 
+    print("========== IMAGE DEBUG ==========")
+    print("FILES:", request.files)
+    print("IMAGE:", request.files.get("image"))
+
     image = request.files.get("image")
     if image and image.filename:
         allowed = {"png", "jpg", "jpeg", "webp"}
