@@ -502,15 +502,26 @@
     // IMAGE
     // ========================================
 
-    console.log("selectedNewImage:", selectedNewImage);
+  console.log("========== IMAGE BEFORE UPLOAD ==========");
+  console.log("selectedNewImage:", selectedNewImage);
+  console.log("imageInput:", imageInput);
+  console.log("imageInput.files:", imageInput ? imageInput.files : null);
+  console.log(
+    "imageInput.files[0]:",
+    imageInput && imageInput.files ? imageInput.files[0] : null
+  );
 
-    if (selectedNewImage && selectedNewImage.file instanceof File) {
-      console.log("Uploading new image:", selectedNewImage.file.name);
+  if (selectedNewImage && selectedNewImage.file instanceof File) {
+    console.log("✅ Uploading:", selectedNewImage.file.name);
 
-      body.append("image", selectedNewImage.file, selectedNewImage.file.name);
-    } else {
-      console.log("No new image selected. Keeping existing image.");
-    }
+    body.append(
+        "image",
+        selectedNewImage.file,
+        selectedNewImage.file.name
+    );
+  } else {
+    console.log("❌ selectedNewImage is empty");
+  }
 
     // ========================================
     // DEBUG FORMDATA
