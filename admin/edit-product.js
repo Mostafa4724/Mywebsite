@@ -89,14 +89,19 @@
       return value;
     }
 
+    let url;
     // Backend stores either:
     // filename
     // /uploads/products/filename
     if (value.startsWith("/uploads/products/")) {
-      return API_BASE + value;
+      url = API_BASE + value;
+    } else {
+      url = API_BASE + "/uploads/products/" + encodeURIComponent(value);
     }
 
-    return API_BASE + "/uploads/products/" + encodeURIComponent(value);
+    // Add cache-busting timestamp to force the browser to fetch
+    // the updated image from the server instead of using a cached old one.
+    return url + "?v=" + Date.now();
   }
 
   async function responseJson(response) {
