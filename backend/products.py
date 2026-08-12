@@ -366,9 +366,25 @@ def edit_product(id):
         image.seek(0)
         if size > 5 * 1024 * 1024:
             return jsonify(success=False, message="Image must be 5MB or smaller."), 400
+
         stored_name = f"{uuid.uuid4()}_{filename}"
-        image.save(os.path.join(current_app.config["UPLOAD_FOLDER"], stored_name))
+
+        image_path = os.path.join(
+        current_app.config["UPLOAD_FOLDER"],
+        stored_name
+        )
+
+        image.save(image_path)
+
         product.image = stored_name
+
+        print("========== NEW IMAGE ==========")
+        print("Original filename:", image.filename)
+        print("Stored filename:", stored_name)
+        print("Image path:", image_path)
+        print("File exists:", os.path.exists(image_path))
+        print("Product image:", product.image)
+        print("================================")
     # If no new image was supplied, the existing image remains untouched.
 
     db.session.commit()
