@@ -1637,6 +1637,7 @@
 
 /* ===== Visually Hidden File Input ===== */
 /* MUST NOT use display: none, otherwise browser security blocks the file change event from firing */
+/* MUST use pointer-events: none, otherwise the invisible input intercepts mouse clicks and triggers the dialog twice */
 #imageInput {
   position: absolute;
   width: 1px;
@@ -1647,4 +1648,5 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+  pointer-events: none; 
 }
