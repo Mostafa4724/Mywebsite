@@ -351,17 +351,6 @@
                 </div>
               </div>
             </div>
-            <div class="vo-card">
-              <div class="vo-card-head"><h3>Shipping Address</h3></div>
-              <div class="vo-address-block">
-                <p class="vo-address-name">John Doe</p>
-                <p>742 Evergreen Terrace</p>
-                <p>Apt 4B</p>
-                <p>Springfield, IL 62704</p>
-                <p>United States</p>
-              </div>
-            </div>
-
             <div class="vo-map-card">
               <div class="vo-card-head">
                 <h3>Delivery Location</h3>
@@ -421,10 +410,6 @@
                 <div class="vo-payment-row">
                   <span>Status</span><span class="vo-payment-paid">Paid</span>
                 </div>
-                <div class="vo-payment-row">
-                  <span>Transaction ID</span
-                  ><span class="vo-mono">TXN-8F3A92BC</span>
-                </div>
               </div>
             </div>
             <div class="vo-card">
@@ -453,9 +438,6 @@
               Back to Orders
             </a>
             <button type="button" id="printBtn">Print Order</button>
-          </div>
-          <div class="vo-bottom-right">
-            <button type="button" id="refundBtn">Issue Refund</button>
           </div>
         </div>
       </div>
@@ -618,45 +600,6 @@
             id="statusModalConfirm"
           >
             Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="vo-modal-overlay" id="refundModal">
-      <div class="vo-modal">
-        <div class="vo-modal-icon vo-modal-icon-danger">
-          <svg
-            width="36"
-            height="36"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-        </div>
-        <h3>Issue Refund?</h3>
-        <p>
-          This will process a full refund of
-          <strong id="refundAmount">$214.91</strong> to the buyer's original
-          payment method. This action cannot be easily undone.
-        </p>
-        <div class="vo-modal-actions">
-          <button type="button" class="vo-modal-cancel" id="refundModalCancel">
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="vo-modal-confirm vo-modal-confirm-danger"
-            id="refundModalConfirm"
-          >
-            Yes, Issue Refund
           </button>
         </div>
       </div>
