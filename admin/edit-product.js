@@ -544,12 +544,16 @@
 
     console.log("====================================");
 
-    // ========================================
+        // ========================================
     // SEND UPDATE
     // ========================================
 
+    // Browsers handle multipart/form-data flawlessly on POST,
+    // but Flask/Werkzeug historically drops files on PUT requests.
+    body.append("_method", "PUT");
+
     const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
-      method: "PUT",
+      method: "POST", 
       headers: authHeaders(),
       body: body,
     });

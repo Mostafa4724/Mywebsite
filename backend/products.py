@@ -226,7 +226,7 @@ def add_product():
 
     })
 
-@products_bp.route("/admin/products/<int:id>", methods=["PUT"])
+@products_bp.route("/admin/products/<int:id>", methods=["PUT", "POST"])
 @admin_required
 def edit_product(id):
     """Update a product using the same database model used by Add Product."""
