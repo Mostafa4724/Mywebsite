@@ -10,6 +10,7 @@
   const previewGrid = document.getElementById("previewGrid");
   const uploadPlaceholder = document.getElementById("uploadPlaceholder");
   const uploadArea = document.getElementById("uploadArea");
+  const chooseImageBtn = document.getElementById("chooseImageBtn");
   const saleToggle = document.getElementById("saleToggle");
   const saleOverlay = document.getElementById("saleOverlay");
   const saleFields = document.getElementById("saleFields");
@@ -79,7 +80,6 @@
   }
 
   function imageUrl(value) {
-<<<<<<< HEAD
       if (!value) return "";
 
       // Already a complete URL
@@ -95,15 +95,6 @@
       }
 
       return API_BASE + "/uploads/products/" + encodeURIComponent(value);
-=======
-    if (!value) return "";
-    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
-<<<<<<< HEAD
-=======
-    if (value.startsWith("/uploads/products/")) return API_BASE + value;
->>>>>>> 816d4a7ea74c36cd6a3139d69555a097bc439156
-    return API_BASE + "/uploads/products/" + encodeURIComponent(value);
->>>>>>> 0c0898d29e6a44129849ef258efca1096ac7c268
   }
 
   async function responseJson(response) {
@@ -319,33 +310,9 @@
   }
 
   async function saveProduct() {
-<<<<<<< HEAD
       const name = document.getElementById("prodName").value.trim();
       const description = document.getElementById("prodDesc").value.trim();
       const categoryId = categorySelect.value;
-=======
-<<<<<<< HEAD
-    const name = document.getElementById("prodName").value.trim();
-    const description = document.getElementById("prodDesc").value.trim();
-    const categoryId = categorySelect.value;
-    const price = Number(priceInput.value);
-    const stock = Number(document.getElementById("prodStock").value);
-    const lowStock = Number(document.getElementById("prodLowStock").value || 0);
-    const salePrice = salePriceField.value === "" ? null : Number(salePriceField.value);
-    const selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
-    const selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
-=======
-    var name = document.getElementById("prodName").value.trim();
-    var description = document.getElementById("prodDesc").value.trim();
-    var categoryId = categorySelect.value;
-    var price = Number(priceInput.value);
-    var stock = Number(document.getElementById("prodStock").value);
-    var lowStock = Number(document.getElementById("prodLowStock").value || 0);
-    var salePrice = salePriceField.value === "" ? null : Number(salePriceField.value);
-    var selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
-    var selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
->>>>>>> 816d4a7ea74c36cd6a3139d69555a097bc439156
->>>>>>> 0c0898d29e6a44129849ef258efca1096ac7c268
 
       const price = Number(priceInput.value);
       const stock = Number(document.getElementById("prodStock").value);
@@ -353,52 +320,10 @@
           document.getElementById("prodLowStock").value || 0
       );
 
-<<<<<<< HEAD
       const salePrice =
           salePriceField.value === ""
               ? null
               : Number(salePriceField.value);
-=======
-<<<<<<< HEAD
-    const categoryOption = categorySelect.options[categorySelect.selectedIndex];
-    const body = new FormData();
-    body.append("title", name);
-    body.append("description", description);
-    body.append("brand", document.getElementById("prodBrand").value.trim());
-    body.append("category_id", categoryId);
-    body.append("category", categoryOption ? categoryOption.textContent : "");
-    body.append("price", String(price));
-    body.append("cost", String(Number(costInput.value) || 0));
-    body.append("tax_class", document.getElementById("prodTax").value || "standard");
-    body.append("stock", String(stock));
-    body.append("low_stock", String(lowStock));
-    body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
-    body.append("status", selectedStatus ? selectedStatus.value : "draft");
-    body.append("scheduled_date", selectedStatus && selectedStatus.value === "scheduled" ? (scheduleDate.value || "") : "");
-    body.append("sale_enabled", saleToggle.checked ? "true" : "false");
-    body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
-    body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
-    body.append("sale_end", saleToggle.checked ? saleEndDate.value : "");
-    body.append("sale_badge", saleBadge.value.trim());
-    body.append("sale_badge_color", selectedSaleColor);
-    body.append("tags", currentTags.join(","));
-    if (selectedNewImage) body.append("image", selectedNewImage.file);
-
-    // Do not set Content-Type manually for FormData. The browser must add
-    // the multipart boundary itself; setting application/json here causes
-    // the backend to reject the request with HTTP 415.
-    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body
-    });
-    const data = await responseJson(response);
-    fillForm(data.product);
-    showToast("Product updated successfully!", "success");
-    setTimeout(() => { window.location.href = "admin_product.html"; }, 700);
-=======
-    var categoryOption = categorySelect.options[categorySelect.selectedIndex];
->>>>>>> 0c0898d29e6a44129849ef258efca1096ac7c268
 
       const selectedStatus = document.querySelector(
           'input[name="publishStatus"]:checked'
@@ -420,7 +345,6 @@
           throw new Error("Description is required.");
       }
 
-<<<<<<< HEAD
       if (!categoryId || categoryId === "__add_category__") {
           throw new Error("Please select a category.");
       }
@@ -659,12 +583,6 @@
       setTimeout(() => {
           window.location.href = "admin_product.html";
       }, 700);
-=======
-    fillForm(data.product);
-    showToast("Product updated successfully!", "success");
-    setTimeout(function () { window.location.href = "admin_product.html"; }, 700);
->>>>>>> 816d4a7ea74c36cd6a3139d69555a097bc439156
->>>>>>> 0c0898d29e6a44129849ef258efca1096ac7c268
   }
 
   async function deleteProduct() {
@@ -701,39 +619,9 @@
       scheduledDate.style.display = r.value === "scheduled" && r.checked ? "block" : "none";
     }));
 
-<<<<<<< HEAD
     document.querySelectorAll('input[name="stockStatus"]').forEach(r => r.addEventListener("change", () => {
       document.querySelectorAll(".ap-stock-chip").forEach(c => c.classList.toggle("active", c.dataset.stock === r.value && r.checked));
     }));
-=======
-<<<<<<< HEAD
-    uploadArea.addEventListener("click", e => {
-      // Only open the native file picker for a real user click.  Programmatic
-      // clicks (for example during image preview rendering) are ignored.
-      if (e.isTrusted && !e.target.closest("button")) imageInput.click();
-    });
-    imageInput.addEventListener("change", () => {
-      const file = imageInput.files && imageInput.files[0];
-      if (!file) return;
-      if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return showToast("Use PNG, JPG or WebP.", "warn");
-      if (file.size > 5 * 1024 * 1024) return showToast("Image must be 5MB or smaller.", "warn");
-      const reader = new FileReader();
-      reader.onload = e => {
-        selectedNewImage = { file, preview: e.target.result };
-        renderImage();
-        markDirty();
-      };
-      reader.readAsDataURL(file);
-    });
-=======
-    document.querySelectorAll('input[name="stockStatus"]').forEach(function (r) {
-      r.addEventListener("change", function () {
-        document.querySelectorAll(".ap-stock-chip").forEach(function (c) {
-          c.classList.toggle("active", c.dataset.stock === r.value && r.checked);
-        });
-      });
-    });
->>>>>>> 0c0898d29e6a44129849ef258efca1096ac7c268
 
     tagInput.addEventListener("keydown", e => {
       if (e.key === "Enter" || e.key === ",") {
@@ -834,7 +722,6 @@
             );
         };
     }
->>>>>>> 816d4a7ea74c36cd6a3139d69555a097bc439156
 
     form.addEventListener("submit", async e => {
       e.preventDefault();
