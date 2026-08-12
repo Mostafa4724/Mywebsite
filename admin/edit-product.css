@@ -871,24 +871,23 @@
 }
 
 .sale-discount-preview {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-  }
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+}
 
-  .discount-circle {
-    width: 64px;
-    height: 64px;
-  }
+.discount-circle {
+  width: 64px;
+  height: 64px;
+}
 
-  .discount-pct {
-    font-size: 1.15rem;
-  }
+.discount-pct {
+  font-size: 1.15rem;
+}
 
-  .discount-details {
-    width: 100%;
-  }
-
+.discount-details {
+  width: 100%;
+}
 
 .discount-row {
   display: flex;
@@ -1632,5 +1631,188 @@
 
   .ep-modal-actions {
     flex-direction: column;
+  }
+}
+
+/* ================================================================
+   IMAGE EDIT — additional styles for edit-product image system
+   Works with the unmodified HTML elements:
+     #imageInput, #previewGrid, #chooseImageBtn, #uploadPlaceholder
+   ================================================================ */
+
+/* ── Utility: JS toggles this to hide/show elements ── */
+.ap-hidden {
+  display: none !important;
+}
+
+/* ── Hide the raw <input type="file"> completely ── */
+.ap-upload-area > input[type="file"] {
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+
+/* ── When preview is visible, remove the dashed border/padding ── */
+.ap-upload-area:has(.ap-preview-grid:not(.ap-hidden)) {
+  padding: 20px;
+  border-color: #e2e8f0;
+  border-style: solid;
+  background: #f8fafc;
+  display: block;
+}
+
+.ap-upload-area:has(.ap-preview-grid:not(.ap-hidden)):hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+/* ── "Choose Image" button (existing HTML element, unstyled by default) ── */
+#chooseImageBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px 20px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#chooseImageBtn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+#chooseImageBtn:active {
+  transform: scale(0.98);
+}
+
+/* Show only when JS removes .ap-hidden */
+#chooseImageBtn:not(.ap-hidden) {
+  display: flex;
+}
+
+/* ── Preview grid visibility toggle ── */
+.ap-preview-grid.ap-hidden {
+  display: none !important;
+}
+
+/* ── Override the "Main" ::after label when edit-page labels are present ── */
+.ap-preview-item:has(.ap-preview-label)::after {
+  display: none;
+}
+
+/* ── Label badge on preview (Current / New) — built by JS ── */
+.ap-preview-label {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ap-preview-label-current {
+  background: rgba(15, 23, 36, 0.7);
+  color: #fff;
+}
+
+.ap-preview-label-new {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* ── Remove button for newly-picked image (red X, top-right) ── */
+.ap-preview-item > .ap-preview-remove {
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s ease;
+  z-index: 3;
+  backdrop-filter: none;
+}
+
+.ap-preview-item:hover > .ap-preview-remove {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ap-preview-item > .ap-preview-remove:hover {
+  background: #dc2626;
+  transform: scale(1.1) !important;
+}
+
+.ap-preview-item > .ap-preview-remove:active {
+  transform: scale(0.95) !important;
+}
+
+/* ── Make placeholder clickable when no image ── */
+#uploadPlaceholder {
+  cursor: pointer;
+  min-height: 200px;
+  padding: 32px 20px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+#uploadPlaceholder:hover .upload-icon {
+  color: #64748b;
+}
+
+/* ── Drag-over visual on the upload area ── */
+.ap-upload-area.ap-upload-dragover {
+  border-color: #2563eb !important;
+  border-style: dashed !important;
+  background: #eff6ff !important;
+}
+
+.ap-upload-area.ap-upload-dragover .upload-icon {
+  color: #2563eb;
+}
+
+/* ── Responsive adjustments for edit image ── */
+@media (max-width: 768px) {
+  .ap-upload-area:has(.ap-preview-grid:not(.ap-hidden)) {
+    padding: 14px;
+  }
+
+  .ap-preview-grid:not(.ap-hidden) {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+  }
+
+  #uploadPlaceholder {
+    min-height: 160px;
+    padding: 24px 16px;
   }
 }
