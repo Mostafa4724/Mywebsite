@@ -678,7 +678,6 @@
     // Choose Image button
     if (chooseImageBtn) {
         chooseImageBtn.addEventListener("click", function (e) {
-            e.preventDefault();
             e.stopPropagation();
 
             console.log("Opening file picker...");
@@ -692,6 +691,15 @@
 
             // Don't open picker twice when clicking the button
             if (e.target.closest("#chooseImageBtn")) {
+                return;
+            }
+
+            // CRITICAL FIX: Prevent the infinite loop!
+            // When imageInput.click() is called, it generates a synthetic click event 
+            // that bubbles up to this uploadArea listener. If we don't catch it here,
+            // it will call imageInput.click() again infinitely, which exhausts the 
+            // browser's "user activation" token and silently blocks the file dialog.
+            if (e.target === imageInput) {
                 return;
             }
 
