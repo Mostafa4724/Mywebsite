@@ -664,51 +664,84 @@
     // IMAGE PICKER
     // ========================================
 
-    if (chooseImageBtn && imageInput) {
-      chooseImageBtn.addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
+    if (imageInput) {
 
-        console.log("========== CHOOSE IMAGE CLICK ==========");
+    // Choose Image button
+    if (chooseImageBtn) {
+        chooseImageBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
 
-        // Make sure the input is enabled
-        imageInput.disabled = false;
+            console.log("Opening file picker...");
+            imageInput.click();
+        });
+    }
 
-        // Open Windows file picker
-        imageInput.click();
-      });
+    // Upload area
+    if (uploadArea) {
+        uploadArea.addEventListener("click", function (e) {
 
-      imageInput.addEventListener("change", function (event) {
-        console.log("========== IMAGE INPUT CHANGE ==========");
+            // Don't open picker twice when clicking the button
+            if (e.target.closest("#chooseImageBtn")) {
+                return;
+            }
 
-        const files = event.target.files;
-        console.log("Files:", files);
-        console.log("Number of files:", files ? files.length : 0);
+            console.log("Upload area clicked...");
+            imageInput.click();
+        });
+    }
 
-        if (!files || files.length === 0) {
-          console.log("❌ NO FILE SELECTED");
-          return;
+    // File selected
+    imageInput.addEventListener("change", function (e) {
+
+        console.log("========== FILE CHANGE ==========");
+
+        const file = e.target.files?.[0];
+
+        console.log("Selected file:", file);
+
+        if (!file) {
+            console.log("❌ No file selected");
+            return;
         }
-
-        const file = files[0];
 
         console.log("✅ FILE SELECTED");
         console.log("Name:", file.name);
         console.log("Type:", file.type);
         console.log("Size:", file.size);
 
+        // Check file type
+        const allowedTypes = [
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            showToast("Please select PNG, JPG, or WEBP image.", "warn");
+
+            imageInput.value = "";
+            return;
+        }
+
+        // Remove old preview URL if necessary
+        if (selectedNewImage?.preview) {
+            URL.revokeObjectURL(selectedNewImage.preview);
+        }
+
         selectedNewImage = {
-          file: file,
-          preview: URL.createObjectURL(file)
+            file: file,
+            preview: URL.createObjectURL(file)
         };
 
         console.log("selectedNewImage:", selectedNewImage);
 
         renderImage();
         markDirty();
+
         showToast("New image selected successfully!", "success");
-      });
-    }
+    });
+  }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
