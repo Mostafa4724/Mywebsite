@@ -56,7 +56,8 @@ UPLOAD_FOLDER = os.path.join(
 
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
+if not os.access(UPLOAD_FOLDER, os.W_OK):
+    print(f"WARNING: Upload folder {UPLOAD_FOLDER} is not writable!")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH}"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
