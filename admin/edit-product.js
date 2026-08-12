@@ -80,10 +80,21 @@
   }
 
   function imageUrl(value) {
-    if (!value) return "";
-    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
-    if (value.startsWith("/uploads/products/")) return API_BASE + value;
-    return API_BASE + "/uploads/products/" + encodeURIComponent(value);
+      if (!value) return "";
+
+      // Already a complete URL
+      if (/^https?:\/\//i.test(value) || value.startsWith("data:")) {
+          return value;
+      }
+
+      // Backend stores either:
+      // filename
+      // /uploads/products/filename
+      if (value.startsWith("/uploads/products/")) {
+          return API_BASE + value;
+      }
+
+      return API_BASE + "/uploads/products/" + encodeURIComponent(value);
   }
 
   async function responseJson(response) {
@@ -133,7 +144,7 @@
       el.textContent = tag;
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = "\u00d7";
+      button.textContent = "×";
       button.addEventListener("click", () => {
         currentTags.splice(index, 1);
         renderTags();
@@ -148,137 +159,50 @@
     const tag = String(value || "").trim().replace(/,$/, "");
     if (!tag) return;
     if (currentTags.includes(tag)) return;
-    if (currentTags.length >= 10) { showToast("Maximum 10 tags allowed", "warn"); return; }
+    if (currentTags.length >= 10) {
+      showToast("Maximum 10 tags allowed", "warn");
+      return;
+    }
     currentTags.push(tag);
     renderTags();
     markDirty();
   }
 
-  // ================================================================
-  //  IMAGE RENDERING
-  //  Since we cannot change the HTML, we control visibility of the
-  //  existing elements (#imageInput, #chooseImageBtn,
-  //  #uploadPlaceholder, #previewGrid) entirely via JS classList.
-  //
-  //  Three states:
-  //    1. No image        → placeholder visible, btn hidden, grid hidden
-  //    2. Current DB image → placeholder hidden, btn visible, grid visible
-  //    3. New image picked → placeholder hidden, btn visible, grid visible
-  //       (grid item gets an X remove button to revert to state 2)
-  // ================================================================
-
   function renderImage() {
     previewGrid.innerHTML = "";
-
-    var hasNewImage = selectedNewImage && selectedNewImage.file instanceof File;
-    var hasCurrentImage = Boolean(currentImage);
-    var src = hasNewImage ? selectedNewImage.preview : hasCurrentImage ? imageUrl(currentImage) : "";
-
+    const src = selectedNewImage ? selectedNewImage.preview : imageUrl(currentImage);
     if (!src) {
-      // State 1: no image
-      uploadPlaceholder.classList.remove("ap-hidden");
-      chooseImageBtn.classList.add("ap-hidden");
-      previewGrid.classList.add("ap-hidden");
+      previewGrid.style.display = "none";
+      uploadPlaceholder.style.display = "flex";
       return;
     }
-
-    // State 2 or 3: image exists
-    uploadPlaceholder.classList.add("ap-hidden");
-    chooseImageBtn.classList.remove("ap-hidden");
-    previewGrid.classList.remove("ap-hidden");
-
-    var item = document.createElement("div");
+    uploadPlaceholder.style.display = "none";
+    previewGrid.style.display = "grid";
+    const item = document.createElement("div");
     item.className = "ap-preview-item";
-
-    var img = document.createElement("img");
+    const img = document.createElement("img");
     img.src = src;
     img.alt = "Product image";
     item.appendChild(img);
-
-    // Label badge
-    var label = document.createElement("span");
-    label.className = "ap-preview-label";
-    if (hasNewImage) {
-      label.classList.add("ap-preview-label-new");
-      label.textContent = "New image";
-    } else {
-      label.classList.add("ap-preview-label-current");
-      label.textContent = "Current image";
-    }
+    const label = document.createElement("span");
+    label.style.cssText = "position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px";
+    label.textContent = selectedNewImage ? "New image" : "Current image";
     item.appendChild(label);
-
-    // Remove button — only for newly picked images (reverts to DB image)
-    if (hasNewImage) {
-      var removeBtn = document.createElement("button");
-      removeBtn.type = "button";
-      removeBtn.className = "ap-preview-remove";
-      removeBtn.title = "Remove new image";
-      removeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      removeBtn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        removeNewImage();
-      });
-      item.appendChild(removeBtn);
-    }
-
     previewGrid.appendChild(item);
   }
 
-  function removeNewImage() {
-    if (selectedNewImage && selectedNewImage.preview) {
-      URL.revokeObjectURL(selectedNewImage.preview);
-    }
-    selectedNewImage = null;
-    imageInput.value = "";
-    renderImage();
-    markDirty();
-    showToast("New image removed. Current image will be kept.", "success");
-  }
-
-  function openFilePicker() {
-    imageInput.value = "";
-    imageInput.click();
-  }
-
-  function processSelectedFile(file) {
-    if (!file) { selectedNewImage = null; return; }
-
-    var allowedTypes = ["image/png", "image/jpeg", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      showToast("Use PNG, JPG or WebP.", "warn");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("Image must be 5MB or smaller.", "warn");
-      return;
-    }
-
-    if (selectedNewImage && selectedNewImage.preview) {
-      URL.revokeObjectURL(selectedNewImage.preview);
-    }
-
-    selectedNewImage = {
-      file: file,
-      preview: URL.createObjectURL(file)
-    };
-
-    renderImage();
-    markDirty();
-    showToast("New image selected. Click Update Product to save it.", "success");
-  }
-
   function updateSalePreview() {
-    var regular = Number(priceInput.value) || 0;
-    var sale = Number(salePriceField.value) || 0;
-    var valid = sale > 0 && sale < regular;
+    const regular = Number(priceInput.value) || 0;
+    const sale = Number(salePriceField.value) || 0;
+    const valid = sale > 0 && sale < regular;
     if (discountPreview) {
       discountPreview.style.display = valid && saleToggle.checked ? "flex" : "none";
       if (valid) {
-        var pct = Math.round(((regular - sale) / regular) * 100);
-        var p = document.getElementById("discountPct");
-        var r = document.getElementById("discRegular");
-        var s = document.getElementById("discSale");
-        var save = document.getElementById("discSave");
+        const pct = Math.round(((regular - sale) / regular) * 100);
+        const p = document.getElementById("discountPct");
+        const r = document.getElementById("discRegular");
+        const s = document.getElementById("discSale");
+        const save = document.getElementById("discSave");
         if (p) p.textContent = pct + "%";
         if (r) r.textContent = "$" + regular.toFixed(2);
         if (s) s.textContent = "$" + sale.toFixed(2);
@@ -286,9 +210,9 @@
       }
     }
     if (saleBadgePreview) saleBadgePreview.style.display = valid && saleToggle.checked ? "block" : "none";
-    var mockBadge = document.getElementById("mockBadge");
-    var mockRegular = document.getElementById("mockRegular");
-    var mockSalePrice = document.getElementById("mockSalePrice");
+    const mockBadge = document.getElementById("mockBadge");
+    const mockRegular = document.getElementById("mockRegular");
+    const mockSalePrice = document.getElementById("mockSalePrice");
     if (mockBadge) {
       mockBadge.textContent = (saleBadge.value.trim() || "SALE").toUpperCase();
       mockBadge.style.background = selectedSaleColor;
@@ -305,17 +229,17 @@
   }
 
   function updateProfit() {
-    var price = Number(priceInput.value) || 0;
-    var cost = Number(costInput.value) || 0;
-    var box = document.getElementById("profitCalc");
+    const price = Number(priceInput.value) || 0;
+    const cost = Number(costInput.value) || 0;
+    const box = document.getElementById("profitCalc");
     if (!box) return;
     if (cost > 0) {
       box.style.display = "flex";
-      var profit = price - cost;
-      var margin = price ? (profit / price) * 100 : 0;
+      const profit = price - cost;
+      const margin = price ? (profit / price) * 100 : 0;
       document.getElementById("profitValue").textContent = "$" + profit.toFixed(2);
       document.getElementById("marginValue").textContent = margin.toFixed(1) + "%";
-    } else { box.style.display = "none"; }
+    } else box.style.display = "none";
   }
 
   function fillForm(p) {
@@ -329,25 +253,20 @@
     document.getElementById("prodStock").value = p.stock ?? 0;
     document.getElementById("prodLowStock").value = p.low_stock ?? 10;
 
-    var status = document.querySelector('input[name="publishStatus"][value="' + CSS.escape(p.status || "draft") + '"]');
+    const status = document.querySelector(`input[name="publishStatus"][value="${CSS.escape(p.status || "draft")}"]`);
     if (status) status.checked = true;
     if (p.status === "scheduled") scheduledDate.style.display = "block";
     if (scheduleDate) scheduleDate.value = toDateTimeLocal(p.scheduled_date);
 
-    var stockStatus = p.stock_status || (Number(p.stock) <= 0 ? "out" : Number(p.stock) <= Number(p.low_stock || 0) ? "low" : "in");
-    var stockRadio = document.querySelector('input[name="stockStatus"][value="' + CSS.escape(stockStatus) + '"]');
+    const stockStatus = p.stock_status || (Number(p.stock) <= 0 ? "out" : Number(p.stock) <= Number(p.low_stock || 0) ? "low" : "in");
+    const stockRadio = document.querySelector(`input[name="stockStatus"][value="${CSS.escape(stockStatus)}"]`);
     if (stockRadio) stockRadio.checked = true;
-    document.querySelectorAll(".ap-stock-chip").forEach(function (chip) {
-      chip.classList.toggle("active", chip.dataset.stock === stockStatus);
-    });
+    document.querySelectorAll(".ap-stock-chip").forEach(chip => chip.classList.toggle("active", chip.dataset.stock === stockStatus));
 
     currentTags = parseTags(p.tags);
     renderTags();
-
-    // Reset image state
     currentImage = p.image || "";
     selectedNewImage = null;
-    imageInput.value = "";
     renderImage();
 
     salePriceField.value = p.sale_price ?? "";
@@ -355,17 +274,15 @@
     saleEndDate.value = toDateTimeLocal(p.sale_end);
     saleBadge.value = p.sale_badge || "";
     selectedSaleColor = p.sale_badge_color || "#ef4444";
-    document.querySelectorAll(".sale-color-btn").forEach(function (btn) {
-      btn.classList.toggle("active", btn.dataset.color === selectedSaleColor);
-    });
+    document.querySelectorAll(".sale-color-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.color === selectedSaleColor));
     setSaleState(Boolean(p.sale_enabled));
 
-    var idStrong = document.querySelector(".ep-id-chip strong");
+    const idStrong = document.querySelector(".ep-id-chip strong");
     if (idStrong) idStrong.textContent = "#" + p.id;
-    var created = document.querySelector(".ep-created-date");
-    if (created) created.textContent = "Created: " + (p.created_at ? new Date(p.created_at).toLocaleDateString() : "\u2014");
-    var modified = document.getElementById("lastModified");
-    if (modified) modified.textContent = p.updated_at ? new Date(p.updated_at).toLocaleString() : "\u2014";
+    const created = document.querySelector(".ep-created-date");
+    if (created) created.textContent = "Created: " + (p.created_at ? new Date(p.created_at).toLocaleDateString() : "—");
+    const modified = document.getElementById("lastModified");
+    if (modified) modified.textContent = p.updated_at ? new Date(p.updated_at).toLocaleString() : "—";
     deleteProductName.textContent = p.title || "this product";
 
     updateProfit();
@@ -374,16 +291,16 @@
   }
 
   async function loadProduct() {
-    var params = new URLSearchParams(window.location.search);
-    var rawId = params.get("id");
+    const params = new URLSearchParams(window.location.search);
+    const rawId = params.get("id");
     productId = Number(rawId);
     if (!rawId || !Number.isInteger(productId) || productId <= 0) {
       setPageError("Product not found.");
       return;
     }
     try {
-      var response = await fetch(API_BASE + "/products/" + productId);
-      var data = await responseJson(response);
+      const response = await fetch(`${API_BASE}/products/${productId}`);
+      const data = await responseJson(response);
       await loadCategories(data.product.category_id);
       fillForm(data.product);
     } catch (error) {
@@ -393,253 +310,490 @@
   }
 
   async function saveProduct() {
-    var name = document.getElementById("prodName").value.trim();
-    var description = document.getElementById("prodDesc").value.trim();
-    var categoryId = categorySelect.value;
-    var price = Number(priceInput.value);
-    var stock = Number(document.getElementById("prodStock").value);
-    var lowStock = Number(document.getElementById("prodLowStock").value || 0);
-    var salePrice = salePriceField.value === "" ? null : Number(salePriceField.value);
-    var selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
-    var selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
+      const name = document.getElementById("prodName").value.trim();
+      const description = document.getElementById("prodDesc").value.trim();
+      const categoryId = categorySelect.value;
 
-    if (!name) throw new Error("Please enter a product name.");
-    if (!description) throw new Error("Description is required.");
-    if (!categoryId || categoryId === "__add_category__") throw new Error("Please select a category.");
-    if (!Number.isFinite(price) || price < 0) throw new Error("Price is invalid.");
-    if (!Number.isInteger(stock) || stock < 0) throw new Error("Quantity is invalid.");
-    if (!Number.isInteger(lowStock) || lowStock < 0) throw new Error("Low stock threshold is invalid.");
-    if (saleToggle.checked && salePrice !== null && (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= price)) {
-      throw new Error("Sale price must be greater than 0 and lower than regular price.");
-    }
+      const price = Number(priceInput.value);
+      const stock = Number(document.getElementById("prodStock").value);
+      const lowStock = Number(
+          document.getElementById("prodLowStock").value || 0
+      );
 
-    var categoryOption = categorySelect.options[categorySelect.selectedIndex];
+      const salePrice =
+          salePriceField.value === ""
+              ? null
+              : Number(salePriceField.value);
 
-    var body = new FormData();
-    body.append("title", name);
-    body.append("description", description);
-    body.append("brand", document.getElementById("prodBrand").value.trim());
-    body.append("category_id", categoryId);
-    body.append("category", categoryOption ? categoryOption.textContent.trim() : "");
-    body.append("price", String(price));
-    body.append("cost", String(Number(costInput.value) || 0));
-    body.append("tax_class", document.getElementById("prodTax").value || "standard");
-    body.append("stock", String(stock));
-    body.append("low_stock", String(lowStock));
-    body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
-    body.append("status", selectedStatus ? selectedStatus.value : "draft");
-    body.append("scheduled_date", selectedStatus && selectedStatus.value === "scheduled" ? (scheduleDate.value || "") : "");
-    body.append("sale_enabled", saleToggle.checked ? "true" : "false");
-    body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
-    body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
-    body.append("sale_end", saleToggle.checked ? saleEndDate.value : "");
-    body.append("sale_badge", saleBadge.value.trim());
-    body.append("sale_badge_color", selectedSaleColor);
-    body.append("tags", currentTags.join(","));
+      const selectedStatus = document.querySelector(
+          'input[name="publishStatus"]:checked'
+      );
 
-    if (selectedNewImage && selectedNewImage.file instanceof File) {
-      body.append("image", selectedNewImage.file, selectedNewImage.file.name);
-    }
+      const selectedStockStatus = document.querySelector(
+          'input[name="stockStatus"]:checked'
+      );
 
-    var response = await fetch(API_BASE + "/admin/products/" + productId, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: body
-    });
+      // ========================================
+      // VALIDATION
+      // ========================================
 
-    var data = await responseJson(response);
+      if (!name) {
+          throw new Error("Please enter a product name.");
+      }
 
-    if (selectedNewImage && selectedNewImage.preview) {
-      URL.revokeObjectURL(selectedNewImage.preview);
-    }
+      if (!description) {
+          throw new Error("Description is required.");
+      }
 
-    fillForm(data.product);
-    showToast("Product updated successfully!", "success");
-    setTimeout(function () { window.location.href = "admin_product.html"; }, 700);
+      if (!categoryId || categoryId === "__add_category__") {
+          throw new Error("Please select a category.");
+      }
+
+      if (!Number.isFinite(price) || price < 0) {
+          throw new Error("Price is invalid.");
+      }
+
+      if (!Number.isInteger(stock) || stock < 0) {
+          throw new Error("Quantity is invalid.");
+      }
+
+      if (!Number.isInteger(lowStock) || lowStock < 0) {
+          throw new Error("Low stock threshold is invalid.");
+      }
+
+      if (
+          saleToggle.checked &&
+          salePrice !== null &&
+          (
+              !Number.isFinite(salePrice) ||
+              salePrice <= 0 ||
+              salePrice >= price
+          )
+      ) {
+          throw new Error(
+              "Sale price must be greater than 0 and lower than regular price."
+          );
+      }
+
+      // ========================================
+      // CATEGORY
+      // ========================================
+
+      const categoryOption =
+          categorySelect.options[categorySelect.selectedIndex];
+
+      // ========================================
+      // CREATE FORMDATA
+      // ========================================
+
+      const body = new FormData();
+
+      body.append("title", name);
+      body.append("description", description);
+
+      body.append(
+          "brand",
+          document.getElementById("prodBrand").value.trim()
+      );
+
+      body.append("category_id", categoryId);
+
+      body.append(
+          "category",
+          categoryOption ? categoryOption.textContent.trim() : ""
+      );
+
+      body.append("price", String(price));
+
+      body.append(
+          "cost",
+          String(Number(costInput.value) || 0)
+      );
+
+      body.append(
+          "tax_class",
+          document.getElementById("prodTax").value || "standard"
+      );
+
+      body.append("stock", String(stock));
+      body.append("low_stock", String(lowStock));
+
+      body.append(
+          "stock_status",
+          selectedStockStatus
+              ? selectedStockStatus.value
+              : ""
+      );
+
+      body.append(
+          "status",
+          selectedStatus
+              ? selectedStatus.value
+              : "draft"
+      );
+
+      body.append(
+          "scheduled_date",
+          selectedStatus &&
+          selectedStatus.value === "scheduled"
+              ? (scheduleDate.value || "")
+              : ""
+      );
+
+      // ========================================
+      // SALE
+      // ========================================
+
+      body.append(
+          "sale_enabled",
+          saleToggle.checked ? "true" : "false"
+      );
+
+      body.append(
+          "sale_price",
+          saleToggle.checked && salePrice !== null
+              ? String(salePrice)
+              : ""
+      );
+
+      body.append(
+          "sale_start",
+          saleToggle.checked
+              ? saleStartDate.value
+              : ""
+      );
+
+      body.append(
+          "sale_end",
+          saleToggle.checked
+              ? saleEndDate.value
+              : ""
+      );
+
+      body.append(
+          "sale_badge",
+          saleBadge.value.trim()
+      );
+
+      body.append(
+          "sale_badge_color",
+          selectedSaleColor
+      );
+
+      // ========================================
+      // TAGS
+      // ========================================
+
+      body.append(
+          "tags",
+          currentTags.join(",")
+      );
+
+      // ========================================
+      // IMAGE
+      // ========================================
+
+      console.log(
+          "selectedNewImage:",
+          selectedNewImage
+      );
+
+      if (
+          selectedNewImage &&
+          selectedNewImage.file instanceof File
+      ) {
+          console.log(
+              "Uploading new image:",
+              selectedNewImage.file.name
+          );
+
+          body.append(
+              "image",
+              selectedNewImage.file,
+              selectedNewImage.file.name
+          );
+      } else {
+          console.log(
+              "No new image selected. Keeping existing image."
+          );
+      }
+
+      // ========================================
+      // DEBUG FORMDATA
+      // ========================================
+
+      console.log("========== PRODUCT UPDATE ==========");
+
+      for (const [key, value] of body.entries()) {
+
+          if (value instanceof File) {
+              console.log(
+                  key,
+                  "FILE:",
+                  value.name,
+                  value.type,
+                  value.size
+              );
+          } else {
+              console.log(key, value);
+          }
+      }
+
+      console.log("====================================");
+
+      // ========================================
+      // SEND UPDATE
+      // ========================================
+
+      const response = await fetch(
+          `${API_BASE}/admin/products/${productId}`,
+          {
+              method: "PUT",
+              headers: authHeaders(),
+              body: body
+          }
+      );
+
+      // ========================================
+      // HANDLE RESPONSE
+      // ========================================
+
+      const data = await responseJson(response);
+
+      console.log(
+          "Server updated product:",
+          data.product
+      );
+
+      // ========================================
+      // UPDATE LOCAL FORM WITH SERVER DATA
+      // ========================================
+
+      fillForm(data.product);
+
+      showToast(
+          "Product updated successfully!",
+          "success"
+      );
+
+      // ========================================
+      // GO BACK TO ADMIN PRODUCTS
+      // ========================================
+
+      setTimeout(() => {
+          window.location.href = "admin_product.html";
+      }, 700);
   }
 
   async function deleteProduct() {
-    var response = await fetch(API_BASE + "/admin/products/" + productId, {
+    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
       method: "DELETE",
       headers: authHeaders()
     });
     await responseJson(response);
     showToast("Product deleted successfully", "success");
     dirty = false;
-    setTimeout(function () { window.location.href = "admin_product.html"; }, 700);
+    setTimeout(() => { window.location.href = "admin_product.html"; }, 700);
   }
 
   function setupEvents() {
-    document.querySelectorAll("input, select, textarea").forEach(function (el) { el.addEventListener("input", markDirty); });
-    document.querySelectorAll("input, select, textarea").forEach(function (el) { el.addEventListener("change", markDirty); });
+    document.querySelectorAll("input, select, textarea").forEach(el => el.addEventListener("input", markDirty));
+    document.querySelectorAll("input, select, textarea").forEach(el => el.addEventListener("change", markDirty));
 
-    priceInput.addEventListener("input", function () { updateProfit(); updateSalePreview(); });
+    priceInput.addEventListener("input", () => { updateProfit(); updateSalePreview(); });
     costInput.addEventListener("input", updateProfit);
     salePriceField.addEventListener("input", updateSalePreview);
     saleBadge.addEventListener("input", updateSalePreview);
 
-    saleToggle.addEventListener("change", function () { setSaleState(saleToggle.checked); markDirty(); });
+    saleToggle.addEventListener("change", () => { setSaleState(saleToggle.checked); markDirty(); });
 
-    document.querySelectorAll(".sale-color-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        selectedSaleColor = btn.dataset.color || selectedSaleColor;
-        document.querySelectorAll(".sale-color-btn").forEach(function (b) { b.classList.remove("active"); });
-        btn.classList.add("active");
-        updateSalePreview();
-        markDirty();
-      });
-    });
+    document.querySelectorAll(".sale-color-btn").forEach(btn => btn.addEventListener("click", () => {
+      selectedSaleColor = btn.dataset.color || selectedSaleColor;
+      document.querySelectorAll(".sale-color-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateSalePreview();
+      markDirty();
+    }));
 
-    document.querySelectorAll('input[name="publishStatus"]').forEach(function (r) {
-      r.addEventListener("change", function () {
-        scheduledDate.style.display = r.value === "scheduled" && r.checked ? "block" : "none";
-      });
-    });
+    document.querySelectorAll('input[name="publishStatus"]').forEach(r => r.addEventListener("change", () => {
+      scheduledDate.style.display = r.value === "scheduled" && r.checked ? "block" : "none";
+    }));
 
-    document.querySelectorAll('input[name="stockStatus"]').forEach(function (r) {
-      r.addEventListener("change", function () {
-        document.querySelectorAll(".ap-stock-chip").forEach(function (c) {
-          c.classList.toggle("active", c.dataset.stock === r.value && r.checked);
-        });
-      });
-    });
+    document.querySelectorAll('input[name="stockStatus"]').forEach(r => r.addEventListener("change", () => {
+      document.querySelectorAll(".ap-stock-chip").forEach(c => c.classList.toggle("active", c.dataset.stock === r.value && r.checked));
+    }));
 
-    tagInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput.value); tagInput.value = ""; }
-    });
-
-    document.querySelectorAll(".suggested-tag").forEach(function (btn) {
-      btn.addEventListener("click", function () { addTag(btn.dataset.tag); });
-    });
-
-    // ================================================================
-    //  IMAGE UPLOAD EVENTS (works with the unmodified HTML)
-    // ================================================================
-
-    // "Choose Image" button → open file picker
-    if (chooseImageBtn) {
-      chooseImageBtn.addEventListener("click", function (e) {
+    tagInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === ",") {
         e.preventDefault();
-        e.stopPropagation();
-        openFilePicker();
-      });
+        addTag(tagInput.value);
+        tagInput.value = "";
+      }
+    });
+
+    document.querySelectorAll(".suggested-tag").forEach(btn => btn.addEventListener("click", () => addTag(btn.dataset.tag)));
+
+    // Open the native file picker only from an explicit user click.
+    // Keeping this on a real button avoids Chrome's "user activation" warning.
+    // ========================================
+    // PRODUCT IMAGE UPLOAD
+    // ========================================
+
+    // ========================================
+    // IMAGE PICKER
+    // ========================================
+
+    if (chooseImageBtn && imageInput) {
+
+        chooseImageBtn.onclick = function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            console.log("USER CLICKED CHOOSE IMAGE");
+
+            // Directly triggered by the button click.
+            imageInput.click();
+        };
+
+        imageInput.onchange = function (event) {
+
+            console.log("FILE INPUT CHANGED");
+            console.log("FILES:", event.target.files);
+
+            if (!event.target.files || event.target.files.length === 0) {
+                console.log("NO FILE SELECTED");
+                selectedNewImage = null;
+                return;
+            }
+
+            const file = event.target.files[0];
+
+            console.log("SELECTED FILE:", file);
+            console.log("NAME:", file.name);
+            console.log("TYPE:", file.type);
+            console.log("SIZE:", file.size);
+
+            const allowedTypes = [
+                "image/png",
+                "image/jpeg",
+                "image/webp"
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                imageInput.value = "";
+                selectedNewImage = null;
+
+                showToast(
+                    "Use PNG, JPG or WebP.",
+                    "warn"
+                );
+
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                imageInput.value = "";
+                selectedNewImage = null;
+
+                showToast(
+                    "Image must be 5MB or smaller.",
+                    "warn"
+                );
+
+                return;
+            }
+
+            selectedNewImage = {
+                file: file,
+                preview: URL.createObjectURL(file)
+            };
+
+            console.log(
+                "NEW IMAGE:",
+                selectedNewImage
+            );
+
+            renderImage();
+            markDirty();
+
+            showToast(
+                "New image selected. Click Update Product to save it.",
+                "success"
+            );
+        };
     }
 
-    // Clicking the placeholder → also open file picker
-    if (uploadPlaceholder) {
-      uploadPlaceholder.style.cursor = "pointer";
-      uploadPlaceholder.addEventListener("click", function (e) {
-        if (e.target.closest("button")) return;
-        e.preventDefault();
-        openFilePicker();
-      });
-    }
-
-    // File input change → process the picked file
-    if (imageInput) {
-      imageInput.addEventListener("change", function () {
-        if (!this.files || this.files.length === 0) {
-          selectedNewImage = null;
-          return;
-        }
-        processSelectedFile(this.files[0]);
-      });
-    }
-
-    // Drag and drop on the upload area
-    if (uploadArea) {
-      uploadArea.addEventListener("dragover", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.classList.add("ap-upload-dragover");
-      });
-
-      uploadArea.addEventListener("dragleave", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.classList.remove("ap-upload-dragover");
-      });
-
-      uploadArea.addEventListener("drop", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        this.classList.remove("ap-upload-dragover");
-
-        var files = e.dataTransfer.files;
-        if (!files || files.length === 0) return;
-        processSelectedFile(files[0]);
-      });
-    }
-
-    // ── Form submit ──
-    form.addEventListener("submit", async function (e) {
+    form.addEventListener("submit", async e => {
       e.preventDefault();
-      try { await saveProduct(); }
-      catch (error) { console.error(error); showToast(error.message || "Unable to update product. Please try again.", "warn"); }
+      try {
+        await saveProduct();
+      } catch (error) {
+        console.error(error);
+        showToast(error.message || "Unable to update product. Please try again.", "warn");
+      }
     });
 
-    document.getElementById("saveDraftBtn")?.addEventListener("click", function () {
-      var draft = document.querySelector('input[name="publishStatus"][value="draft"]');
+    document.getElementById("saveDraftBtn")?.addEventListener("click", () => {
+      const draft = document.querySelector('input[name="publishStatus"][value="draft"]');
       if (draft) draft.checked = true;
       scheduledDate.style.display = "none";
       form.requestSubmit();
     });
 
-    // ── Delete ──
-    deleteProductBtn.addEventListener("click", function () { deleteModal.classList.add("show"); });
-    cancelDelete.addEventListener("click", function () { deleteModal.classList.remove("show"); });
-    confirmDelete.addEventListener("click", async function () {
+    deleteProductBtn.addEventListener("click", () => deleteModal.classList.add("show"));
+    cancelDelete.addEventListener("click", () => deleteModal.classList.remove("show"));
+    confirmDelete.addEventListener("click", async () => {
       try { await deleteProduct(); }
       catch (error) { console.error(error); deleteModal.classList.remove("show"); showToast(error.message || "Unable to delete product.", "warn"); }
     });
 
-    // ── Unsaved changes ──
-    var backLink = form.querySelector(".ap-cancel-btn");
-    backLink?.addEventListener("click", function (e) {
+    const backLink = form.querySelector(".ap-cancel-btn");
+    backLink?.addEventListener("click", e => {
       if (!dirty) return;
       e.preventDefault();
       unsavedModal.classList.add("show");
     });
-    stayOnPage?.addEventListener("click", function () { unsavedModal.classList.remove("show"); });
-    leaveAnyway?.addEventListener("click", function () { dirty = false; window.location.href = "admin_product.html"; });
-    window.addEventListener("beforeunload", function (e) { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+    stayOnPage?.addEventListener("click", () => unsavedModal.classList.remove("show"));
+    leaveAnyway?.addEventListener("click", () => { dirty = false; window.location.href = "admin_product.html"; });
+    window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
 
-    // ── Category creation ──
-    categorySelect.addEventListener("change", async function () {
+    // Category creation uses the same API as Add Product.
+    categorySelect.addEventListener("change", async () => {
       if (categorySelect.value !== "__add_category__") return;
       categorySelect.value = product ? String(product.category_id || "") : "";
-      var modal = document.getElementById("addCategoryModal");
+      const modal = document.getElementById("addCategoryModal");
       if (modal) { modal.removeAttribute("hidden"); modal.style.display = "flex"; }
     });
 
-    var closeCategory = function () {
-      var modal = document.getElementById("addCategoryModal");
+    const closeCategory = () => {
+      const modal = document.getElementById("addCategoryModal");
       if (modal) { modal.setAttribute("hidden", ""); modal.style.display = "none"; }
     };
     document.getElementById("addCategoryClose")?.addEventListener("click", closeCategory);
     document.getElementById("cancelCategoryBtn")?.addEventListener("click", closeCategory);
-    document.getElementById("saveCategoryBtn")?.addEventListener("click", async function () {
-      var input = document.getElementById("newCategoryName");
-      var errorEl = document.getElementById("newCategoryError");
-      var name = input.value.trim();
+    document.getElementById("saveCategoryBtn")?.addEventListener("click", async () => {
+      const input = document.getElementById("newCategoryName");
+      const errorEl = document.getElementById("newCategoryError");
+      const name = input.value.trim();
       if (!name) { errorEl.textContent = "Category name is required."; return; }
       try {
-        var response = await fetch(API_BASE + "/categories", {
+        const response = await fetch(API_BASE + "/categories", {
           method: "POST",
           headers: { ...authHeaders(), "Content-Type": "application/json" },
           body: JSON.stringify({ name })
         });
-        var data = await responseJson(response);
+        const data = await responseJson(response);
         await loadCategories(data.category.id);
         closeCategory();
         markDirty();
-        showToast("Category \"" + data.category.name + "\" created!", "success");
+        showToast(`Category "${data.category.name}" created!`, "success");
       } catch (error) { errorEl.textContent = error.message; }
     });
 
-    // ── Variants (not persisted) ──
+    // Variants are not persisted by this database schema. Keep the existing UI
+    // visible, but never pretend that edits to it were saved to SQLite.
     if (variantsList && addVariantBtn) {
-      var note = document.createElement("div");
+      const note = document.createElement("div");
       note.style.cssText = "margin-top:10px;font-size:12px;opacity:.7";
       note.textContent = "Variants are not stored in the current product database, so they are not included in updates.";
       variantsList.parentElement?.appendChild(note);
@@ -647,8 +801,15 @@
       addVariantBtn.title = "Variants are not supported by the current database schema";
     }
   }
+  console.log("IMAGE ELEMENT:", imageInput);
+  console.log("CHOOSE BUTTON:", chooseImageBtn);
 
-  // ── Init ──
+  if (imageInput) {
+      console.log("IMAGE INPUT TYPE:", imageInput.type);
+      console.log("IMAGE INPUT MULTIPLE:", imageInput.multiple);
+      console.log("IMAGE INPUT ACCEPT:", imageInput.accept);
+  }
+
   setupEvents();
   loadProduct();
 })();
