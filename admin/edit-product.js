@@ -654,53 +654,48 @@
     // ========================================
 
     if (chooseImageBtn && imageInput) {
-      chooseImageBtn.addEventListener("click", function () {
-        console.log("CHOOSE IMAGE CLICKED");
+      chooseImageBtn.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log("========== CHOOSE IMAGE CLICK ==========");
+
+        // Make sure the input is enabled
+        imageInput.disabled = false;
+
+        // Open Windows file picker
         imageInput.click();
       });
 
-      imageInput.addEventListener("change", function () {
-        console.log("========== IMAGE TEST ==========");
-        console.log("Files:", imageInput.files);
-        console.log("Number of files:", imageInput.files.length);
+      imageInput.addEventListener("change", function (event) {
+        console.log("========== IMAGE INPUT CHANGE ==========");
 
-        if (imageInput.files.length === 0) {
+        const files = event.target.files;
+        console.log("Files:", files);
+        console.log("Number of files:", files ? files.length : 0);
+
+        if (!files || files.length === 0) {
           console.log("❌ NO FILE SELECTED");
           return;
         }
 
-        const file = imageInput.files[0];
+        const file = files[0];
 
         console.log("✅ FILE SELECTED");
         console.log("Name:", file.name);
         console.log("Type:", file.type);
         console.log("Size:", file.size);
 
-        const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
-
-        if (!allowedTypes.includes(file.type)) {
-          imageInput.value = "";
-          showToast("Use PNG, JPG or WebP.", "warn");
-          return;
-        }
-
-        if (file.size > 5 * 1024 * 1024) {
-          imageInput.value = "";
-          showToast("Image must be 5MB or smaller.", "warn");
-          return;
-        }
-
         selectedNewImage = {
           file: file,
-          preview: URL.createObjectURL(file),
+          preview: URL.createObjectURL(file)
         };
 
         console.log("selectedNewImage:", selectedNewImage);
 
         renderImage();
         markDirty();
-        showToast("New image selected!", "success");
-        console.log("================================");
+        showToast("New image selected successfully!", "success");
       });
     }
 
