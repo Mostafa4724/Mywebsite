@@ -25,17 +25,14 @@
   });
   overlay?.addEventListener("click", closeSidebar);
 
-  function compact(value, decimals = 1) {
-    const n = Number(value) || 0;
-    const abs = Math.abs(n);
-    if (abs >= 1e9) return (n / 1e9).toFixed(decimals).replace(/\.0+$/, "") + "B";
-    if (abs >= 1e6) return (n / 1e6).toFixed(decimals).replace(/\.0+$/, "") + "M";
-    if (abs >= 1e3) return (n / 1e3).toFixed(decimals).replace(/\.0+$/, "") + "K";
-    return n.toLocaleString("en-US");
-  }
+  const money = value =>
+    "$" + (Number(value) || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
 
-  const money = value => "$" + compact(value);
-  const number = value => compact(value, 1);
+  const number = value =>
+    (Number(value) || 0).toLocaleString("en-US");
 
   const escapeHtml = value => {
     const div = document.createElement("div");
@@ -63,10 +60,14 @@
       const width = Math.max(2, Math.min(100, Number(item.percent) || 0));
       return `
         <div class="traffic-row">
-          <div class="category-name">
+          <div class="traffic-label">
+            <span class="traffic-dot" style="background: var(--blue)"></span>
             <strong>${escapeHtml(item.name)}</strong>
           </div>
-          <span class="category-value">${compact(item.value ?? item.sales ?? item.revenue ?? item.percent ?? 0)}</span>
+          <div class="traffic-bar-bg">
+            <div class="traffic-bar-fill" style="--w:${width}%"></div>
+          </div>
+          <span class="traffic-pct">${width}%</span>
         </div>
       `;
     }).join("");

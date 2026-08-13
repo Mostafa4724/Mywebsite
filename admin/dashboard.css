@@ -792,13 +792,3 @@ button {
 ::-webkit-scrollbar-thumb:hover {
   background: #a0a3b5;
 }
-
-
-/* Dashboard refinements */
-.dash-stat-icon { display:none !important; }
-.traffic-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--border, #e5e7eb); }
-.traffic-row:last-child { border-bottom:0; }
-.category-name { min-width:0; flex:1; }
-.category-value { font-weight:700; color:var(--fg, #0f1724); white-space:nowrap; }
-.traffic-bar-bg, .traffic-bar-fill, .traffic-pct, .traffic-dot { display:none !important; }
-.dash-stat-value { font-variant-numeric: tabular-nums; letter-spacing:-0.02em; }
