@@ -1,3 +1,6 @@
+// Global variable to hold the selected file (persists across function calls)
+let selectedFile = null;
+
 (function () {
   "use strict";
 
@@ -42,11 +45,13 @@
   let productId = null;
   let product = null;
   let currentImage = "";
-  let selectedNewImage = null;
+  let selectedNewImage = null; // kept for preview
   let currentTags = [];
   let selectedSaleColor = "#ef4444";
   let dirty = false;
   let toastTimer = null;
+
+  // ─── helpers ──────────────────────────────────────────
 
   function authHeaders() {
     const t = token();
@@ -83,35 +88,20 @@
 
   function imageUrl(value) {
     if (!value) return "";
-
-    // Already a complete URL
-    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) {
-      return value;
-    }
-
+    if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
     let url;
-    // Backend stores either:
-    // filename
-    // /uploads/products/filename
     if (value.startsWith("/uploads/products/")) {
       url = API_BASE + value;
     } else {
       url = API_BASE + "/uploads/products/" + encodeURIComponent(value);
     }
-
-    // Add cache-busting timestamp to force the browser to fetch
-    // the updated image from the server instead of using a cached old one.
     return url + "?v=" + Date.now();
   }
 
   async function responseJson(response) {
     const text = await response.text();
     let data;
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch (_) {
-      data = {};
-    }
+    try { data = text ? JSON.parse(text) : {}; } catch (_) { data = {}; }
     if (!response.ok || data.success === false) {
       throw new Error(data.message || `Server returned ${response.status}`);
     }
@@ -121,8 +111,7 @@
   async function loadCategories(selectedId) {
     const response = await fetch(API_BASE + "/categories");
     const data = await responseJson(response);
-    categorySelect.innerHTML =
-      '<option value="" disabled>Select category</option>';
+    categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
     data.categories.forEach((cat) => {
       const option = document.createElement("option");
       option.value = String(cat.id);
@@ -139,24 +128,13 @@
   }
 
   function parseTags(value) {
-    if (Array.isArray(value))
-      return value
-        .map(String)
-        .map((s) => s.trim())
-        .filter(Boolean);
+    if (Array.isArray(value)) return value.map(String).map(s => s.trim()).filter(Boolean);
     if (!value) return [];
     try {
       const parsed = JSON.parse(value);
-      if (Array.isArray(parsed))
-        return parsed
-          .map(String)
-          .map((s) => s.trim())
-          .filter(Boolean);
+      if (Array.isArray(parsed)) return parsed.map(String).map(s => s.trim()).filter(Boolean);
     } catch (_) {}
-    return String(value)
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    return String(value).split(",").map(s => s.trim()).filter(Boolean);
   }
 
   function renderTags() {
@@ -179,9 +157,7 @@
   }
 
   function addTag(value) {
-    const tag = String(value || "")
-      .trim()
-      .replace(/,$/, "");
+    const tag = String(value || "").trim().replace(/,$/, "");
     if (!tag) return;
     if (currentTags.includes(tag)) return;
     if (currentTags.length >= 10) {
@@ -195,9 +171,7 @@
 
   function renderImage() {
     previewGrid.innerHTML = "";
-    const src = selectedNewImage
-      ? selectedNewImage.preview
-      : imageUrl(currentImage);
+    const src = selectedNewImage ? selectedNewImage.preview : imageUrl(currentImage);
     if (!src) {
       previewGrid.style.display = "none";
       uploadPlaceholder.style.display = "flex";
@@ -212,8 +186,7 @@
     img.alt = "Product image";
     item.appendChild(img);
     const label = document.createElement("span");
-    label.style.cssText =
-      "position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px";
+    label.style.cssText = "position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px";
     label.textContent = selectedNewImage ? "New image" : "Current image";
     item.appendChild(label);
     previewGrid.appendChild(item);
@@ -224,23 +197,18 @@
     const sale = Number(salePriceField.value) || 0;
     const valid = sale > 0 && sale < regular;
     if (discountPreview) {
-      discountPreview.style.display =
-        valid && saleToggle.checked ? "flex" : "none";
+      discountPreview.style.display = valid && saleToggle.checked ? "flex" : "none";
       if (valid) {
         const pct = Math.round(((regular - sale) / regular) * 100);
-        const p = document.getElementById("discountPct");
-        const r = document.getElementById("discRegular");
-        const s = document.getElementById("discSale");
-        const save = document.getElementById("discSave");
-        if (p) p.textContent = pct + "%";
-        if (r) r.textContent = "$" + regular.toFixed(2);
-        if (s) s.textContent = "$" + sale.toFixed(2);
-        if (save) save.textContent = "$" + (regular - sale).toFixed(2);
+        document.getElementById("discountPct").textContent = pct + "%";
+        document.getElementById("discRegular").textContent = "$" + regular.toFixed(2);
+        document.getElementById("discSale").textContent = "$" + sale.toFixed(2);
+        document.getElementById("discSave").textContent = "$" + (regular - sale).toFixed(2);
       }
     }
-    if (saleBadgePreview)
-      saleBadgePreview.style.display =
-        valid && saleToggle.checked ? "block" : "none";
+    if (saleBadgePreview) {
+      saleBadgePreview.style.display = valid && saleToggle.checked ? "block" : "none";
+    }
     const mockBadge = document.getElementById("mockBadge");
     const mockRegular = document.getElementById("mockRegular");
     const mockSalePrice = document.getElementById("mockSalePrice");
@@ -268,11 +236,11 @@
       box.style.display = "flex";
       const profit = price - cost;
       const margin = price ? (profit / price) * 100 : 0;
-      document.getElementById("profitValue").textContent =
-        "$" + profit.toFixed(2);
-      document.getElementById("marginValue").textContent =
-        margin.toFixed(1) + "%";
-    } else box.style.display = "none";
+      document.getElementById("profitValue").textContent = "$" + profit.toFixed(2);
+      document.getElementById("marginValue").textContent = margin.toFixed(1) + "%";
+    } else {
+      box.style.display = "none";
+    }
   }
 
   function fillForm(p) {
@@ -286,29 +254,18 @@
     document.getElementById("prodStock").value = p.stock ?? 0;
     document.getElementById("prodLowStock").value = p.low_stock ?? 10;
 
-    const status = document.querySelector(
-      `input[name="publishStatus"][value="${CSS.escape(p.status || "draft")}"]`,
-    );
+    const status = document.querySelector(`input[name="publishStatus"][value="${CSS.escape(p.status || "draft")}"]`);
     if (status) status.checked = true;
     if (p.status === "scheduled") scheduledDate.style.display = "block";
     if (scheduleDate) scheduleDate.value = toDateTimeLocal(p.scheduled_date);
 
-    const stockStatus =
-      p.stock_status ||
-      (Number(p.stock) <= 0
-        ? "out"
-        : Number(p.stock) <= Number(p.low_stock || 0)
-          ? "low"
-          : "in");
-    const stockRadio = document.querySelector(
-      `input[name="stockStatus"][value="${CSS.escape(stockStatus)}"]`,
-    );
+    const stockStatus = p.stock_status ||
+      (Number(p.stock) <= 0 ? "out" : Number(p.stock) <= Number(p.low_stock || 0) ? "low" : "in");
+    const stockRadio = document.querySelector(`input[name="stockStatus"][value="${CSS.escape(stockStatus)}"]`);
     if (stockRadio) stockRadio.checked = true;
-    document
-      .querySelectorAll(".ap-stock-chip")
-      .forEach((chip) =>
-        chip.classList.toggle("active", chip.dataset.stock === stockStatus),
-      );
+    document.querySelectorAll(".ap-stock-chip").forEach(chip =>
+      chip.classList.toggle("active", chip.dataset.stock === stockStatus)
+    );
 
     currentTags = parseTags(p.tags);
     renderTags();
@@ -321,25 +278,17 @@
     saleEndDate.value = toDateTimeLocal(p.sale_end);
     saleBadge.value = p.sale_badge || "";
     selectedSaleColor = p.sale_badge_color || "#ef4444";
-    document
-      .querySelectorAll(".sale-color-btn")
-      .forEach((btn) =>
-        btn.classList.toggle("active", btn.dataset.color === selectedSaleColor),
-      );
+    document.querySelectorAll(".sale-color-btn").forEach(btn =>
+      btn.classList.toggle("active", btn.dataset.color === selectedSaleColor)
+    );
     setSaleState(Boolean(p.sale_enabled));
 
     const idStrong = document.querySelector(".ep-id-chip strong");
     if (idStrong) idStrong.textContent = "#" + p.id;
     const created = document.querySelector(".ep-created-date");
-    if (created)
-      created.textContent =
-        "Created: " +
-        (p.created_at ? new Date(p.created_at).toLocaleDateString() : "—");
+    if (created) created.textContent = "Created: " + (p.created_at ? new Date(p.created_at).toLocaleDateString() : "—");
     const modified = document.getElementById("lastModified");
-    if (modified)
-      modified.textContent = p.updated_at
-        ? new Date(p.updated_at).toLocaleString()
-        : "—";
+    if (modified) modified.textContent = p.updated_at ? new Date(p.updated_at).toLocaleString() : "—";
     deleteProductName.textContent = p.title || "this product";
 
     updateProfit();
@@ -362,178 +311,87 @@
       fillForm(data.product);
     } catch (error) {
       console.error(error);
-      setPageError(
-        error.message === "Product not found"
-          ? "Product not found."
-          : "Unable to load product. Please try again.",
-      );
+      setPageError(error.message === "Product not found" ? "Product not found." : "Unable to load product. Please try again.");
     }
   }
+
+  // ─── SAVE PRODUCT ──────────────────────────────────────
 
   async function saveProduct() {
     const name = document.getElementById("prodName").value.trim();
     const description = document.getElementById("prodDesc").value.trim();
     const categoryId = categorySelect.value;
-
     const price = Number(priceInput.value);
     const stock = Number(document.getElementById("prodStock").value);
     const lowStock = Number(document.getElementById("prodLowStock").value || 0);
+    const salePrice = salePriceField.value === "" ? null : Number(salePriceField.value);
+    const selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
+    const selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
 
-    const salePrice =
-      salePriceField.value === "" ? null : Number(salePriceField.value);
-
-    const selectedStatus = document.querySelector(
-      'input[name="publishStatus"]:checked',
-    );
-
-    const selectedStockStatus = document.querySelector(
-      'input[name="stockStatus"]:checked',
-    );
-
-    // ========================================
-    // VALIDATION
-    // ========================================
-
-    if (!name) {
-      throw new Error("Please enter a product name.");
+    // ── validation ──
+    if (!name) throw new Error("Please enter a product name.");
+    if (!description) throw new Error("Description is required.");
+    if (!categoryId || categoryId === "__add_category__") throw new Error("Please select a category.");
+    if (!Number.isFinite(price) || price < 0) throw new Error("Price is invalid.");
+    if (!Number.isInteger(stock) || stock < 0) throw new Error("Quantity is invalid.");
+    if (!Number.isInteger(lowStock) || lowStock < 0) throw new Error("Low stock threshold is invalid.");
+    if (saleToggle.checked && salePrice !== null && (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= price)) {
+      throw new Error("Sale price must be greater than 0 and lower than regular price.");
     }
-
-    if (!description) {
-      throw new Error("Description is required.");
-    }
-
-    if (!categoryId || categoryId === "__add_category__") {
-      throw new Error("Please select a category.");
-    }
-
-    if (!Number.isFinite(price) || price < 0) {
-      throw new Error("Price is invalid.");
-    }
-
-    if (!Number.isInteger(stock) || stock < 0) {
-      throw new Error("Quantity is invalid.");
-    }
-
-    if (!Number.isInteger(lowStock) || lowStock < 0) {
-      throw new Error("Low stock threshold is invalid.");
-    }
-
-    if (
-      saleToggle.checked &&
-      salePrice !== null &&
-      (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= price)
-    ) {
-      throw new Error(
-        "Sale price must be greater than 0 and lower than regular price.",
-      );
-    }
-
-    // ========================================
-    // CATEGORY
-    // ========================================
 
     const categoryOption = categorySelect.options[categorySelect.selectedIndex];
-
-    // ========================================
-    // CREATE FORMDATA
-    // ========================================
-
     const body = new FormData();
 
     body.append("title", name);
     body.append("description", description);
-
     body.append("brand", document.getElementById("prodBrand").value.trim());
-
     body.append("category_id", categoryId);
-
-    body.append(
-      "category",
-      categoryOption ? categoryOption.textContent.trim() : "",
-    );
-
+    body.append("category", categoryOption ? categoryOption.textContent.trim() : "");
     body.append("price", String(price));
-
     body.append("cost", String(Number(costInput.value) || 0));
-
-    body.append(
-      "tax_class",
-      document.getElementById("prodTax").value || "standard",
-    );
-
+    body.append("tax_class", document.getElementById("prodTax").value || "standard");
     body.append("stock", String(stock));
     body.append("low_stock", String(lowStock));
-
-    body.append(
-      "stock_status",
-      selectedStockStatus ? selectedStockStatus.value : "",
-    );
-
+    body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
     body.append("status", selectedStatus ? selectedStatus.value : "draft");
-
-    body.append(
-      "scheduled_date",
-      selectedStatus && selectedStatus.value === "scheduled"
-        ? scheduleDate.value || ""
-        : "",
-    );
-
-    // ========================================
-    // SALE
-    // ========================================
-
+    body.append("scheduled_date", selectedStatus && selectedStatus.value === "scheduled" ? scheduleDate.value || "" : "");
     body.append("sale_enabled", saleToggle.checked ? "true" : "false");
-
-    body.append(
-      "sale_price",
-      saleToggle.checked && salePrice !== null ? String(salePrice) : "",
-    );
-
+    body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
     body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
-
     body.append("sale_end", saleToggle.checked ? saleEndDate.value : "");
-
     body.append("sale_badge", saleBadge.value.trim());
-
     body.append("sale_badge_color", selectedSaleColor);
-
-    // ========================================
-    // TAGS
-    // ========================================
-
     body.append("tags", currentTags.join(","));
 
-// ========================================
-// IMAGE – DEBUG + UPLOAD
-// ========================================
-const fileInput = document.getElementById("imageInput"); // Get it fresh
-const file = fileInput && fileInput.files && fileInput.files[0];
+    // ── IMAGE ──
+    let file = selectedFile;  // global variable set by change event
 
-console.log("========== IMAGE DEBUG (FRONTEND) ==========");
-console.log("fileInput:", fileInput);
-console.log("fileInput.files:", fileInput ? fileInput.files : "null");
-console.log("file:", file);
-
-// SHOW AN ALERT SO YOU CAN SEE WHAT'S HAPPENING
-if (file) {
-    alert(`✅ File selected: ${file.name} (${file.size} bytes)`);
-    body.append("image", file, file.name);
-} else {
-    alert("❌ No file selected in the file input!");
-    // Fallback: try the old selectedNewImage just in case
-    if (selectedNewImage && selectedNewImage.file instanceof File) {
-        alert(`⚠️ Fallback using selectedNewImage: ${selectedNewImage.file.name}`);
-        body.append("image", selectedNewImage.file, selectedNewImage.file.name);
-    } else {
-        alert("❌ No image to upload – keeping existing image.");
+    // fallback: read directly from input (if something cleared selectedFile)
+    if (!file) {
+      const inp = document.getElementById("imageInput");
+      if (inp && inp.files && inp.files[0]) {
+        file = inp.files[0];
+        console.log("📁 Fallback: retrieved file from input:", file.name);
+      }
     }
-}
-    // ========================================
-    // DEBUG FORMDATA
-    // ========================================
 
+    // last fallback: selectedNewImage (for preview)
+    if (!file && selectedNewImage && selectedNewImage.file instanceof File) {
+      file = selectedNewImage.file;
+      console.log("📁 Fallback: used selectedNewImage:", file.name);
+    }
+
+    console.log("📤 FINAL FILE TO UPLOAD:", file);
+
+    if (file) {
+      console.log(`✅ Uploading: ${file.name} (${file.size} bytes, ${file.type})`);
+      body.append("image", file, file.name);
+    } else {
+      console.log("ℹ️ No new image – keeping existing.");
+    }
+
+    // ── debug log ──
     console.log("========== PRODUCT UPDATE ==========");
-
     for (const [key, value] of body.entries()) {
       if (value instanceof File) {
         console.log(key, "FILE:", value.name, value.type, value.size);
@@ -541,43 +399,22 @@ if (file) {
         console.log(key, value);
       }
     }
-
     console.log("====================================");
 
-        // ========================================
-    // SEND UPDATE
-    // ========================================
-
-    // Browsers handle multipart/form-data flawlessly on POST,
-    // but Flask/Werkzeug historically drops files on PUT requests.
+    // ── send ──
     body.append("_method", "PUT");
-
     const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
-      method: "POST", 
+      method: "POST",
       headers: authHeaders(),
       body: body,
     });
 
-    // ========================================
-    // HANDLE RESPONSE
-    // ========================================
-
     const data = await responseJson(response);
-
     console.log("Server updated product:", data.product);
-
-    // ========================================
-    // UPDATE LOCAL FORM WITH SERVER DATA
-    // ========================================
-
     fillForm(data.product);
-
     showToast("Product updated successfully!", "success");
 
-    // ========================================
-    // GO BACK TO ADMIN PRODUCTS
-    // ========================================
-
+    // optional redirect
     setTimeout(() => {
       window.location.href = "admin_product.html";
     }, 700);
@@ -596,18 +433,15 @@ if (file) {
     }, 700);
   }
 
-  function setupEvents() {
-    document
-      .querySelectorAll("input, select, textarea")
-      .forEach((el) => el.addEventListener("input", markDirty));
-    document
-      .querySelectorAll("input, select, textarea")
-      .forEach((el) => el.addEventListener("change", markDirty));
+  // ─── EVENT SETUP ──────────────────────────────────────
 
-    priceInput.addEventListener("input", () => {
-      updateProfit();
-      updateSalePreview();
+  function setupEvents() {
+    document.querySelectorAll("input, select, textarea").forEach(el => {
+      el.addEventListener("input", markDirty);
+      el.addEventListener("change", markDirty);
     });
+
+    priceInput.addEventListener("input", () => { updateProfit(); updateSalePreview(); });
     costInput.addEventListener("input", updateProfit);
     salePriceField.addEventListener("input", updateSalePreview);
     saleBadge.addEventListener("input", updateSalePreview);
@@ -617,36 +451,28 @@ if (file) {
       markDirty();
     });
 
-    document.querySelectorAll(".sale-color-btn").forEach((btn) =>
+    document.querySelectorAll(".sale-color-btn").forEach(btn =>
       btn.addEventListener("click", () => {
         selectedSaleColor = btn.dataset.color || selectedSaleColor;
-        document
-          .querySelectorAll(".sale-color-btn")
-          .forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".sale-color-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         updateSalePreview();
         markDirty();
-      }),
+      })
     );
 
-    document.querySelectorAll('input[name="publishStatus"]').forEach((r) =>
+    document.querySelectorAll('input[name="publishStatus"]').forEach(r =>
       r.addEventListener("change", () => {
-        scheduledDate.style.display =
-          r.value === "scheduled" && r.checked ? "block" : "none";
-      }),
+        scheduledDate.style.display = r.value === "scheduled" && r.checked ? "block" : "none";
+      })
     );
 
-    document.querySelectorAll('input[name="stockStatus"]').forEach((r) =>
+    document.querySelectorAll('input[name="stockStatus"]').forEach(r =>
       r.addEventListener("change", () => {
-        document
-          .querySelectorAll(".ap-stock-chip")
-          .forEach((c) =>
-            c.classList.toggle(
-              "active",
-              c.dataset.stock === r.value && r.checked,
-            ),
-          );
-      }),
+        document.querySelectorAll(".ap-stock-chip").forEach(c =>
+          c.classList.toggle("active", c.dataset.stock === r.value && r.checked)
+        );
+      })
     );
 
     tagInput.addEventListener("keydown", (e) => {
@@ -657,138 +483,93 @@ if (file) {
       }
     });
 
-    document
-      .querySelectorAll(".suggested-tag")
-      .forEach((btn) =>
-        btn.addEventListener("click", () => addTag(btn.dataset.tag)),
-      );
+    document.querySelectorAll(".suggested-tag").forEach(btn =>
+      btn.addEventListener("click", () => addTag(btn.dataset.tag))
+    );
 
-    // Open the native file picker only from an explicit user click.
-    // Keeping this on a real button avoids Chrome's "user activation" warning.
-    // ========================================
-    // PRODUCT IMAGE UPLOAD
-    // ========================================
-
-    // ========================================
-    // IMAGE PICKER
-    // ========================================
-
+    // ── FILE INPUT HANDLING ──
     if (imageInput) {
-
-    // Choose Image button
-    if (chooseImageBtn) {
+      // Open file picker via button
+      if (chooseImageBtn) {
         chooseImageBtn.addEventListener("click", function (e) {
-            e.stopPropagation();
-
-            console.log("Opening file picker...");
-            imageInput.click();
+          e.stopPropagation();
+          console.log("🖱️ Choose Image button clicked – opening picker");
+          imageInput.click();
         });
-    }
+      }
 
-    // Upload area
-    if (uploadArea) {
+      // Upload area click (if not on the button)
+      if (uploadArea) {
         uploadArea.addEventListener("click", function (e) {
-
-            // Don't open picker twice when clicking the button
-            if (e.target.closest("#chooseImageBtn")) {
-                return;
-            }
-
-            // CRITICAL FIX: Prevent the infinite loop!
-            // When imageInput.click() is called, it generates a synthetic click event 
-            // that bubbles up to this uploadArea listener. If we don't catch it here,
-            // it will call imageInput.click() again infinitely, which exhausts the 
-            // browser's "user activation" token and silently blocks the file dialog.
-            if (e.target === imageInput) {
-                return;
-            }
-
-            console.log("Upload area clicked...");
-            imageInput.click();
+          if (e.target.closest("#chooseImageBtn")) return;
+          if (e.target === imageInput) return;
+          console.log("📂 Upload area clicked – opening picker");
+          imageInput.click();
         });
-    }
+      }
 
-    // File selected
-    imageInput.addEventListener("change", function (e) {
-
+      // Change event – capture the file
+      imageInput.addEventListener("change", function (e) {
         console.log("========== FILE CHANGE ==========");
-
         const file = e.target.files?.[0];
-        alert(`📁 File selected in change event: ${file ? file.name : "NONE"}`);
+        console.log("Raw file object:", file);
 
-        console.log("Selected file:", file);
+        // Store globally
+        selectedFile = file || null;
+
+        // Alert for debugging (remove later)
+        alert(`📁 File selected: ${file ? file.name : "NONE"}`);
 
         if (!file) {
-            console.log("❌ No file selected");
-            return;
+          console.log("❌ No file selected (user cancelled or error).");
+          return;
         }
 
-        console.log("✅ FILE SELECTED");
-        console.log("Name:", file.name);
-        console.log("Type:", file.type);
-        console.log("Size:", file.size);
+        console.log("✅ FILE SELECTED:", file.name, file.type, file.size);
 
-        // Check file type
-        const allowedTypes = [
-            "image/png",
-            "image/jpeg",
-            "image/webp"
-        ];
-
+        // Validate type
+        const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
         if (!allowedTypes.includes(file.type)) {
-            showToast("Please select PNG, JPG, or WEBP image.", "warn");
-
-            imageInput.value = "";
-            return;
+          showToast("Please select PNG, JPG, or WEBP image.", "warn");
+          imageInput.value = "";   // clear the input
+          selectedFile = null;     // also clear global
+          return;
         }
 
-        // Remove old preview URL if necessary
+        // Create preview
         if (selectedNewImage?.preview) {
-            URL.revokeObjectURL(selectedNewImage.preview);
+          URL.revokeObjectURL(selectedNewImage.preview);
         }
-
         selectedNewImage = {
-            file: file,
-            preview: URL.createObjectURL(file)
+          file: file,
+          preview: URL.createObjectURL(file)
         };
-
-        console.log("selectedNewImage:", selectedNewImage);
-
         renderImage();
         markDirty();
-
         showToast("New image selected successfully!", "success");
-    });
-  }
+      });
+    }
 
+    // ── form submit ──
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       try {
         await saveProduct();
       } catch (error) {
         console.error(error);
-        showToast(
-          error.message || "Unable to update product. Please try again.",
-          "warn",
-        );
+        showToast(error.message || "Unable to update product. Please try again.", "warn");
       }
     });
 
     document.getElementById("saveDraftBtn")?.addEventListener("click", () => {
-      const draft = document.querySelector(
-        'input[name="publishStatus"][value="draft"]',
-      );
+      const draft = document.querySelector('input[name="publishStatus"][value="draft"]');
       if (draft) draft.checked = true;
       scheduledDate.style.display = "none";
       form.requestSubmit();
     });
 
-    deleteProductBtn.addEventListener("click", () =>
-      deleteModal.classList.add("show"),
-    );
-    cancelDelete.addEventListener("click", () =>
-      deleteModal.classList.remove("show"),
-    );
+    deleteProductBtn.addEventListener("click", () => deleteModal.classList.add("show"));
+    cancelDelete.addEventListener("click", () => deleteModal.classList.remove("show"));
     confirmDelete.addEventListener("click", async () => {
       try {
         await deleteProduct();
@@ -805,9 +586,7 @@ if (file) {
       e.preventDefault();
       unsavedModal.classList.add("show");
     });
-    stayOnPage?.addEventListener("click", () =>
-      unsavedModal.classList.remove("show"),
-    );
+    stayOnPage?.addEventListener("click", () => unsavedModal.classList.remove("show"));
     leaveAnyway?.addEventListener("click", () => {
       dirty = false;
       window.location.href = "admin_product.html";
@@ -819,7 +598,7 @@ if (file) {
       }
     });
 
-    // Category creation uses the same API as Add Product.
+    // ── category add modal ──
     categorySelect.addEventListener("change", async () => {
       if (categorySelect.value !== "__add_category__") return;
       categorySelect.value = product ? String(product.category_id || "") : "";
@@ -837,54 +616,47 @@ if (file) {
         modal.style.display = "none";
       }
     };
-    document
-      .getElementById("addCategoryClose")
-      ?.addEventListener("click", closeCategory);
-    document
-      .getElementById("cancelCategoryBtn")
-      ?.addEventListener("click", closeCategory);
-    document
-      .getElementById("saveCategoryBtn")
-      ?.addEventListener("click", async () => {
-        const input = document.getElementById("newCategoryName");
-        const errorEl = document.getElementById("newCategoryError");
-        const name = input.value.trim();
-        if (!name) {
-          errorEl.textContent = "Category name is required.";
-          return;
-        }
-        try {
-          const response = await fetch(API_BASE + "/categories", {
-            method: "POST",
-            headers: { ...authHeaders(), "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
-          });
-          const data = await responseJson(response);
-          await loadCategories(data.category.id);
-          closeCategory();
-          markDirty();
-          showToast(`Category "${data.category.name}" created!`, "success");
-        } catch (error) {
-          errorEl.textContent = error.message;
-        }
-      });
+    document.getElementById("addCategoryClose")?.addEventListener("click", closeCategory);
+    document.getElementById("cancelCategoryBtn")?.addEventListener("click", closeCategory);
+    document.getElementById("saveCategoryBtn")?.addEventListener("click", async () => {
+      const input = document.getElementById("newCategoryName");
+      const errorEl = document.getElementById("newCategoryError");
+      const name = input.value.trim();
+      if (!name) {
+        errorEl.textContent = "Category name is required.";
+        return;
+      }
+      try {
+        const response = await fetch(API_BASE + "/categories", {
+          method: "POST",
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const data = await responseJson(response);
+        await loadCategories(data.category.id);
+        closeCategory();
+        markDirty();
+        showToast(`Category "${data.category.name}" created!`, "success");
+      } catch (error) {
+        errorEl.textContent = error.message;
+      }
+    });
 
-    // Variants are not persisted by this database schema. Keep the existing UI
-    // visible, but never pretend that edits to it were saved to SQLite.
+    // ── variants placeholder ──
     if (variantsList && addVariantBtn) {
       const note = document.createElement("div");
       note.style.cssText = "margin-top:10px;font-size:12px;opacity:.7";
-      note.textContent =
-        "Variants are not stored in the current product database, so they are not included in updates.";
+      note.textContent = "Variants are not stored in the current product database, so they are not included in updates.";
       variantsList.parentElement?.appendChild(note);
       addVariantBtn.disabled = true;
-      addVariantBtn.title =
-        "Variants are not supported by the current database schema";
+      addVariantBtn.title = "Variants are not supported by the current database schema";
     }
   }
+
+  // ─── INIT ─────────────────────────────────────────────
+
   console.log("IMAGE ELEMENT:", imageInput);
   console.log("CHOOSE BUTTON:", chooseImageBtn);
-
   if (imageInput) {
     console.log("IMAGE INPUT TYPE:", imageInput.type);
     console.log("IMAGE INPUT MULTIPLE:", imageInput.multiple);
