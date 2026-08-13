@@ -67,6 +67,8 @@ UPLOAD_FOLDER = os.path.join(
 )
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+print("Upload folder:", UPLOAD_FOLDER)
+print("Is writable?", os.access(UPLOAD_FOLDER, os.W_OK))
 
 
 # ============================================================
