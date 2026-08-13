@@ -155,286 +155,71 @@
       </header>
 
       <div class="admin-content">
-        <!-- Summary Stats -->
+        <div id="dashboardError" style="display:none;margin-bottom:18px;padding:12px 16px;border-radius:10px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;"></div>
+
+        <!-- Live summary -->
         <div class="dash-stats" style="margin-bottom: 24px">
           <div class="dash-stat-card blue">
-            <div class="dash-stat-icon">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="12" y1="1" x2="12" y2="23" />
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            </div>
+            <div class="dash-stat-icon">💰</div>
             <div class="dash-stat-text">
-              <span class="dash-stat-value">$84,320</span>
+              <span class="dash-stat-value" id="statRevenue">Loading...</span>
               <span class="dash-stat-label">Total Revenue</span>
             </div>
-            <span class="dash-stat-trend up">+12.6%</span>
           </div>
           <div class="dash-stat-card green">
-            <div class="dash-stat-icon">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-              </svg>
-            </div>
+            <div class="dash-stat-icon">🛍️</div>
             <div class="dash-stat-text">
-              <span class="dash-stat-value">1,248</span>
+              <span class="dash-stat-value" id="statOrders">Loading...</span>
               <span class="dash-stat-label">Orders Placed</span>
             </div>
-            <span class="dash-stat-trend up">+8.4%</span>
+            <span class="dash-stat-trend up" id="orderBadge">Live</span>
           </div>
           <div class="dash-stat-card purple">
-            <div class="dash-stat-icon">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                <line x1="1" y1="10" x2="23" y2="10" />
-              </svg>
-            </div>
+            <div class="dash-stat-icon">🧾</div>
             <div class="dash-stat-text">
-              <span class="dash-stat-value">$67.50</span>
+              <span class="dash-stat-value" id="statAverage">Loading...</span>
               <span class="dash-stat-label">Avg. Order Value</span>
             </div>
-            <span class="dash-stat-trend up">+$4.20</span>
           </div>
           <div class="dash-stat-card amber">
-            <div class="dash-stat-icon">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </div>
+            <div class="dash-stat-icon">👥</div>
             <div class="dash-stat-text">
-              <span class="dash-stat-value">5,612</span>
+              <span class="dash-stat-value" id="statCustomers">Loading...</span>
               <span class="dash-stat-label">Total Customers</span>
             </div>
-            <span class="dash-stat-trend up">+214</span>
           </div>
         </div>
 
-        <!-- Sales by Category + Best Sellers -->
         <div class="dash-grid-2" style="margin-bottom: 24px">
           <div class="dash-card">
             <div class="dash-card-head">
               <h3>Sales by Category</h3>
-              <span class="dash-card-sub">This month</span>
+              <span class="dash-card-sub">From real orders</span>
             </div>
-            <div class="traffic-list">
-              <div class="traffic-row">
-                <div class="traffic-label">
-                  <span class="traffic-dot" style="background: #2563eb"></span>
-                  <strong>Electronics</strong>
-                </div>
-                <div class="traffic-bar-bg">
-                  <div
-                    class="traffic-bar-fill"
-                    style="--w: 72%; background: #2563eb"
-                  ></div>
-                </div>
-                <span class="traffic-pct">72%</span>
-              </div>
-              <div class="traffic-row">
-                <div class="traffic-label">
-                  <span class="traffic-dot" style="background: #7c3aed"></span>
-                  <strong>Fashion</strong>
-                </div>
-                <div class="traffic-bar-bg">
-                  <div
-                    class="traffic-bar-fill"
-                    style="--w: 54%; background: #7c3aed"
-                  ></div>
-                </div>
-                <span class="traffic-pct">54%</span>
-              </div>
-              <div class="traffic-row">
-                <div class="traffic-label">
-                  <span class="traffic-dot" style="background: #ec4899"></span>
-                  <strong>Home & Living</strong>
-                </div>
-                <div class="traffic-bar-bg">
-                  <div
-                    class="traffic-bar-fill"
-                    style="--w: 38%; background: #ec4899"
-                  ></div>
-                </div>
-                <span class="traffic-pct">38%</span>
-              </div>
-              <div class="traffic-row">
-                <div class="traffic-label">
-                  <span class="traffic-dot" style="background: #d97706"></span>
-                  <strong>Beauty & Care</strong>
-                </div>
-                <div class="traffic-bar-bg">
-                  <div
-                    class="traffic-bar-fill"
-                    style="--w: 26%; background: #d97706"
-                  ></div>
-                </div>
-                <span class="traffic-pct">26%</span>
-              </div>
-              <div class="traffic-row">
-                <div class="traffic-label">
-                  <span class="traffic-dot" style="background: #16a34a"></span>
-                  <strong>Sports & Outdoors</strong>
-                </div>
-                <div class="traffic-bar-bg">
-                  <div
-                    class="traffic-bar-fill"
-                    style="--w: 14%; background: #16a34a"
-                  ></div>
-                </div>
-                <span class="traffic-pct">14%</span>
-              </div>
+            <div class="traffic-list" id="categorySales">
+              <div style="color:#94a3b8">Loading...</div>
             </div>
           </div>
+
           <div class="dash-card">
             <div class="dash-card-head">
               <h3>Best Sellers</h3>
               <span class="dash-card-sub">By units sold</span>
             </div>
-            <div class="top-pages-list">
-              <div class="top-page-row">
-                <span class="top-page-rank">1</span>
-                <div class="top-page-info">
-                  <strong>Wireless Earbuds Pro</strong
-                  ><span>Electronics / Audio</span>
-                </div>
-                <span class="top-page-views">1,842</span>
-              </div>
-              <div class="top-page-row">
-                <span class="top-page-rank">2</span>
-                <div class="top-page-info">
-                  <strong>Oversized Hoodie</strong
-                  ><span>Fashion / Winter Wear</span>
-                </div>
-                <span class="top-page-views">1,456</span>
-              </div>
-              <div class="top-page-row">
-                <span class="top-page-rank">3</span>
-                <div class="top-page-info">
-                  <strong>Smart LED Desk Lamp</strong><span>Home & Living</span>
-                </div>
-                <span class="top-page-views">1,120</span>
-              </div>
-              <div class="top-page-row">
-                <span class="top-page-rank">4</span>
-                <div class="top-page-info">
-                  <strong>Vitamin C Serum</strong><span>Beauty / Skincare</span>
-                </div>
-                <span class="top-page-views">984</span>
-              </div>
-              <div class="top-page-row">
-                <span class="top-page-rank">5</span>
-                <div class="top-page-info">
-                  <strong>Yoga Mat Premium</strong><span>Sports / Fitness</span>
-                </div>
-                <span class="top-page-views">876</span>
-              </div>
-              <div class="top-page-row">
-                <span class="top-page-rank">6</span>
-                <div class="top-page-info">
-                  <strong>USB-C Fast Charger</strong
-                  ><span>Electronics / Accessories</span>
-                </div>
-                <span class="top-page-views">743</span>
-              </div>
+            <div class="top-pages-list" id="bestSellers">
+              <div style="color:#94a3b8">Loading...</div>
             </div>
           </div>
         </div>
 
-        <!-- Monthly Trend -->
         <div class="dash-card">
           <div class="dash-card-head">
             <h3>Monthly Sales</h3>
             <span class="dash-card-sub">Last 6 months</span>
           </div>
           <div class="chart-container" style="height: 200px">
-            <div class="chart-bars">
-              <div class="chart-bar-group">
-                <div
-                  class="chart-bar"
-                  style="--h: 42%"
-                  data-value="$52,100"
-                ></div>
-                <span>Nov</span>
-              </div>
-              <div class="chart-bar-group">
-                <div
-                  class="chart-bar"
-                  style="--h: 68%"
-                  data-value="$78,400"
-                ></div>
-                <span>Dec</span>
-              </div>
-              <div class="chart-bar-group">
-                <div
-                  class="chart-bar"
-                  style="--h: 55%"
-                  data-value="$61,200"
-                ></div>
-                <span>Jan</span>
-              </div>
-              <div class="chart-bar-group">
-                <div
-                  class="chart-bar"
-                  style="--h: 74%"
-                  data-value="$79,800"
-                ></div>
-                <span>Feb</span>
-              </div>
-              <div class="chart-bar-group">
-                <div
-                  class="chart-bar"
-                  style="--h: 88%"
-                  data-value="$91,500"
-                ></div>
-                <span>Mar</span>
-              </div>
-              <div class="chart-bar-group">
-                <div
-                  class="chart-bar active"
-                  style="--h: 100%"
-                  data-value="$104,200"
-                ></div>
-                <span>Apr</span>
-              </div>
+            <div class="chart-bars" id="monthlySales">
+              <div style="color:#94a3b8">Loading...</div>
             </div>
           </div>
         </div>

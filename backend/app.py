@@ -21,6 +21,8 @@ from categories import categories_bp
 from database import db
 from models import User
 from config import Config
+from security import admin_required
+from datetime import datetime, timedelta
 
 
 # ============================================================
@@ -103,6 +105,8 @@ from models import (
     Cart,
     Order,
     OrderItem,
+    Category,
+    Review,
 )
 
 
@@ -117,6 +121,122 @@ def home():
         "message": "Shopping Server Running",
     })
 
+
+
+# ============================================================
+# Admin Dashboard
+# ============================================================
+
+@app.route("/admin/dashboard", methods=["GET"])
+@admin_required
+def admin_dashboard():
+    """Return live dashboard metrics calculated from shopping.db."""
+    now = datetime.utcnow()
+    orders = Order.query.order_by(Order.created_at.asc()).all()
+    products = Product.query.all()
+    users = User.query.all()
+
+    # Revenue is based on non-cancelled orders.
+    valid_orders = [
+        o for o in orders
+        if (o.status or "").lower() not in {"cancelled", "refunded"}
+    ]
+
+    revenue = sum(float(o.total or 0) for o in valid_orders)
+    order_count = len(orders)
+    avg_order = revenue / len(valid_orders) if valid_orders else 0
+
+    # Category sales and product units are derived from order items.
+    category_sales = {}
+    product_units = {}
+    for order in valid_orders:
+        for item in order.items:
+            qty = int(item.quantity or 0)
+            product = Product.query.get(item.product_id) if item.product_id else None
+            category = (
+                (product.category if product else None)
+                or (product.category_ref.name if product and product.category_ref else None)
+                or "Other"
+            )
+            category_sales[category] = category_sales.get(category, 0) + qty * float(
+                item.unit_price or item.sale_price or item.original_price or 0
+            )
+            key = item.product_id or item.product_name or "unknown"
+            if key not in product_units:
+                product_units[key] = {
+                    "name": item.product_name or (product.title if product else "Unknown"),
+                    "category": category,
+                    "units": 0,
+                    "revenue": 0,
+                    "image": product.image if product else getattr(item, "image", None),
+                }
+            product_units[key]["units"] += qty
+            product_units[key]["revenue"] += qty * float(
+                item.unit_price or item.sale_price or item.original_price or 0
+            )
+
+    category_total = sum(category_sales.values())
+    categories = sorted(
+        [
+            {
+                "name": name,
+                "revenue": round(value, 2),
+                "percent": round((value / category_total) * 100, 1) if category_total else 0,
+            }
+            for name, value in category_sales.items()
+        ],
+        key=lambda x: x["revenue"],
+        reverse=True,
+    )[:6]
+
+    best_sellers = sorted(
+        product_units.values(),
+        key=lambda x: (x["units"], x["revenue"]),
+        reverse=True,
+    )[:6]
+    for item in best_sellers:
+        item["revenue"] = round(item["revenue"], 2)
+
+    # Last 6 calendar months, including the current month.
+    monthly = []
+    for offset in range(5, -1, -1):
+        first = datetime(now.year, now.month, 1)
+        month_num = first.month - offset
+        year = first.year + (month_num - 1) // 12
+        month = (month_num - 1) % 12 + 1
+        start = datetime(year, month, 1)
+        if month == 12:
+            end = datetime(year + 1, 1, 1)
+        else:
+            end = datetime(year, month + 1, 1)
+        value = sum(
+            float(o.total or 0)
+            for o in valid_orders
+            if o.created_at and start <= o.created_at < end
+        )
+        monthly.append({
+            "label": start.strftime("%b"),
+            "revenue": round(value, 2),
+        })
+
+    low_stock = sum(
+        1 for p in products
+        if (p.stock or 0) <= (p.low_stock if p.low_stock is not None else 10)
+    )
+
+    return jsonify({
+        "success": True,
+        "stats": {
+            "revenue": round(revenue, 2),
+            "orders": order_count,
+            "average_order": round(avg_order, 2),
+            "customers": len(users),
+            "low_stock": low_stock,
+        },
+        "categories": categories,
+        "best_sellers": best_sellers,
+        "monthly_sales": monthly,
+    })
 
 # ============================================================
 # Product Uploads
