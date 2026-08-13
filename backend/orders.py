@@ -137,7 +137,14 @@ def _order_to_dict(order):
         "total": order.total,
 
         "items": [
-            item.to_dict()
+            {
+                **item.to_dict(),
+                "image": (
+                    Product.query.get(item.product_id).image
+                    if item.product_id and Product.query.get(item.product_id)
+                    else item.image
+                ),
+            }
             for item in order.items
         ],
     }
