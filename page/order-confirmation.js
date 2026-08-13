@@ -4,6 +4,7 @@
   var API_BASE = "http://127.0.0.1:5000";
 
   var order = null;
+  var productsById = {};
   var isLoading = true;
   var loadError = null;
 
@@ -110,46 +111,88 @@
 
   function getProductImage(image, productId) {
 
-      if (image) {
+    // Use the LIVE Product record loaded from /products first.
+    // This is the same endpoint/source used by home.html.
+    var product = null;
 
-          var imagePath = String(image).trim();
+    if (productId !== null && productId !== undefined) {
+      product = productsById[String(productId)] || null;
+    }
 
-          // Already a complete URL
-          if (
-              imagePath.startsWith("http://") ||
-              imagePath.startsWith("https://")
-          ) {
-              return imagePath;
-          }
+    var imagePath = product && product.image
+      ? String(product.image).trim()
+      : (image ? String(image).trim() : "");
 
-          // Already contains uploads path
-          if (
-              imagePath.startsWith("/uploads/")
-          ) {
-              return API_BASE + imagePath;
-          }
+    if (!imagePath) {
+      return (
+        "https://picsum.photos/seed/ord" +
+        (productId || "product") +
+        "/200/200.jpg"
+      );
+    }
 
-          if (
-              imagePath.startsWith("uploads/")
-          ) {
-              return API_BASE + "/" + imagePath;
-          }
+    if (
+      imagePath.startsWith("http://") ||
+      imagePath.startsWith("https://")
+    ) {
+      return imagePath;
+    }
 
-          // Only filename
-          return (
-              API_BASE +
-              "/uploads/products/" +
-              imagePath
-          );
+    if (imagePath.startsWith("/uploads/")) {
+      return API_BASE + imagePath;
+    }
+
+    if (imagePath.startsWith("uploads/")) {
+      return API_BASE + "/" + imagePath;
+    }
+
+    // Same URL construction used by buildProductCard() in script.js.
+    return (
+      API_BASE +
+      "/uploads/products/" +
+      imagePath
+    );
+  }
+
+
+  async function loadProductsForImages() {
+
+    try {
+      var response = await fetch(
+        API_BASE + "/products"
+      );
+
+      if (!response.ok) {
+        console.warn(
+          "Could not load products for order images:",
+          response.status
+        );
+        return;
       }
 
-      // Fallback image
-      return (
-          "https://picsum.photos/seed/ord" +
-          (productId || "product") +
-          "/200/200.jpg"
+      var data = await response.json();
+
+      if (!data || !Array.isArray(data.products)) {
+        console.warn("Products response did not contain a products array.");
+        return;
+      }
+
+      productsById = {};
+
+      data.products.forEach(function (product) {
+        if (product && product.id !== undefined && product.id !== null) {
+          productsById[String(product.id)] = product;
+        }
+      });
+
+    } catch (err) {
+      console.warn(
+        "Failed to load products for order images:",
+        err
       );
+    }
   }
+
 
   function esc(s) {
 
@@ -431,12 +474,15 @@
 
         h += '<div class="oc-item">';
 
+        var imageUrl = getProductImage(
+          item.image,
+          item.product_id
+        );
+
         h +=
           '<div class="oc-item-img">' +
             '<img src="' +
-              API_BASE +
-              '/uploads/products/' +
-              encodeURIComponent(item.image) +
+              esc(imageUrl) +
               '" alt="' +
               esc(
                 display(
@@ -793,6 +839,10 @@
       order =
         data.order;
 
+      // Load live product records from the same /products endpoint
+      // used by home.html, then map order item product_id to product.image.
+      await loadProductsForImages();
+
       isLoading = false;
 
       render();
@@ -879,6 +929,8 @@
 
         order =
           data.order;
+
+        await loadProductsForImages();
 
         render();
       }

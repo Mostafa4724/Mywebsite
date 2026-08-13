@@ -112,6 +112,24 @@ def _current_unit_price(product):
     return regular
 
 
+
+def _order_item_to_dict(item):
+    """Return an order item using the live Product.image from shopping.db."""
+    data = item.to_dict()
+
+    product = None
+    if item.product_id is not None:
+        product = Product.query.get(item.product_id)
+
+    if product is not None:
+        data["image"] = product.image
+        data["product_id"] = product.id
+        data["product_name"] = product.title
+    else:
+        data["image"] = getattr(item, "image", None)
+
+    return data
+
 def _order_to_dict(order):
     """
     Serialize only real order fields.
@@ -137,7 +155,7 @@ def _order_to_dict(order):
         "total": order.total,
 
         "items": [
-            item.to_dict()
+            _order_item_to_dict(item)
             for item in order.items
         ],
     }

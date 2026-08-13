@@ -1,25 +1,31 @@
 import os
+import sqlite3
 
-from flask_jwt_extended import JWTManager
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 
-from products import products_bp
-from orders import orders_bp
-from auth import auth_bp
-from database import db
-from werkzeug.security import generate_password_hash
-from models import User
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
     jwt_required,
     get_jwt_identity,
 )
+
+from werkzeug.security import generate_password_hash
+
+from products import products_bp
+from orders import orders_bp
+from auth import auth_bp
+from categories import categories_bp
+
+from database import db
+from models import User
 from config import Config
 
-import sqlite3
 
+# ============================================================
+# Environment / Secrets
+# ============================================================
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
@@ -30,6 +36,10 @@ if not SECRET_KEY or not JWT_SECRET_KEY:
     )
 
 
+# ============================================================
+# Flask App
+# ============================================================
+
 app = Flask(__name__)
 
 app.config.from_object(Config)
@@ -37,79 +47,115 @@ app.config.from_object(Config)
 CORS(app)
 
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+# ============================================================
+# Paths
+# ============================================================
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 DATABASE_PATH = os.path.join(
     BASE_DIR,
     "..",
     "database",
-    "shopping.db"
+    "shopping.db",
 )
-
 
 UPLOAD_FOLDER = os.path.join(
     BASE_DIR,
     "uploads",
-    "products"
+    "products",
 )
 
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-if not os.access(UPLOAD_FOLDER, os.W_OK):
-    print(f"WARNING: Upload folder {UPLOAD_FOLDER} is not writable!")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH}"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# ============================================================
+# Database Configuration
+# ============================================================
+
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"sqlite:///{DATABASE_PATH}"
+)
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
-# Connect SQLAlchemy to Flask
+# ============================================================
+# Initialize Extensions
+# ============================================================
+
 db.init_app(app)
 
 jwt = JWTManager(app)
 
 
-# Import models AFTER db is initialized
-from models import User, Product, Cart, Order, OrderItem
+# ============================================================
+# Import Models
+# ============================================================
+
+# Import after db.init_app()
+from models import (
+    User,
+    Product,
+    Cart,
+    Order,
+    OrderItem,
+)
 
 
-@app.route("/debug/products")
-def debug_products():
-
-    conn = sqlite3.connect(DATABASE_PATH)
-
-    cursor = conn.cursor()
-
-    cursor.execute("PRAGMA table_info(products)")
-
-    data = cursor.fetchall()
-
-    conn.close()
-
-    return {"columns": data}
-
+# ============================================================
+# Basic Routes
+# ============================================================
 
 @app.route("/")
 def home():
-
     return jsonify({
         "success": True,
-        "message": "Shopping Server Running"
+        "message": "Shopping Server Running",
     })
 
 
+# ============================================================
+# Product Uploads
+# ============================================================
+
 @app.route("/uploads/products/<filename>")
 def uploaded_file(filename):
-
     return send_from_directory(
         app.config["UPLOAD_FOLDER"],
-        filename
+        filename,
     )
 
 
-from categories import categories_bp
+# ============================================================
+# Debug: Products Table
+# ============================================================
 
+@app.route("/debug/products")
+def debug_products():
+    conn = sqlite3.connect(DATABASE_PATH)
+
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "PRAGMA table_info(products)"
+        )
+
+        data = cursor.fetchall()
+
+    finally:
+        conn.close()
+
+    return jsonify({
+        "columns": data,
+    })
+
+
+# ============================================================
+# Register Blueprints
+# ============================================================
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(products_bp)
@@ -117,9 +163,14 @@ app.register_blueprint(orders_bp)
 app.register_blueprint(categories_bp)
 
 
+# ============================================================
+# Database Migration Helpers
+# ============================================================
+
 def _ensure_column(conn, table, column, ddl):
     """
-    Add a column to an existing SQLite table if it does not exist.
+    Add a column to an existing SQLite table
+    if it does not already exist.
     """
 
     columns = [
@@ -137,242 +188,198 @@ def _ensure_column(conn, table, column, ddl):
 
 def migrate():
     """
-    Backward-compatible migrations for the existing shopping.db.
+    Backward-compatible migrations for the
+    existing shopping.db.
     """
 
-    with sqlite3.connect(DATABASE_PATH) as conn:
+    # --------------------------------------------------------
+    # Products / Users
+    # --------------------------------------------------------
 
-        # ---------------------------------------------------------
-        # PRODUCTS
-        # ---------------------------------------------------------
+    with sqlite3.connect(DATABASE_PATH) as conn:
 
         _ensure_column(
             conn,
             "products",
             "category_id",
-            "INTEGER REFERENCES categories(id)"
+            "INTEGER REFERENCES categories(id)",
         )
-
-        # ---------------------------------------------------------
-        # USERS
-        # ---------------------------------------------------------
 
         _ensure_column(
             conn,
             "users",
             "google_sub",
-            "VARCHAR(255)"
+            "VARCHAR(255)",
         )
 
-        # ---------------------------------------------------------
-        # ORDERS
-        # ---------------------------------------------------------
+        # ----------------------------------------------------
+        # Orders
+        # ----------------------------------------------------
 
         _ensure_column(
             conn,
             "orders",
             "customer_name",
-            "VARCHAR(200)"
+            "VARCHAR(200)",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_lastname",
-            "VARCHAR(200)"
+            "VARCHAR(200)",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_email",
-            "VARCHAR(150)"
+            "VARCHAR(150)",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_phone",
-            "VARCHAR(100)"
+            "VARCHAR(100)",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_address",
-            "VARCHAR(300)"
+            "VARCHAR(300)",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_architecture",
-            "VARCHAR(200)"
+            "VARCHAR(200)",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_floor",
-            "VARCHAR(100)"
+            "VARCHAR(100)",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_lat",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "orders",
             "customer_lng",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "orders",
             "payment_method",
-            "VARCHAR(50)"
+            "VARCHAR(50)",
         )
-
-        # Some older databases used the shorter "payment" column.
-        # Preserve that data when the newer payment_method column is empty.
-
-        order_columns = [
-            row[1]
-            for row in conn.execute(
-                "PRAGMA table_info(orders)"
-            )
-        ]
-
-        if (
-            "payment" in order_columns
-            and "payment_method" in order_columns
-        ):
-
-            conn.execute(
-                "UPDATE orders SET payment_method = payment "
-                "WHERE (payment_method IS NULL OR TRIM(payment_method) = '') "
-                "AND payment IS NOT NULL"
-            )
 
         _ensure_column(
             conn,
             "orders",
             "subtotal",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "orders",
             "shipping",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "orders",
             "tax",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "orders",
             "discount",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "orders",
             "created_at",
-            "DATETIME"
+            "DATETIME",
         )
 
-        # ---------------------------------------------------------
-        # ORDER ITEMS
-        # ---------------------------------------------------------
+        # ----------------------------------------------------
+        # Order Items
+        # ----------------------------------------------------
 
         _ensure_column(
             conn,
             "order_items",
             "product_name",
-            "VARCHAR(200)"
+            "VARCHAR(200)",
         )
 
         _ensure_column(
             conn,
             "order_items",
             "original_price",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "order_items",
             "sale_price",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "order_items",
             "unit_price",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "order_items",
             "discount",
-            "FLOAT"
+            "FLOAT",
         )
 
         _ensure_column(
             conn,
             "order_items",
             "total",
-            "FLOAT"
+            "FLOAT",
         )
 
-        # ---------------------------------------------------------
-        # ORDER STATUS MIGRATION
-        # ---------------------------------------------------------
-
-        # New orders use "placed".
-        #
-        # Older versions of the project used "pending".
-        # Convert those old records safely to the first workflow state.
-
-        conn.execute(
-            "UPDATE orders SET status = 'placed' "
-            "WHERE status IS NULL "
-            "OR TRIM(status) = '' "
-            "OR LOWER(status) = 'pending'"
-        )
-
-        # Normalize existing status values.
-        conn.execute(
-            "UPDATE orders SET status = LOWER(status) "
-            "WHERE status IS NOT NULL"
-        )
-
-    # NOTE:
-    # SQLite's ALTER TABLE ADD COLUMN cannot add a UNIQUE column,
-    # so the `name` column uniqueness for categories is enforced
-    # in code and by the app-level index below.
+    # --------------------------------------------------------
+    # Indexes
+    # --------------------------------------------------------
 
     with sqlite3.connect(DATABASE_PATH) as conn:
 
         conn.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub "
-            "ON users(google_sub) "
-            "WHERE google_sub IS NOT NULL"
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS
+            ix_users_google_sub
+            ON users(google_sub)
+            WHERE google_sub IS NOT NULL
+            """
         )
 
         indexes = [
@@ -387,16 +394,24 @@ def migrate():
             try:
 
                 conn.execute(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS "
-                    "ix_categories_name ON categories(name)"
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS
+                    ix_categories_name
+                    ON categories(name)
+                    """
                 )
 
             except Exception:
-
-                # Duplicate names may already exist;
-                # enforce in code only.
+                # Existing duplicate category names can
+                # prevent creation of the unique index.
+                # The application-level validation remains
+                # responsible in that case.
                 pass
 
+
+# ============================================================
+# Create / Migrate Database
+# ============================================================
 
 with app.app_context():
 
@@ -404,6 +419,10 @@ with app.app_context():
 
     migrate()
 
+
+# ============================================================
+# Login
+# ============================================================
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -420,7 +439,7 @@ def login():
 
         return jsonify(
             success=False,
-            message="Email and password are required"
+            message="Email and password are required",
         ), 400
 
     user = User.query.filter(
@@ -431,7 +450,7 @@ def login():
 
         return jsonify(
             success=False,
-            message="Invalid email or password"
+            message="Invalid email or password",
         ), 401
 
     token = create_access_token(
@@ -445,10 +464,14 @@ def login():
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "role": user.role
-        }
+            "role": user.role,
+        },
     )
 
+
+# ============================================================
+# Current User
+# ============================================================
 
 @app.route("/me", methods=["GET"])
 @jwt_required()
@@ -462,7 +485,7 @@ def me():
 
         return jsonify(
             success=False,
-            message="User not found"
+            message="User not found",
         ), 404
 
     return jsonify(
@@ -471,10 +494,14 @@ def me():
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "role": user.role
-        }
+            "role": user.role,
+        },
     )
 
+
+# ============================================================
+# Register
+# ============================================================
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -491,48 +518,75 @@ def register():
 
     password = data.get("password") or ""
 
+    # --------------------------------------------------------
+    # Validation
+    # --------------------------------------------------------
+
     if not username or not email or not password:
 
         return jsonify(
             success=False,
-            message="Username, email and password are required"
+            message=(
+                "Username, email and password are required"
+            ),
         ), 400
 
     if len(password) < 8:
 
         return jsonify(
             success=False,
-            message="Password must be at least 8 characters"
+            message=(
+                "Password must be at least 8 characters"
+            ),
         ), 400
 
-    if User.query.filter(
+    # --------------------------------------------------------
+    # Duplicate email
+    # --------------------------------------------------------
+
+    existing_email = User.query.filter(
         db.func.lower(User.email) == email
-    ).first():
+    ).first()
+
+    if existing_email:
 
         return jsonify(
             success=False,
-            message="Email is already registered"
+            message="Email is already registered",
         ), 409
 
-    if User.query.filter_by(
+    # --------------------------------------------------------
+    # Duplicate username
+    # --------------------------------------------------------
+
+    existing_username = User.query.filter_by(
         username=username
-    ).first():
+    ).first()
+
+    if existing_username:
 
         return jsonify(
             success=False,
-            message="Username is already registered"
+            message="Username is already registered",
         ), 409
+
+    # --------------------------------------------------------
+    # Create user
+    # --------------------------------------------------------
 
     user = User(
         username=username,
         email=email,
         password=generate_password_hash(password),
-        role="user"
+        role="user",
     )
 
     db.session.add(user)
-
     db.session.commit()
+
+    # --------------------------------------------------------
+    # JWT
+    # --------------------------------------------------------
 
     token = create_access_token(
         identity=str(user.id)
@@ -545,15 +599,19 @@ def register():
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "role": user.role
-        }
+            "role": user.role,
+        },
     ), 201
 
+
+# ============================================================
+# Run Server
+# ============================================================
 
 if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
         port=5000,
-        debug=False
+        debug=False,
     )
