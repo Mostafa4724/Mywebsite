@@ -504,6 +504,7 @@
   border: none;
   font-family: inherit;
   z-index: 2;
+  position: relative;
 }
 .upload-label:hover {
   background: #1d4ed8;
@@ -512,15 +513,16 @@
   font-size: 1.2rem;
 }
 
-/* Hide the file input safely */
+/* CRITICAL FIX: hidden but clickable */
 #imageInput {
   position: absolute;
-  width: 0.1px;
-  height: 0.1px;
-  opacity: 0;
-  overflow: hidden;
+  top: -9999px;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  pointer-events: auto;  /* THIS IS THE KEY FIX */
   z-index: -1;
-  pointer-events: none; /* not needed with label, but harmless */
 }
 
 .upload-placeholder {
