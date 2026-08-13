@@ -2,9 +2,7 @@
 .admin-body {
   background: #f1f5f9;
   color: #0f1724;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   display: flex;
   min-height: 100vh;
 }
@@ -250,7 +248,7 @@
   font-weight: 600;
 }
 
-/* ===== Product ID Chip (Edit-specific) ===== */
+/* ===== Product ID Chip ===== */
 .ep-id-chip {
   display: flex;
   align-items: center;
@@ -478,6 +476,7 @@
   position: relative;
   min-height: 160px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
@@ -488,11 +487,48 @@
   background: #f0f7ff;
 }
 
+/* Label that looks like a button */
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 12px;
+  border: none;
+  font-family: inherit;
+  z-index: 2;
+}
+.upload-label:hover {
+  background: #1d4ed8;
+}
+.upload-label-icon {
+  font-size: 1.2rem;
+}
+
+/* Hide the file input safely */
+#imageInput {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none; /* not needed with label, but harmless */
+}
+
 .upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  width: 100%;
 }
 
 .upload-icon {
@@ -656,14 +692,8 @@
 }
 
 @keyframes variantFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .variant-field label {
@@ -860,35 +890,49 @@
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .sale-discount-preview {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-  }
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 14px 18px;
+  border: 1px solid #e8edf3;
+}
 
-  .discount-circle {
-    width: 64px;
-    height: 64px;
-  }
+.discount-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-radius: 50%;
+  color: #dc2626;
+}
 
-  .discount-pct {
-    font-size: 1.15rem;
-  }
+.discount-pct {
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
 
-  .discount-details {
-    width: 100%;
-  }
+.discount-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
+.discount-details {
+  flex: 1;
+}
 
 .discount-row {
   display: flex;
@@ -1141,14 +1185,8 @@
 }
 
 @keyframes tagIn {
-  from {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .ap-tag-remove {
@@ -1333,7 +1371,7 @@
   flex-shrink: 0;
 }
 
-/* ===== Danger Zone (Edit-specific) ===== */
+/* ===== Danger Zone ===== */
 .ep-danger-card {
   border-color: #fecaca;
   background: #fffbfb;
@@ -1371,7 +1409,7 @@
   border-color: #ef4444;
 }
 
-/* ===== Modal ===== */
+/* ===== Modals ===== */
 .ep-modal-overlay {
   position: fixed;
   inset: 0;
@@ -1517,16 +1555,13 @@
   .ap-grid {
     grid-template-columns: 1fr;
   }
-
   .ap-variant-row {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
-
   .ap-variant-row .variant-field:first-child {
     grid-column: 1 / -1;
   }
-
   .variant-remove {
     grid-column: 2;
     justify-self: end;
@@ -1537,78 +1572,62 @@
   .admin-sidebar {
     transform: translateX(-100%);
   }
-
   .admin-sidebar.open {
     transform: translateX(0);
   }
-
   .admin-main {
     margin-left: 0;
   }
-
   .menu-toggle {
     display: inline-flex;
   }
-
   .admin-content {
     padding: 20px 16px;
   }
-
   .ap-row-2 {
     grid-template-columns: 1fr;
   }
-
   .ap-bottom-bar {
     flex-direction: column;
     gap: 14px;
     padding: 16px;
   }
-
   .ap-bottom-left,
   .ap-bottom-right {
     width: 100%;
     justify-content: stretch;
   }
-
   .ap-bottom-left {
     order: 2;
   }
-
   .ap-bottom-right {
     order: 1;
   }
-
   .ap-bottom-right .ap-btn-secondary,
   .ap-bottom-right .ap-btn-primary {
     flex: 1;
     text-align: center;
     justify-content: center;
   }
-
   .ap-cancel-btn {
     width: 100%;
     justify-content: center;
   }
-
   .ap-variant-row {
     grid-template-columns: 1fr 1fr;
   }
-
   .ep-id-chip {
     font-size: 0.75rem;
     gap: 6px;
     padding: 8px 14px;
   }
-
   .ep-modal {
     padding: 24px;
   }
-
   .ap-profit-calc {
     flex-direction: column;
     gap: 8px;
   }
-
   .sale-discount-preview {
     flex-direction: column;
     align-items: flex-start;
@@ -1620,30 +1639,14 @@
   .ap-variant-row {
     grid-template-columns: 1fr;
   }
-
   .variant-remove {
     grid-column: auto;
     justify-self: start;
   }
-
   .ap-preview-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
   .ep-modal-actions {
     flex-direction: column;
   }
-}
-
-/* ===== FIXED: Visually Hidden File Input ===== */
-/* This method works reliably on all modern browsers */
-#imageInput {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-    width: 1px;
-    height: 1px;
-    opacity: 0.01;
-    pointer-events: auto;  /* important: allow the input to receive file */
-    z-index: -1;
 }

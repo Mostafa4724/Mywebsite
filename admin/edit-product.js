@@ -1,4 +1,4 @@
-// Global variable to hold the selected file (persists across function calls)
+// Global variable to hold the selected file
 let selectedFile = null;
 
 (function () {
@@ -13,7 +13,6 @@ let selectedFile = null;
   const previewGrid = document.getElementById("previewGrid");
   const uploadPlaceholder = document.getElementById("uploadPlaceholder");
   const uploadArea = document.getElementById("uploadArea");
-  const chooseImageBtn = document.getElementById("chooseImageBtn");
   const saleToggle = document.getElementById("saleToggle");
   const saleOverlay = document.getElementById("saleOverlay");
   const saleFields = document.getElementById("saleFields");
@@ -364,10 +363,8 @@ let selectedFile = null;
     body.append("tags", currentTags.join(","));
 
     // ── IMAGE ──
-    // First try the global variable
     let file = selectedFile;
 
-    // If not set, try reading directly from input
     if (!file) {
       const inp = document.getElementById("imageInput");
       if (inp && inp.files && inp.files[0]) {
@@ -376,7 +373,6 @@ let selectedFile = null;
       }
     }
 
-    // Last fallback: selectedNewImage (for preview)
     if (!file && selectedNewImage && selectedNewImage.file instanceof File) {
       file = selectedNewImage.file;
       console.log("📁 Fallback: used selectedNewImage:", file.name);
@@ -415,7 +411,6 @@ let selectedFile = null;
     fillForm(data.product);
     showToast("Product updated successfully!", "success");
 
-    // optional redirect
     setTimeout(() => {
       window.location.href = "admin_product.html";
     }, 700);
@@ -488,31 +483,10 @@ let selectedFile = null;
       btn.addEventListener("click", () => addTag(btn.dataset.tag))
     );
 
-    // ── FILE INPUT HANDLING ──
+    // ── FILE INPUT HANDLING (using label) ──
     if (imageInput) {
-      // Open file picker via button
-      if (chooseImageBtn) {
-        chooseImageBtn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          console.log("🖱️ Choose Image button clicked – opening picker");
-          // Clear the input value so that selecting the same file again triggers change
-          imageInput.value = "";
-          imageInput.click();
-        });
-      }
-
-      // Upload area click (if not on the button)
-      if (uploadArea) {
-        uploadArea.addEventListener("click", function (e) {
-          if (e.target.closest("#chooseImageBtn")) return;
-          if (e.target === imageInput) return;
-          console.log("📂 Upload area clicked – opening picker");
-          imageInput.value = "";
-          imageInput.click();
-        });
-      }
-
-      // Change event – capture the file
+      // The label automatically opens the file dialog – no manual click needed.
+      // We only need the change event.
       imageInput.addEventListener("change", function (e) {
         console.log("========== FILE CHANGE ==========");
         const file = e.target.files?.[0];
@@ -660,7 +634,6 @@ let selectedFile = null;
   // ─── INIT ─────────────────────────────────────────────
 
   console.log("IMAGE ELEMENT:", imageInput);
-  console.log("CHOOSE BUTTON:", chooseImageBtn);
   if (imageInput) {
     console.log("IMAGE INPUT TYPE:", imageInput.type);
     console.log("IMAGE INPUT MULTIPLE:", imageInput.multiple);
