@@ -1,10 +1,20 @@
+// =================================================================
+// Admin order notification bubble
+// Shows the number of orders whose status is exactly "placed".
+// Hidden on orders.html (and order.html for compatibility).
+// =================================================================
 (function () {
   "use strict";
 
-  function isOrderPage() {
+  var API_BASE = "http://127.0.0.1:5000";
+
+  function isOrdersPage() {
     var path = window.location.pathname.toLowerCase();
 
     return (
+      path.endsWith("/orders.html") ||
+      path === "/orders.html" ||
+      path.endsWith("orders.html") ||
       path.endsWith("/order.html") ||
       path === "/order.html" ||
       path.endsWith("order.html")
@@ -29,7 +39,7 @@
 
     if (!bubble) return;
 
-    if (count <= 0 || isOrderPage()) {
+    if (count <= 0 || isOrdersPage()) {
       hideOrderBubble();
       return;
     }
@@ -43,35 +53,38 @@
 
     if (!bubble) return;
 
-    /*
-     * The order page must NEVER show the bubble,
-     * even while the API request is loading.
-     */
-    if (isOrderPage()) {
+    // The Orders page must never show its own notification bubble.
+    if (isOrdersPage()) {
       hideOrderBubble();
       return;
     }
 
     try {
-      var response = await fetch("/orders", {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store"
-      });
+      var token = sessionStorage.getItem("token");
+
+      var headers = {};
+      if (token) {
+        headers.Authorization = "Bearer " + token;
+      }
+
+      var response = await fetch(
+        API_BASE + "/orders",
+        {
+          method: "GET",
+          headers: headers,
+          credentials: "include",
+          cache: "no-store"
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to load orders");
+        throw new Error(
+          "Failed to load orders: HTTP " + response.status
+        );
       }
 
       var data = await response.json();
 
-      /*
-       * Support the common API response formats:
-       *
-       * { orders: [...] }
-       * or
-       * [...]
-       */
       var orders = Array.isArray(data)
         ? data
         : Array.isArray(data.orders)
@@ -83,27 +96,21 @@
       }).length;
 
       showOrderBubble(placedCount);
-
     } catch (error) {
-      console.error("Failed to update order notification bubble:", error);
+      console.error(
+        "Failed to update order notification bubble:",
+        error
+      );
 
-      /*
-       * Don't show a fake number if the API fails.
-       */
+      // Never display a fake/stale number when the API fails.
       hideOrderBubble();
     }
   }
 
-  /*
-   * Run when the page loads.
-   */
   document.addEventListener("DOMContentLoaded", function () {
     updateOrderBubble();
   });
 
-  /*
-   * Make the function available to other admin scripts.
-   */
+  // Useful after an order status is changed without a full page reload.
   window.updateOrderBubble = updateOrderBubble;
-
 })();

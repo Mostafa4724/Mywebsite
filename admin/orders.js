@@ -30,12 +30,6 @@
     document.querySelector(
       ".page-info"
     );
-
-  const badge =
-    document.querySelector(
-      ".sidebar-badge"
-    );
-
   const STATUS_LABELS = {
     placed: "Placed",
     confirmed: "Confirmed",
@@ -404,13 +398,6 @@
         " of " +
         allOrders.length +
         " orders";
-    }
-
-    if (badge) {
-      badge.textContent =
-        String(
-          allOrders.length
-        );
     }
   }
 
