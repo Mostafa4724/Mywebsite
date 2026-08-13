@@ -1,5 +1,5 @@
-// Global variable to hold the selected file
-let selectedFile = null;
+// Global variable to store the selected file
+window.selectedFile = null;
 
 (function () {
   "use strict";
@@ -10,9 +10,8 @@ let selectedFile = null;
   const form = document.getElementById("editProductForm");
   const categorySelect = document.getElementById("prodCategory");
   const imageInput = document.getElementById("imageInput");
-  const previewGrid = document.getElementById("previewGrid");
+  const imagePreview = document.getElementById("imagePreview");
   const uploadPlaceholder = document.getElementById("uploadPlaceholder");
-  const uploadArea = document.getElementById("uploadArea");
   const saleToggle = document.getElementById("saleToggle");
   const saleOverlay = document.getElementById("saleOverlay");
   const saleFields = document.getElementById("saleFields");
@@ -44,7 +43,6 @@ let selectedFile = null;
   let productId = null;
   let product = null;
   let currentImage = "";
-  let selectedNewImage = null;
   let currentTags = [];
   let selectedSaleColor = "#ef4444";
   let dirty = false;
@@ -168,29 +166,6 @@ let selectedFile = null;
     markDirty();
   }
 
-  function renderImage() {
-    previewGrid.innerHTML = "";
-    const src = selectedNewImage ? selectedNewImage.preview : imageUrl(currentImage);
-    if (!src) {
-      previewGrid.style.display = "none";
-      uploadPlaceholder.style.display = "flex";
-      return;
-    }
-    uploadPlaceholder.style.display = "none";
-    previewGrid.style.display = "grid";
-    const item = document.createElement("div");
-    item.className = "ap-preview-item";
-    const img = document.createElement("img");
-    img.src = src;
-    img.alt = "Product image";
-    item.appendChild(img);
-    const label = document.createElement("span");
-    label.style.cssText = "position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;padding:2px 6px;border-radius:4px;font-size:11px";
-    label.textContent = selectedNewImage ? "New image" : "Current image";
-    item.appendChild(label);
-    previewGrid.appendChild(item);
-  }
-
   function updateSalePreview() {
     const regular = Number(priceInput.value) || 0;
     const sale = Number(salePriceField.value) || 0;
@@ -269,8 +244,19 @@ let selectedFile = null;
     currentTags = parseTags(p.tags);
     renderTags();
     currentImage = p.image || "";
-    selectedNewImage = null;
-    renderImage();
+
+    // Update image preview
+    if (currentImage) {
+      imagePreview.src = imageUrl(currentImage);
+      imagePreview.style.display = "block";
+      uploadPlaceholder.style.display = "none";
+    } else {
+      imagePreview.style.display = "none";
+      uploadPlaceholder.style.display = "flex";
+    }
+    // Clear any selected file from previous session
+    window.selectedFile = null;
+    imageInput.value = ""; // reset file input
 
     salePriceField.value = p.sale_price ?? "";
     saleStartDate.value = toDateTimeLocal(p.sale_start);
@@ -363,19 +349,14 @@ let selectedFile = null;
     body.append("tags", currentTags.join(","));
 
     // ── IMAGE ──
-    let file = selectedFile;
+    let file = window.selectedFile;
 
+    // If no file stored, check the input directly (fallback)
     if (!file) {
-      const inp = document.getElementById("imageInput");
-      if (inp && inp.files && inp.files[0]) {
-        file = inp.files[0];
+      if (imageInput && imageInput.files && imageInput.files[0]) {
+        file = imageInput.files[0];
         console.log("📁 Fallback: retrieved file from input:", file.name);
       }
-    }
-
-    if (!file && selectedNewImage && selectedNewImage.file instanceof File) {
-      file = selectedNewImage.file;
-      console.log("📁 Fallback: used selectedNewImage:", file.name);
     }
 
     console.log("📤 FINAL FILE TO UPLOAD:", file);
@@ -483,23 +464,20 @@ let selectedFile = null;
       btn.addEventListener("click", () => addTag(btn.dataset.tag))
     );
 
-    // ── FILE INPUT HANDLING (using label) ──
+    // ── FILE INPUT HANDLING (SIMPLIFIED) ──
     if (imageInput) {
-      // The label automatically opens the file dialog – no manual click needed.
-      // We only need the change event.
       imageInput.addEventListener("change", function (e) {
         console.log("========== FILE CHANGE ==========");
-        const file = e.target.files?.[0];
+        const file = e.target.files[0];
         console.log("Raw file object:", file);
 
         // Store globally
-        selectedFile = file || null;
-
-        // Alert for debugging (remove later)
-        alert(`📁 File selected: ${file ? file.name : "NONE"}`);
+        window.selectedFile = file || null;
 
         if (!file) {
           console.log("❌ No file selected (user cancelled or error).");
+          imagePreview.style.display = "none";
+          uploadPlaceholder.style.display = "flex";
           return;
         }
 
@@ -509,20 +487,22 @@ let selectedFile = null;
         const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
         if (!allowedTypes.includes(file.type)) {
           showToast("Please select PNG, JPG, or WEBP image.", "warn");
-          imageInput.value = "";   // clear the input
-          selectedFile = null;     // also clear global
+          imageInput.value = "";
+          window.selectedFile = null;
+          imagePreview.style.display = "none";
+          uploadPlaceholder.style.display = "flex";
           return;
         }
 
-        // Create preview
-        if (selectedNewImage?.preview) {
-          URL.revokeObjectURL(selectedNewImage.preview);
-        }
-        selectedNewImage = {
-          file: file,
-          preview: URL.createObjectURL(file)
+        // Show preview using FileReader
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          imagePreview.src = ev.target.result;
+          imagePreview.style.display = "block";
+          uploadPlaceholder.style.display = "none";
         };
-        renderImage();
+        reader.readAsDataURL(file);
+
         markDirty();
         showToast("New image selected successfully!", "success");
       });
