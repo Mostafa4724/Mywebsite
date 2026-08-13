@@ -118,9 +118,6 @@
     { id: "streetInput", errorId: "streetError", label: "Street address is required." },
     { id: "architectureInput", errorId: "architectureError", label: "Building NO. is required." },
     { id: "cardholderInput", errorId: "cardholderError", label: "Cardholder name is required." },
-    { id: "floorInput", errorId: "FloorError", label: "Floor is required." },
-    { id: "phoneInput", errorId: "phoneError", label: "Phone is required." },
-    { id: "checkoutEmail", errorId: "emailError", label: "Email is required." },  
   ];
 
 
