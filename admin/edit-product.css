@@ -1635,14 +1635,15 @@
   }
 }
 
-/* ===== Visually Hidden File Input ===== */
-/* MUST NOT use display: none, otherwise browser security blocks the file change event from firing */
-/* MUST use pointer-events: none, otherwise the invisible input intercepts mouse clicks and triggers the dialog twice */
+/* ===== FIXED: Visually Hidden File Input ===== */
+/* This method works reliably on all modern browsers */
 #imageInput {
-    position: static;
-    width: auto;
-    height: auto;
-    opacity: 1;
-    overflow: visible;
-    z-index: auto;
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0.01;
+    pointer-events: auto;  /* important: allow the input to receive file */
+    z-index: -1;
 }

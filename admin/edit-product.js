@@ -45,7 +45,7 @@ let selectedFile = null;
   let productId = null;
   let product = null;
   let currentImage = "";
-  let selectedNewImage = null; // kept for preview
+  let selectedNewImage = null;
   let currentTags = [];
   let selectedSaleColor = "#ef4444";
   let dirty = false;
@@ -364,9 +364,10 @@ let selectedFile = null;
     body.append("tags", currentTags.join(","));
 
     // ── IMAGE ──
-    let file = selectedFile;  // global variable set by change event
+    // First try the global variable
+    let file = selectedFile;
 
-    // fallback: read directly from input (if something cleared selectedFile)
+    // If not set, try reading directly from input
     if (!file) {
       const inp = document.getElementById("imageInput");
       if (inp && inp.files && inp.files[0]) {
@@ -375,7 +376,7 @@ let selectedFile = null;
       }
     }
 
-    // last fallback: selectedNewImage (for preview)
+    // Last fallback: selectedNewImage (for preview)
     if (!file && selectedNewImage && selectedNewImage.file instanceof File) {
       file = selectedNewImage.file;
       console.log("📁 Fallback: used selectedNewImage:", file.name);
@@ -494,6 +495,8 @@ let selectedFile = null;
         chooseImageBtn.addEventListener("click", function (e) {
           e.stopPropagation();
           console.log("🖱️ Choose Image button clicked – opening picker");
+          // Clear the input value so that selecting the same file again triggers change
+          imageInput.value = "";
           imageInput.click();
         });
       }
@@ -504,6 +507,7 @@ let selectedFile = null;
           if (e.target.closest("#chooseImageBtn")) return;
           if (e.target === imageInput) return;
           console.log("📂 Upload area clicked – opening picker");
+          imageInput.value = "";
           imageInput.click();
         });
       }
