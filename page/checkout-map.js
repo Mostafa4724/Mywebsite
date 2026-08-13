@@ -14,7 +14,7 @@
 
   // Initialize the map centered on a default location
   var map = L.map("checkoutMap", {
-    center: [40.7128, -74.006],
+    center: [30.0599469, 31.3278101],
     zoom: 13,
     zoomControl: true,
     attributionControl: true,

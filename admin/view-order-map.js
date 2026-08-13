@@ -1,8 +1,8 @@
 (function () {
   "use strict";
 
-  var DEFAULT_LAT = 40.7128;
-  var DEFAULT_LNG = -74.006;
+  var DEFAULT_LAT = 30.0599469;
+  var DEFAULT_LNG = 31.3278101;
 
   var inlineMap = null;
   var inlineMarker = null;
@@ -79,13 +79,15 @@
       ].filter(function (p) { return p && String(p).trim(); });
 
       return {
-        lat: hasCoords ? customerLat : DEFAULT_LAT,
-        lng: hasCoords ? customerLng : DEFAULT_LNG,
+        lat: DEFAULT_LAT,
+        lng: DEFAULT_LNG,
         name: fullName,
         address: addressParts.join(", ") || "Delivery address on file",
         city: "",
         country: "",
-        fullAddress: ([fullName].concat(addressParts)).join(", ") || "Delivery address on file"
+        fullAddress:
+          ([fullName].concat(addressParts)).join(", ") ||
+          "Delivery address on file"
       };
     }
 
