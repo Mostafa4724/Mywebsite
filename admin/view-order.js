@@ -181,19 +181,16 @@
 
   function fullName() {
 
+    // Show the real account username instead of the email address.
+    // Legacy orders are supported through the saved customer name.
     return (
+      orderData.username ||
       (
-        orderData.customer_name ||
-        ""
-      )
-      +
-      " "
-      +
-      (
-        orderData.customer_lastname ||
-        ""
-      )
-    ).trim();
+        (orderData.customer_name || "") +
+        " " +
+        (orderData.customer_lastname || "")
+      ).trim()
+    );
   }
 
 

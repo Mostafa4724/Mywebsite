@@ -67,6 +67,7 @@
         customerLat !== 0 && customerLng !== 0;
 
       var fullName =
+        order.username ||
         ((order.customer_name || "") + " " + (order.customer_lastname || "")).trim() ||
         order.customer_email ||
         "Customer";
