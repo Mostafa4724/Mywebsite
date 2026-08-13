@@ -1639,10 +1639,10 @@
 /* MUST NOT use display: none, otherwise browser security blocks the file change event from firing */
 /* MUST use pointer-events: none, otherwise the invisible input intercepts mouse clicks and triggers the dialog twice */
 #imageInput {
-    position: absolute;
-    width: 0.1px;
-    height: 0.1px;
-    opacity: 0;
-    overflow: hidden;
-    z-index: -1;
+    position: static;
+    width: auto;
+    height: auto;
+    opacity: 1;
+    overflow: visible;
+    z-index: auto;
 }
