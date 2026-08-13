@@ -31,6 +31,22 @@
       maximumFractionDigits: 2
     });
 
+  const compactMoney = value => {
+    const n = Number(value) || 0;
+    if (n >= 1e9) return "$" + (n / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+    if (n >= 1e6) return "$" + (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1e3) return "$" + (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const compactNumber = value => {
+    const n = Number(value) || 0;
+    if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+    if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+    return n.toLocaleString("en-US");
+  };
+
   const number = value =>
     (Number(value) || 0).toLocaleString("en-US");
 
@@ -39,6 +55,14 @@
     div.textContent = value ?? "";
     return div.innerHTML;
   };
+
+  function getCategoryColor(percent) {
+    if (percent >= 70) return "#16a34a";
+    if (percent >= 50) return "#2563eb";
+    if (percent >= 30) return "#7c3aed";
+    if (percent >= 15) return "#d97706";
+    return "#ec4899";
+  }
 
   function showError(message) {
     const el = document.getElementById("dashboardError");
@@ -58,14 +82,15 @@
 
     container.innerHTML = categories.map((item, index) => {
       const width = Math.max(2, Math.min(100, Number(item.percent) || 0));
+      const color = getCategoryColor(width);
       return `
         <div class="traffic-row">
           <div class="traffic-label">
-            <span class="traffic-dot" style="background: var(--blue)"></span>
+            <span class="traffic-dot" style="background: ${color}"></span>
             <strong>${escapeHtml(item.name)}</strong>
           </div>
           <div class="traffic-bar-bg">
-            <div class="traffic-bar-fill" style="--w:${width}%"></div>
+            <div class="traffic-bar-fill" style="--w:${width}%; background: ${color}"></div>
           </div>
           <span class="traffic-pct">${width}%</span>
         </div>
@@ -89,7 +114,7 @@
           <strong>${escapeHtml(item.name)}</strong>
           <span>${escapeHtml(item.category || "Other")}</span>
         </div>
-        <span class="top-page-views">${number(item.units)} units</span>
+        <span class="top-page-views">${compactNumber(item.units)} units</span>
       </div>
     `).join("");
   }
@@ -113,8 +138,8 @@
           <div
             class="chart-bar ${index === months.length - 1 ? "active" : ""}"
             style="--h:${height}%"
-            data-value="${money(revenue)}"
-            title="${escapeHtml(month.label)}: ${money(revenue)}"
+            data-value="${compactMoney(revenue)}"
+            title="${escapeHtml(month.label)}: ${compactMoney(revenue)}"
           ></div>
           <span>${escapeHtml(month.label)}</span>
         </div>
@@ -160,10 +185,10 @@
         throw new Error(data.message || "Could not load dashboard data.");
       }
 
-      document.getElementById("statRevenue").textContent = money(data.stats.revenue);
-      document.getElementById("statOrders").textContent = number(data.stats.orders);
-      document.getElementById("statAverage").textContent = money(data.stats.average_order);
-      document.getElementById("statCustomers").textContent = number(data.stats.customers);
+      document.getElementById("statRevenue").textContent = compactMoney(data.stats.revenue);
+      document.getElementById("statOrders").textContent = compactNumber(data.stats.orders);
+      document.getElementById("statAverage").textContent = compactMoney(data.stats.average_order);
+      document.getElementById("statCustomers").textContent = compactNumber(data.stats.customers);
 
       const badge = document.getElementById("orderBadge");
       if (badge) badge.textContent = `${number(data.stats.low_stock)} low stock`;
