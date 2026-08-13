@@ -363,6 +363,8 @@ window.selectedFile = null;
 
     if (file) {
       console.log(`✅ Uploading: ${file.name} (${file.size} bytes, ${file.type})`);
+      console.log('About to append file:', file);
+      console.log('File instanceof File?', file instanceof File);
       body.append("image", file, file.name);
     } else {
       console.log("ℹ️ No new image – keeping existing.");
