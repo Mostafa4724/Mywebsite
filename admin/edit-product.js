@@ -503,24 +503,29 @@
 
     body.append("tags", currentTags.join(","));
 
-    // ========================================
-// IMAGE – use the file input directly
 // ========================================
-const fileInput = imageInput;
+// IMAGE – DEBUG + UPLOAD
+// ========================================
+const fileInput = document.getElementById("imageInput"); // Get it fresh
 const file = fileInput && fileInput.files && fileInput.files[0];
 
-console.log("========== IMAGE BEFORE UPLOAD ==========");
-console.log("fileInput.files[0]:", file);
+console.log("========== IMAGE DEBUG (FRONTEND) ==========");
+console.log("fileInput:", fileInput);
+console.log("fileInput.files:", fileInput ? fileInput.files : "null");
+console.log("file:", file);
 
+// SHOW AN ALERT SO YOU CAN SEE WHAT'S HAPPENING
 if (file) {
-    console.log("✅ Uploading:", file.name, file.type, file.size);
+    alert(`✅ File selected: ${file.name} (${file.size} bytes)`);
     body.append("image", file, file.name);
 } else {
-    console.log("❌ No file selected in input");
-    // Optional fallback – if selectedNewImage still exists, use it
+    alert("❌ No file selected in the file input!");
+    // Fallback: try the old selectedNewImage just in case
     if (selectedNewImage && selectedNewImage.file instanceof File) {
-        console.log("⚠️ Using fallback selectedNewImage");
+        alert(`⚠️ Fallback using selectedNewImage: ${selectedNewImage.file.name}`);
         body.append("image", selectedNewImage.file, selectedNewImage.file.name);
+    } else {
+        alert("❌ No image to upload – keeping existing image.");
     }
 }
     // ========================================
@@ -709,6 +714,7 @@ if (file) {
         console.log("========== FILE CHANGE ==========");
 
         const file = e.target.files?.[0];
+        alert(`📁 File selected in change event: ${file ? file.name : "NONE"}`);
 
         console.log("Selected file:", file);
 
