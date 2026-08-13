@@ -116,7 +116,7 @@
     { id: "firstNameInput", errorId: "firstNameError", label: "First name is required." },
     { id: "lastNameInput", errorId: "lastNameError", label: "Last name is required." },
     { id: "streetInput", errorId: "streetError", label: "Street address is required." },
-    { id: "architectureInput", errorId: "architectureError", label: "Architecture is required." },
+    { id: "architectureInput", errorId: "architectureError", label: "Building NO. is required." },
     { id: "cardholderInput", errorId: "cardholderError", label: "Cardholder name is required." },
   ];
 
