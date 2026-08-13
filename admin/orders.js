@@ -113,23 +113,15 @@
   }
 
   function buyerName(order) {
-    const first =
-      order.customer_name ||
-      "";
-
-    const last =
-      order.customer_lastname ||
-      "";
-
-    const name =
-      (
-        first +
-        " " +
-        last
-      ).trim();
-
+    // The account username is the name shown in the admin Orders list.
+    // Fall back to the older customer-name fields for legacy orders.
     return (
-      name ||
+      order.username ||
+      (
+        (order.customer_name || "") +
+        " " +
+        (order.customer_lastname || "")
+      ).trim() ||
       order.customer_email ||
       "Anonymous"
     );

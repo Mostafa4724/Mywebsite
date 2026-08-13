@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import Blueprint, request, jsonify
 
-from models import Product, Order, OrderItem
+from models import User, Product, Order, OrderItem
 from database import db
 from security import (
     user_required,
@@ -138,11 +138,20 @@ def _order_to_dict(order):
     AttributeError problems.
     """
 
+    # Resolve the real account username from the users table.
+    # This is the source of truth for the username shown in orders,
+    # including orders that were created before this field was added.
+    user = None
+    if order.user_id is not None:
+        user = User.query.get(order.user_id)
+
     base = {
 
         "id": order.id,
 
         "user_id": order.user_id,
+
+        "username": user.username if user else None,
 
         "payment_method": getattr(
             order,
