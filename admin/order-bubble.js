@@ -1,7 +1,7 @@
 // =====================================================================
 // Admin order notification bubble
-// Shows the number of orders that are still in "placed" status.
-// When an order is changed to "confirmed", the number updates/clears.
+// Counts all orders whose current status is "placed".
+// This file is used by every admin page that has the sidebar.
 // =====================================================================
 (function () {
   "use strict";
@@ -9,30 +9,56 @@
   var API_BASE = "http://127.0.0.1:5000";
   var REFRESH_INTERVAL = 3000;
 
-  function getOrderBubble() {
-    return document.getElementById("orderBubble");
+  function getOrderBubbles() {
+    // Use the id when available, but also support every sidebar badge
+    // beside the Orders link so the script works on all admin pages.
+    var byId = document.getElementById("orderBubble");
+    var bubbles = byId ? [byId] : [];
+
+    var orderLink = document.querySelector(
+      '.sidebar-link[href="orders.html"]'
+    );
+
+    if (orderLink) {
+      var badges = orderLink.querySelectorAll(".sidebar-badge");
+
+      badges.forEach(function (badge) {
+        if (bubbles.indexOf(badge) === -1) {
+          bubbles.push(badge);
+        }
+      });
+    }
+
+    return bubbles;
   }
 
   function renderOrderBubble(count) {
-    var bubble = getOrderBubble();
-    if (!bubble) return;
+    var bubbles = getOrderBubbles();
 
-    if (count > 0) {
-      bubble.textContent = String(count);
-      bubble.hidden = false;
-    } else {
-      bubble.textContent = "";
-      bubble.hidden = true;
-    }
+    bubbles.forEach(function (bubble) {
+      if (count > 0) {
+        bubble.textContent = String(count);
+        bubble.hidden = false;
+      } else {
+        bubble.textContent = "";
+        bubble.hidden = true;
+      }
+    });
   }
 
   async function updateOrderBubble() {
-    var bubble = getOrderBubble();
-    if (!bubble) return;
+    var bubbles = getOrderBubbles();
+
+    if (!bubbles.length) {
+      return;
+    }
 
     try {
       var token = sessionStorage.getItem("token");
-      var headers = {};
+
+      var headers = {
+        Accept: "application/json"
+      };
 
       if (token) {
         headers.Authorization = "Bearer " + token;
@@ -47,20 +73,27 @@
 
       if (!response.ok) {
         throw new Error(
-          "Failed to load orders: HTTP " + response.status
+          "Orders request failed: HTTP " + response.status
         );
       }
 
       var data = await response.json();
 
-      var orders = Array.isArray(data)
-        ? data
-        : Array.isArray(data.orders)
-          ? data.orders
-          : [];
+      if (
+        !data ||
+        data.success !== true ||
+        !Array.isArray(data.orders)
+      ) {
+        throw new Error("Invalid orders response.");
+      }
 
-      var placedCount = orders.filter(function (order) {
-        return String(order.status || "").toLowerCase() === "placed";
+      var placedCount = data.orders.filter(function (order) {
+        var status = String(
+          order.status || ""
+        ).trim().toLowerCase();
+
+        // "pending" is treated as placed by the existing order UI.
+        return status === "placed" || status === "pending";
       }).length;
 
       renderOrderBubble(placedCount);
@@ -71,23 +104,45 @@
         error
       );
 
+      // Do not show an incorrect number if the backend cannot be reached.
       renderOrderBubble(0);
     }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function start() {
     updateOrderBubble();
 
-    // Keep every admin page synchronized without refreshing the page.
-    window.setInterval(updateOrderBubble, REFRESH_INTERVAL);
-  });
+    // Refresh immediately after an order status changes.
+    window.addEventListener(
+      "orderStatusUpdated",
+      updateOrderBubble
+    );
 
-  // Other admin scripts can force an immediate refresh
-  // after a status change.
-  window.updateOrderBubble = updateOrderBubble;
+    window.addEventListener(
+      "ordersChanged",
+      updateOrderBubble
+    );
 
-  window.addEventListener(
-    "orderStatusUpdated",
-    updateOrderBubble
-  );
+    // Keep synchronized every 3 seconds.
+    window.setInterval(
+      updateOrderBubble,
+      REFRESH_INTERVAL
+    );
+
+    // Allow other scripts to refresh it manually.
+    window.updateOrderBubble =
+      updateOrderBubble;
+  }
+
+  if (
+    document.readyState === "loading"
+  ) {
+    document.addEventListener(
+      "DOMContentLoaded",
+      start
+    );
+  } else {
+    start();
+  }
+
 })();
