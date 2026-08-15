@@ -47,7 +47,10 @@
       .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
         from_name:  name,
         from_email: email,
+        to_name:    "Mostafa",
+        to_email:   "mnmaibrahim@gmail.com",
         message:    message,
+        subject:    "New message from " + name
       })
       .then(function () {
         showStatus("Message sent successfully!", true);
