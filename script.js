@@ -1264,7 +1264,7 @@ if (typeof setupPromoCode === "function") {
     const token = sessionStorage.getItem("token");
 
     if (!token) {
-      window.location.href = "login.html";
+      window.location.href = "/page/login.html";
       return false;
     }
 
@@ -1278,7 +1278,7 @@ if (typeof setupPromoCode === "function") {
       if (!response.ok) {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("auth_user");
-        window.location.href = "login.html";
+        window.location.href = "/page/login.html";
         return false;
       }
 
@@ -1328,7 +1328,7 @@ if (typeof setupPromoCode === "function") {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
       sessionStorage.removeItem("adminLoggedIn");
-      window.location.href = "login.html";
+      window.location.href = "/page/login.html";
     });
   }
 
@@ -1406,566 +1406,254 @@ if (typeof setupPromoCode === "function") {
   }
 })();
 
-  // Set session on successful login (handled in submit above via redirect)
-  // We set it right before redirect
-  const origSubmit = document.getElementById("adminForm");
-
-  if (origSubmit) {
-    origSubmit.addEventListener("submit", function setSession() {
-      // This runs after the validation in the main handler above
-      // The session is set below
-    });
-  }
-  const isLoginPage =
-    window.location.pathname.endsWith("login.html");
-  // Patch: set session flag before redirect on login page
-  if (isLoginPage) {
-    const form = document.getElementById("adminForm");
-    if (form) {
-      const originalHandler = form.onsubmit;
-      form.addEventListener(
-        "submit",
-        function () {
-          const u = document.getElementById("adminUser");
-          const p = document.getElementById("adminPass");
-          if (
-            u &&
-            p &&
-            u.value.trim() === VALID_USER &&
-            p.value === VALID_PASS
-          ) {
-            sessionStorage.setItem("adminLoggedIn", "true");
-          }
-        },
-        true
-      ); // capture phase so it runs before the main handler
-    }
-  }
-
+/* =============================================================================
+ *  ADD PRODUCT PAGE — Image Uploader
+ *  Self-contained module. Runs only on pages that contain #uploadArea (add.html).
+ *  Exposes:
+ *    window.uploadedImages          -> live array [{ file, preview }]  (add.js reads this)
+ *    window.ProductImages           -> { getFiles, getMainFile, clear, count }
+ * ========================================================================== */
 (function () {
-  'use strict';
+  "use strict";
 
-  // ===== Image Upload =====
-  const uploadArea = document.getElementById('uploadArea');
-  const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-  const imageInput = document.getElementById('imageInput');
-  const previewGrid = document.getElementById('previewGrid');
+  // ----- Config -------------------------------------------------------------
   const MAX_IMAGES = 5;
-  let uploadedImages = [];
-  
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+  // ----- DOM ----------------------------------------------------------------
+  const dom = {
+    area: document.getElementById("uploadArea"),
+    placeholder: document.getElementById("uploadPlaceholder"),
+    input: document.getElementById("imageInput"),
+    grid: document.getElementById("previewGrid"),
+  };
+
+  // Not the add-product page -> do nothing.
+  if (!dom.area || !dom.input || !dom.grid || !dom.placeholder) return;
+
+  // ----- State --------------------------------------------------------------
+  // NOTE: this array is mutated in place and never reassigned, so the reference
+  // held by window.uploadedImages (used by add.js) always stays valid.
+  const uploadedImages = [];
   window.uploadedImages = uploadedImages;
 
-  if (uploadArea) {
-    uploadArea.addEventListener('click', (e) => {
-      if (e.target.closest('.preview-remove') || e.target.closest('.preview-add-more')) return;
-      if (uploadedImages.length >= MAX_IMAGES) return;
-      
-    });
+  let dragDepth = 0; // avoids dragleave flicker on child elements
 
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadArea.classList.add('dragover');
-    });
-
-    uploadArea.addEventListener('dragleave', () => {
-      uploadArea.classList.remove('dragover');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadArea.classList.remove('dragover');
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-      handleFiles(files);
-    });
-
-    imageInput.addEventListener('change', () => {
-      const files = Array.from(imageInput.files);
-      handleFiles(files);
-      imageInput.value = '';
-    });
+  // ----- Helpers ------------------------------------------------------------
+  function notify(message) {
+    if (typeof window.showToast === "function") window.showToast(message);
+    else console.warn(message);
   }
 
-  function handleFiles(files) {
+  function openFilePicker() {
+    if (uploadedImages.length >= MAX_IMAGES) {
+      notify("You can upload a maximum of " + MAX_IMAGES + " images.");
+      return;
+    }
+    dom.input.click();
+  }
 
-    const remaining = MAX_IMAGES - uploadedImages.length;
-    const toAdd = files.slice(0, remaining);
+  function validateFile(file) {
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      return '"' + file.name + '" is not a supported image (PNG, JPG, WebP).';
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return '"' + file.name + '" exceeds the 5MB limit.';
+    }
+    return null;
+  }
 
-    toAdd.forEach(file => {
+  function isDuplicate(file) {
+    return uploadedImages.some(
+      (img) =>
+        img.file.name === file.name &&
+        img.file.size === file.size &&
+        img.file.lastModified === file.lastModified
+    );
+  }
 
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('File "' + file.name + '" exceeds 5MB limit.');
-            return;
-        }
+  // ----- Core: add / remove -------------------------------------------------
+  function addFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
 
-        const reader = new FileReader();
+    const errors = [];
+    let added = 0;
 
-        reader.onload = (e) => {
+    for (const file of files) {
+      if (uploadedImages.length >= MAX_IMAGES) {
+        errors.push("Only " + MAX_IMAGES + " images allowed; extra files were skipped.");
+        break;
+      }
 
-            uploadedImages.push({
-                file: file,
-                preview: e.target.result
-            });
+      const error = validateFile(file);
+      if (error) {
+        errors.push(error);
+        continue;
+      }
 
-            renderPreviews();
+      if (isDuplicate(file)) {
+        errors.push('"' + file.name + '" is already added.');
+        continue;
+      }
 
-        };
+      // Object URLs are far cheaper than base64 data URLs from FileReader,
+      // and preserve the exact order the user selected the files in.
+      uploadedImages.push({ file: file, preview: URL.createObjectURL(file) });
+      added++;
+    }
 
-        reader.readAsDataURL(file);
+    if (added) renderPreviews();
+    if (errors.length) notify(errors[0]);
+  }
 
-    });
+  function removeImage(index) {
+    const [removed] = uploadedImages.splice(index, 1);
+    if (removed && removed.preview.startsWith("blob:")) {
+      URL.revokeObjectURL(removed.preview); // free memory
+    }
+    renderPreviews();
+  }
 
-}
+  // ----- Rendering ----------------------------------------------------------
+  function buildPreviewItem(img, index) {
+    const item = document.createElement("div");
+    item.className = "preview-item";
+
+    const picture = document.createElement("img");
+    picture.src = img.preview;
+    picture.alt = "Preview " + (index + 1);
+    item.appendChild(picture);
+
+    if (index === 0) {
+      const badge = document.createElement("span");
+      badge.className = "preview-badge";
+      badge.textContent = "Main";
+      item.appendChild(badge);
+    }
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "preview-remove";
+    remove.dataset.index = String(index);
+    remove.setAttribute("aria-label", "Remove image");
+    remove.innerHTML = "&times;";
+    item.appendChild(remove);
+
+    return item;
+  }
+
+  function buildAddMoreTile() {
+    const tile = document.createElement("div");
+    tile.className = "preview-add-more";
+    tile.setAttribute("role", "button");
+    tile.setAttribute("tabindex", "0");
+    tile.innerHTML =
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" ' +
+      'stroke-linejoin="round">' +
+      '<line x1="12" y1="5" x2="12" y2="19"/>' +
+      '<line x1="5" y1="12" x2="19" y2="12"/>' +
+      "</svg><span>Add More</span>";
+    return tile;
+  }
 
   function renderPreviews() {
     if (uploadedImages.length === 0) {
-      uploadPlaceholder.style.display = '';
-      previewGrid.style.display = 'none';
+      dom.placeholder.style.display = "";
+      dom.grid.style.display = "none";
+      dom.grid.innerHTML = "";
       return;
     }
 
-    uploadPlaceholder.style.display = 'none';
-    previewGrid.style.display = 'grid';
-    previewGrid.innerHTML = '';
+    dom.placeholder.style.display = "none";
+    dom.grid.style.display = "grid";
 
-    uploadedImages.forEach((img, i) => {
-      const item = document.createElement('div');
-      item.className = 'preview-item';
-      item.innerHTML =
-        '<img src="' + img.preview + '" alt="Preview ' + (i + 1) + '" />' +
-        (i === 0 ? '<span class="preview-badge">Main</span>' : '') +
-        '<button type="button" class="preview-remove" data-index="' + i + '" aria-label="Remove image">&times;</button>';
-      previewGrid.appendChild(item);
-    });
+    // Build off-document, then swap in once -> a single reflow.
+    const fragment = document.createDocumentFragment();
+    uploadedImages.forEach((img, i) => fragment.appendChild(buildPreviewItem(img, i)));
+    if (uploadedImages.length < MAX_IMAGES) fragment.appendChild(buildAddMoreTile());
 
-    if (uploadedImages.length < MAX_IMAGES) {
-      const addMore = document.createElement('div');
-      addMore.className = 'preview-add-more';
-      addMore.innerHTML =
-        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-        '<span>Add More</span>';
-      addMore.addEventListener('click', (e) => {
-        e.stopPropagation();
-        
-      });
-      previewGrid.appendChild(addMore);
-    }
-
-    previewGrid.querySelectorAll('.preview-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const idx = parseInt(btn.dataset.index);
-        uploadedImages.splice(idx, 1);
-        renderPreviews();
-      });
-    });
+    dom.grid.innerHTML = "";
+    dom.grid.appendChild(fragment);
   }
 
-  // ===== Character Counts =====
-  const prodDesc = document.getElementById('prodDesc');
-  const descCount = document.getElementById('descCount');
-  const seoTitle = document.getElementById('seoTitle');
-  const seoTitleCount = document.getElementById('seoTitleCount');
-  const seoDesc = document.getElementById('seoDesc');
-  const seoDescCount = document.getElementById('seoDescCount');
-
-  function updateCount(input, counter, max) {
-    if (!input || !counter) return;
-    const len = input.value.length;
-    counter.textContent = len;
-    counter.parentElement.className = 'ap-field-bottom';
-    if (len > max * 0.9) counter.parentElement.classList.add('warning');
-    if (len > max) counter.parentElement.classList.add('over');
-  }
-
-  if (prodDesc) prodDesc.addEventListener('input', () => updateCount(prodDesc, descCount, 2000));
-  if (seoTitle) seoTitle.addEventListener('input', () => updateCount(seoTitle, seoTitleCount, 60));
-  if (seoDesc) seoDesc.addEventListener('input', () => updateCount(seoDesc, seoDescCount, 160));
-
-  // ===== Auto-generate slug from name =====
-  const prodName = document.getElementById('prodName');
-  const seoSlug = document.getElementById('seoSlug');
-
-  if (prodName && seoSlug) {
-    prodName.addEventListener('input', () => {
-      if (seoSlug.dataset.manual === 'true') return;
-      seoSlug.value = prodName.value
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-    });
-    seoSlug.addEventListener('input', () => {
-      seoSlug.dataset.manual = 'true';
-    });
-  }
-
-  // ===== Profit Calculator =====
-  const prodPrice = document.getElementById('prodPrice');
-  const prodCost = document.getElementById('prodCost');
-  const profitCalc = document.getElementById('profitCalc');
-  const profitValue = document.getElementById('profitValue');
-  const marginValue = document.getElementById('marginValue');
-
-  function calcProfit() {
-    if (!profitCalc) return;
-    const price = parseFloat(prodPrice.value) || 0;
-    const cost = parseFloat(prodCost.value) || 0;
-
-    if (price > 0 && cost > 0) {
-      profitCalc.style.display = '';
-      const profit = price - cost;
-      profitValue.textContent = '$' + profit.toFixed(2);
-      const margin = ((profit / price) * 100).toFixed(1);
-      marginValue.textContent = margin + '%';
-      profitValue.style.color = profit >= 0 ? '#16a34a' : '#ef4444';
-      marginValue.style.color = profit >= 0 ? '#16a34a' : '#ef4444';
-    } else {
-      profitCalc.style.display = 'none';
-    }
-  }
-
-  if (prodPrice) prodPrice.addEventListener('input', () => { calcProfit(); updateDiscountPreview(); });
-  if (prodCost) prodCost.addEventListener('input', calcProfit);
-
-  // ===== Publish Status =====
-  const scheduledDate = document.getElementById('scheduledDate');
-  document.querySelectorAll('input[name="publishStatus"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (scheduledDate) {
-        scheduledDate.style.display = radio.value === 'scheduled' ? '' : 'none';
-      }
-    });
+  // ----- Events -------------------------------------------------------------
+  // Click anywhere on the empty upload area opens the picker.
+  dom.area.addEventListener("click", (e) => {
+    if (e.target.closest(".preview-remove") || e.target.closest(".preview-add-more")) return;
+    if (e.target.closest(".preview-item")) return;
+    openFilePicker();
   });
 
-  // ===== Stock Status Chips =====
-  document.querySelectorAll('.ap-stock-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.ap-stock-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      chip.querySelector('input').checked = true;
-    });
+  // Delegated handling for preview controls: bound once, not on every render.
+  dom.grid.addEventListener("click", (e) => {
+    const removeBtn = e.target.closest(".preview-remove");
+    if (removeBtn) {
+      e.stopPropagation();
+      removeImage(Number(removeBtn.dataset.index));
+      return;
+    }
+
+    if (e.target.closest(".preview-add-more")) {
+      e.stopPropagation();
+      openFilePicker();
+    }
   });
 
-  // ===== Tags =====
-  const tagInput = document.getElementById('tagInput');
-  const tagsList = document.getElementById('tagsList');
-  const tagsWrap = document.getElementById('tagsWrap');
-  let tags = [];
-
-  if (tagInput && tagsList) {
-    tagsWrap.addEventListener('click', () => tagInput.focus());
-
-    tagInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        addTag(tagInput.value.replace(',', '').trim());
-        tagInput.value = '';
-      }
-      if (e.key === 'Backspace' && tagInput.value === '' && tags.length > 0) {
-        removeTag(tags.length - 1);
-      }
-    });
-  }
-
-  function addTag(text) {
-    if (!text || tags.includes(text.toLowerCase())) return;
-    tags.push(text.toLowerCase());
-    renderTags();
-  }
-
-  function removeTag(index) {
-    tags.splice(index, 1);
-    renderTags();
-  }
-
-  function renderTags() {
-    if (!tagsList) return;
-    tagsList.innerHTML = '';
-    tags.forEach((tag, i) => {
-      const el = document.createElement('span');
-      el.className = 'ap-tag';
-      el.innerHTML = tag + ' <button type="button" data-idx="' + i + '">&times;</button>';
-      el.querySelector('button').addEventListener('click', () => removeTag(i));
-      tagsList.appendChild(el);
-    });
-  }
-
-  document.querySelectorAll('.suggested-tag').forEach(btn => {
-    btn.addEventListener('click', () => {
-      addTag(btn.dataset.tag);
-      btn.style.display = 'none';
-    });
-  });
-
-  // ===== Variants =====
-  const addVariantBtn = document.getElementById('addVariantBtn');
-  const variantsList = document.getElementById('variantsList');
-
-  function bindVariantRemove() {
-    variantsList.querySelectorAll('.variant-remove').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (variantsList.children.length > 1) {
-          const row = btn.closest('.ap-variant-row');
-          row.style.opacity = '0';
-          row.style.transform = 'translateY(-8px)';
-          row.style.transition = 'all 0.2s';
-          setTimeout(() => row.remove(), 200);
-        }
-      });
-    });
-  }
-
-  if (addVariantBtn && variantsList) {
-    addVariantBtn.addEventListener('click', () => {
-      const row = document.createElement('div');
-      row.className = 'ap-variant-row';
-      row.innerHTML =
-        '<div class="variant-field"><label>Size</label><select class="variant-select"><option value="xs">XS</option><option value="s">S</option><option value="m" selected>M</option><option value="l">L</option><option value="xl">XL</option><option value="xxl">XXL</option></select></div>' +
-        '<div class="variant-field"><label>Color</label><input type="text" class="variant-input" placeholder="e.g. White" /></div>' +
-        '<div class="variant-field"><label>Stock</label><input type="number" class="variant-input" placeholder="0" min="0" value="0" /></div>' +
-        '<div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-input" placeholder="0.00" step="0.01" min="0" /></div></div>' +
-        '<button type="button" class="variant-remove" aria-label="Remove variant"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-      variantsList.appendChild(row);
-      bindVariantRemove();
-    });
-
-    bindVariantRemove();
-  }
-
-  // ===== Sale & Discount =====
-  const saleToggle = document.getElementById('saleToggle');
-  const saleFields = document.getElementById('saleFields');
-  const saleOverlay = document.getElementById('saleOverlay');
-  const salePriceField = document.getElementById('salePriceField');
-  const discountPreview = document.getElementById('discountPreview');
-  const discountPct = document.getElementById('discountPct');
-  const discRegular = document.getElementById('discRegular');
-  const discSale = document.getElementById('discSale');
-  const discSave = document.getElementById('discSave');
-  const saleBadge = document.getElementById('saleBadge');
-  const badgeCount = document.getElementById('badgeCount');
-  const saleBadgePreview = document.getElementById('saleBadgePreview');
-  const mockBadge = document.getElementById('mockBadge');
-  const mockRegular = document.getElementById('mockRegular');
-  const mockSalePrice = document.getElementById('mockSalePrice');
-  const saleColorOptions = document.getElementById('saleColorOptions');
-  let selectedSaleColor = '#ef4444';
-
-  if (saleToggle) {
-    saleToggle.addEventListener('change', () => {
-      const on = saleToggle.checked;
-      saleFields.style.display = on ? '' : 'none';
-      saleOverlay.style.display = on ? 'none' : '';
-      if (on) {
-        updateDiscountPreview();
-        updateBadgePreview();
-        const startDate = document.getElementById('saleStartDate');
-        if (startDate && !startDate.value) {
-          const now = new Date();
-          now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-          startDate.value = now.toISOString().slice(0, 16);
-        }
-      }
-    });
-  }
-
-  function updateDiscountPreview() {
-    if (!salePriceField || !discountPreview) return;
-    const regular = parseFloat(prodPrice ? prodPrice.value : 0) || 0;
-    const sale = parseFloat(salePriceField.value) || 0;
-
-    if (sale > 0 && regular > 0 && sale < regular) {
-      const pct = Math.round(((regular - sale) / regular) * 100);
-      const save = regular - sale;
-
-      discountPct.textContent = pct + '%';
-      discRegular.textContent = '$' + regular.toFixed(2);
-      discSale.textContent = '$' + sale.toFixed(2);
-      discSave.textContent = '$' + save.toFixed(2);
-
-      const circle = discountPreview.querySelector('.discount-circle');
-      if (pct >= 50) {
-        circle.style.background = '#dc2626';
-        circle.style.boxShadow = '0 4px 14px rgba(220, 38, 38, 0.3)';
-      } else if (pct >= 25) {
-        circle.style.background = '#ef4444';
-        circle.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.3)';
-      } else {
-        circle.style.background = '#f97316';
-        circle.style.boxShadow = '0 4px 14px rgba(249, 115, 22, 0.3)';
-      }
-
-      discountPreview.style.display = '';
-    } else {
-      discountPreview.style.display = 'none';
-    }
-
-    if (mockRegular && mockSalePrice) {
-      mockRegular.textContent = '$' + regular.toFixed(2);
-      if (sale > 0 && sale < regular) {
-        mockSalePrice.textContent = '$' + sale.toFixed(2);
-        mockSalePrice.style.display = '';
-        mockRegular.classList.add('struck');
-      } else {
-        mockSalePrice.style.display = 'none';
-        mockRegular.classList.remove('struck');
-      }
-    }
-  }
-
-  if (salePriceField) {
-    salePriceField.addEventListener('input', () => {
-      salePriceField.classList.remove('error');
-      updateDiscountPreview();
-    });
-  }
-
-  if (saleBadge && badgeCount) {
-    saleBadge.addEventListener('input', () => {
-      badgeCount.textContent = saleBadge.value.length;
-      updateBadgePreview();
-    });
-  }
-
-  if (saleColorOptions) {
-    saleColorOptions.querySelectorAll('.sale-color-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        saleColorOptions.querySelectorAll('.sale-color-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedSaleColor = btn.dataset.color;
-        updateBadgePreview();
-      });
-    });
-  }
-
-  function updateBadgePreview() {
-    if (!saleBadgePreview || !mockBadge) return;
-    const text = saleBadge ? saleBadge.value.trim().toUpperCase() : '';
-    const sale = salePriceField ? parseFloat(salePriceField.value) || 0 : 0;
-    if (text || sale > 0) {
-      saleBadgePreview.style.display = '';
-      mockBadge.textContent = text || 'SALE';
-      mockBadge.style.background = selectedSaleColor;
-    } else {
-      saleBadgePreview.style.display = 'none';
-    }
-    updateDiscountPreview();
-  }
-
-  const saleEndDate = document.getElementById('saleEndDate');
-  if (saleEndDate) {
-    saleEndDate.addEventListener('input', () => {
-      saleEndDate.classList.remove('error');
-    });
-  }
-
-  // ===== Form Submission =====
-  const addProductForm = document.getElementById('addProductForm');
-  const saveDraftBtn = document.getElementById('saveDraftBtn');
-
-  function validateForm() {
-    let valid = true;
-    const required = [
-      { id: 'prodName', label: 'Product name' },
-      { id: 'prodCategory', label: 'Category' },
-      { id: 'prodPrice', label: 'Regular price' },
-      { id: 'prodStock', label: 'Stock quantity' },
-      { id: 'prodDesc', label: 'Description' }
-    ];
-
-    document.querySelectorAll('.ap-field input.error, .ap-field select.error, .ap-field textarea.error').forEach(el => {
-      el.classList.remove('error');
-    });
-
-    for (let i = 0; i < required.length; i++) {
-      const el = document.getElementById(required[i].id);
-      if (el && !el.value.trim()) {
-        el.classList.add('error');
-        el.focus();
-        valid = false;
-        break;
-      }
-    }
-
-    const price = document.getElementById('prodPrice');
-    if (price && parseFloat(price.value) <= 0) {
-      price.classList.add('error');
-      price.focus();
-      valid = false;
-    }
-
-    if (!valid) {
-      const firstError = document.querySelector('.ap-field input.error, .ap-field select.error, .ap-field textarea.error');
-      if (firstError) {
-        firstError.closest('.ap-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-
-    return valid;
-  }
-
-  function validateSale() {
-    if (saleToggle && saleToggle.checked) {
-      const regular = parseFloat(prodPrice ? prodPrice.value : 0) || 0;
-      const sale = parseFloat(salePriceField ? salePriceField.value : 0) || 0;
-
-      if (sale <= 0) {
-        salePriceField.classList.add('error');
-        salePriceField.focus();
-        salePriceField.closest('.ap-field').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return false;
-      }
-
-      if (sale >= regular) {
-        salePriceField.classList.add('error');
-        salePriceField.focus();
-        salePriceField.closest('.ap-field').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        showToast('Sale price must be lower than the regular price.');
-        return false;
-      }
-
-      const startEl = document.getElementById('saleStartDate');
-      const endEl = document.getElementById('saleEndDate');
-      if (startEl && endEl && startEl.value && endEl.value) {
-        if (new Date(endEl.value) <= new Date(startEl.value)) {
-          endEl.classList.add('error');
-          endEl.focus();
-          endEl.closest('.ap-field').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          showToast('Sale end date must be after the start date.');
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  if (addProductForm) {
-    addProductForm.addEventListener('submit', (e) => {
+  dom.grid.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.closest(".preview-add-more")) {
       e.preventDefault();
-      if (validateForm() && validateSale()) {
-        showToast('Product published successfully!');
-      }
-    });
-  }
+      openFilePicker();
+    }
+  });
 
-  if (saveDraftBtn) {
-    saveDraftBtn.addEventListener('click', () => {
-      showToast('Draft saved successfully!');
-    });
-  }
+  dom.input.addEventListener("change", () => {
+    addFiles(dom.input.files);
+    dom.input.value = ""; // allow re-selecting the same file
+  });
 
-  // ===== Toast =====
-  function showToast(msg) {
-    const toast = document.getElementById('apToast');
-    const toastMsg = document.getElementById('apToastMsg');
-    if (!toast || !toastMsg) return;
-    toastMsg.textContent = msg;
-    toast.classList.add('visible');
-    setTimeout(() => toast.classList.remove('visible'), 3000);
-  }
+  // Drag & drop
+  dom.area.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    dragDepth++;
+    dom.area.classList.add("dragover");
+  });
+
+  dom.area.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  });
+
+  dom.area.addEventListener("dragleave", () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) dom.area.classList.remove("dragover");
+  });
+
+  dom.area.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    dom.area.classList.remove("dragover");
+    addFiles(e.dataTransfer.files);
+  });
+
+  // Release object URLs when leaving the page.
+  window.addEventListener("beforeunload", () => {
+    uploadedImages.forEach((img) => {
+      if (img.preview.startsWith("blob:")) URL.revokeObjectURL(img.preview);
+    });
+  });
+
+  // ----- Public API ---------------------------------------------------------
+  window.ProductImages = {
+    count: () => uploadedImages.length,
+    getFiles: () => uploadedImages.map((img) => img.file),
+    getMainFile: () => (uploadedImages[0] ? uploadedImages[0].file : null),
+    clear: () => {
+      while (uploadedImages.length) removeImage(uploadedImages.length - 1);
+    },
+  };
+
+  renderPreviews(); // initial paint (empty state)
 })();
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    updateCartBubble();
-
-});

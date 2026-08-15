@@ -1,117 +1,195 @@
-const form = document.getElementById("addProductForm");
+/* =============================================================================
+ *  ADD PRODUCT — client script  (admin/add.js)
+ *  Fixed version.
+ *
+ *  Requires (in this order, inside admin/add.html):
+ *      <script src="script.js"></script>     <-- NOT "/script.js"
+ *      <script src="add.js"></script>
+ * ========================================================================== */
+(function () {
+  "use strict";
 
-const API_BASE = "http://127.0.0.1:5000";
+  const API_BASE = "http://127.0.0.1:5000";
+  const ADD_CATEGORY_VALUE = "__add_category__";
+  const LOGIN_PAGE = "../page/login.html";
+  const PRODUCTS_PAGE = "admin_product.html";
 
-// =============================================
-// Dynamic Category Dropdown
-// =============================================
-const categorySelect = document.getElementById("prodCategory");
-const ADD_CATEGORY_VALUE = "__add_category__";
+  // ---------------------------------------------------------------------------
+  // DOM
+  // ---------------------------------------------------------------------------
+  const form = document.getElementById("addProductForm");
+  if (!form) return; // not the add-product page
 
-// Modal elements
-const addCategoryModal = document.getElementById("addCategoryModal");
-const addCategoryClose = document.getElementById("addCategoryClose");
-const cancelCategoryBtn = document.getElementById("cancelCategoryBtn");
-const saveCategoryBtn = document.getElementById("saveCategoryBtn");
-const newCategoryName = document.getElementById("newCategoryName");
-const newCategoryError = document.getElementById("newCategoryError");
+  const el = (id) => document.getElementById(id);
 
-function getAuthHeaders(json) {
-    const headers = {
-        Authorization: "Bearer " + sessionStorage.getItem("token")
-    };
-    if (json) {
-        headers["Content-Type"] = "application/json";
+  const categorySelect = el("prodCategory");
+  const publishBtn = el("publishBtn");
+  const saveDraftBtn = el("saveDraftBtn");
+
+  const prodName = el("prodName");
+  const prodDesc = el("prodDesc");
+  const prodPrice = el("prodPrice");
+  const prodCost = el("prodCost");
+  const prodStock = el("prodStock");
+  const prodLowStock = el("prodLowStock");
+  const prodTax = el("prodTax");
+
+  const addCategoryModal = el("addCategoryModal");
+  const addCategoryClose = el("addCategoryClose");
+  const cancelCategoryBtn = el("cancelCategoryBtn");
+  const saveCategoryBtn = el("saveCategoryBtn");
+  const newCategoryName = el("newCategoryName");
+  const newCategoryError = el("newCategoryError");
+
+  const saleToggle = el("saleToggle");
+  const saleFields = el("saleFields");
+  const saleOverlay = el("saleOverlay");
+  const salePriceField = el("salePriceField");
+  const saleBadge = el("saleBadge");
+  const saleStartDate = el("saleStartDate");
+  const saleEndDate = el("saleEndDate");
+  const saleColorOptions = el("saleColorOptions");
+
+  const discountPreview = el("discountPreview");
+  const discountPct = el("discountPct");
+  const discRegular = el("discRegular");
+  const discSale = el("discSale");
+  const discSave = el("discSave");
+  const badgeCount = el("badgeCount");
+  const saleBadgePreview = el("saleBadgePreview");
+  const mockBadge = el("mockBadge");
+  const mockRegular = el("mockRegular");
+  const mockSalePrice = el("mockSalePrice");
+
+  const profitCalc = el("profitCalc");
+  const profitValue = el("profitValue");
+  const marginValue = el("marginValue");
+  const descCount = el("descCount");
+
+  const tagInput = el("tagInput");
+  const tagsList = el("tagsList");
+  const tagsWrap = el("tagsWrap");
+
+  const addVariantBtn = el("addVariantBtn");
+  const variantsList = el("variantsList");
+  const scheduledDate = el("scheduledDate");
+  const scheduleDate = el("scheduleDate");
+
+  let selectedSaleColor = "#ef4444";
+  let stockStatusManual = false; // true once the user clicks a stock chip
+  let submitting = false;
+
+  // ---------------------------------------------------------------------------
+  // Toast — exposed globally because script.js's image uploader calls it
+  // ---------------------------------------------------------------------------
+  function showToast(msg) {
+    const toast = el("apToast");
+    const toastMsg = el("apToastMsg");
+    if (!toast || !toastMsg) {
+      console.warn(msg);
+      return;
     }
+    toastMsg.textContent = msg;
+    toast.classList.add("visible");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove("visible"), 3000);
+  }
+  window.showToast = showToast;
+
+  // ---------------------------------------------------------------------------
+  // Auth helpers
+  // ---------------------------------------------------------------------------
+  function getToken() {
+    return sessionStorage.getItem("token") || "";
+  }
+
+  function getAuthHeaders(json) {
+    // NOTE: never set Content-Type when sending FormData — the browser must
+    // add the multipart boundary itself.
+    const headers = { Authorization: "Bearer " + getToken() };
+    if (json) headers["Content-Type"] = "application/json";
     return headers;
-}
+  }
 
-// Load categories from the backend and populate the dropdown
-async function loadCategories(selectId) {
+  /** Reads a response safely: a Flask 500 returns HTML, not JSON. */
+  async function readJson(response) {
+    const text = await response.text();
     try {
-        const response = await fetch(API_BASE + "/categories");
-        const data = await response.json();
-
-        if (!data.success) return;
-
-        const select = selectId instanceof HTMLElement
-            ? selectId
-            : categorySelect;
-
-        if (!select) return;
-
-        // Preserve the currently selected category id
-        const currentValue = select.value;
-
-        // Clear the existing options (keep the placeholder)
-        select.innerHTML = "";
-
-        select.innerHTML +=
-            '<option value="" disabled selected>Select category</option>';
-
-        data.categories.forEach((cat) => {
-            const opt = document.createElement("option");
-            opt.value = String(cat.id);
-            opt.dataset.name = cat.name;
-            opt.textContent = cat.name;
-            select.appendChild(opt);
-        });
-
-        // Divider-like "+ Add Category" option
-        const addOpt = document.createElement("option");
-        addOpt.value = ADD_CATEGORY_VALUE;
-        addOpt.textContent = "+ Add Category";
-        select.appendChild(addOpt);
-
-        // Re-select previously selected category if still present
-        if (currentValue && currentValue !== ADD_CATEGORY_VALUE) {
-            const exists = Array.from(select.options).some(
-                (o) => o.value === currentValue
-            );
-            if (exists) {
-                select.value = currentValue;
-            }
-        }
-    } catch (err) {
-        console.error("Failed to load categories:", err);
+      return JSON.parse(text);
+    } catch (e) {
+      return {
+        success: false,
+        message:
+          "Server error (HTTP " +
+          response.status +
+          "). Check the Flask console for the traceback.",
+      };
     }
-}
+  }
 
-// Handle the "+ Add Category" option selection
-function openAddCategoryModal() {
+  // ---------------------------------------------------------------------------
+  // Categories
+  // ---------------------------------------------------------------------------
+  async function loadCategories() {
+    if (!categorySelect) return;
+    try {
+      const response = await fetch(API_BASE + "/categories");
+      const data = await readJson(response);
+      if (!data.success) return;
+
+      const currentValue = categorySelect.value;
+      categorySelect.innerHTML =
+        '<option value="" disabled selected>Select category</option>';
+
+      (data.categories || []).forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = String(cat.id);
+        opt.dataset.name = cat.name;
+        opt.textContent = cat.name;
+        categorySelect.appendChild(opt);
+      });
+
+      const addOpt = document.createElement("option");
+      addOpt.value = ADD_CATEGORY_VALUE;
+      addOpt.textContent = "+ Add Category";
+      categorySelect.appendChild(addOpt);
+
+      if (currentValue && currentValue !== ADD_CATEGORY_VALUE) {
+        const exists = Array.from(categorySelect.options).some(
+          (o) => o.value === currentValue
+        );
+        if (exists) categorySelect.value = currentValue;
+      }
+    } catch (err) {
+      console.error("Failed to load categories:", err);
+      showToast("Could not load categories. Is the server running?");
+    }
+  }
+
+  function openAddCategoryModal() {
     if (!addCategoryModal || !newCategoryName || !newCategoryError) return;
-
     newCategoryName.value = "";
     newCategoryError.textContent = "";
-
-    if (addCategoryModal.hasAttribute("hidden")) {
-        addCategoryModal.removeAttribute("hidden");
-    } else {
-        addCategoryModal.classList.add("show");
-        addCategoryModal.style.display = "flex";
-    }
-
+    addCategoryModal.removeAttribute("hidden");
+    addCategoryModal.classList.add("show");
+    addCategoryModal.style.display = "flex";
     setTimeout(() => newCategoryName.focus(), 50);
-}
+  }
 
-function closeAddCategoryModal() {
+  function closeAddCategoryModal() {
     if (!addCategoryModal) return;
-    if (addCategoryModal.hasAttribute("hidden")) {
-        addCategoryModal.setAttribute("hidden", "");
-    }
     addCategoryModal.classList.remove("show");
     addCategoryModal.style.display = "none";
-}
+    addCategoryModal.setAttribute("hidden", "");
+  }
 
-// Create a category in the backend
-async function createCategory() {
-    if (!newCategoryName || !newCategoryError) return;
+  async function createCategory() {
+    if (!newCategoryName || !newCategoryError || !saveCategoryBtn) return;
 
     const name = newCategoryName.value.trim();
-
     if (!name) {
-        newCategoryError.textContent = "Category name is required.";
-        return;
+      newCategoryError.textContent = "Category name is required.";
+      return;
     }
 
     newCategoryError.textContent = "";
@@ -119,314 +197,673 @@ async function createCategory() {
     saveCategoryBtn.textContent = "Saving...";
 
     try {
-        const response = await fetch(API_BASE + "/categories", {
-            method: "POST",
-            headers: getAuthHeaders(true),
-            body: JSON.stringify({ name: name })
-        });
+      const response = await fetch(API_BASE + "/categories", {
+        method: "POST",
+        headers: getAuthHeaders(true),
+        body: JSON.stringify({ name: name }),
+      });
+      const data = await readJson(response);
 
-        const data = await response.json();
-
-        if (!data.success) {
-            newCategoryError.textContent =
-                data.message || "Could not create category.";
-            saveCategoryBtn.disabled = false;
-            saveCategoryBtn.textContent = "Add Category";
-            return;
-        }
-
-        // Reload the dropdown and select the newly created category
-        await loadCategories();
-
-        if (categorySelect) {
-            categorySelect.value = String(data.category.id);
-        }
-
-        closeAddCategoryModal();
-
-        showToast('Category "' + data.category.name + '" created!');
-
-    } catch (err) {
-        console.error("Failed to create category:", err);
+      if (!response.ok || !data.success) {
         newCategoryError.textContent =
-            "Failed to connect. Please try again.";
+          data.message || "Could not create category.";
+        return;
+      }
+
+      await loadCategories();
+      if (categorySelect && data.category) {
+        categorySelect.value = String(data.category.id);
+      }
+      closeAddCategoryModal();
+      showToast('Category "' + data.category.name + '" created!');
+    } catch (err) {
+      console.error("Failed to create category:", err);
+      newCategoryError.textContent = "Failed to connect. Please try again.";
     } finally {
-        saveCategoryBtn.disabled = false;
-        saveCategoryBtn.textContent = "Add Category";
+      saveCategoryBtn.disabled = false;
+      saveCategoryBtn.textContent = "Add Category";
     }
-}
+  }
 
-// Wire up the category select and modal
-if (categorySelect) {
+  if (categorySelect) {
     categorySelect.addEventListener("change", function () {
-        if (this.value === ADD_CATEGORY_VALUE) {
-            openAddCategoryModal();
-            // Reset so the dropdown doesn't stay on the add-option value
-            this.value = "";
-        }
+      if (this.value === ADD_CATEGORY_VALUE) {
+        openAddCategoryModal();
+        this.value = "";
+      }
     });
-}
-
-if (addCategoryClose) {
+  }
+  if (addCategoryClose)
     addCategoryClose.addEventListener("click", closeAddCategoryModal);
-}
-if (cancelCategoryBtn) {
+  if (cancelCategoryBtn)
     cancelCategoryBtn.addEventListener("click", closeAddCategoryModal);
-}
-if (saveCategoryBtn) {
-    saveCategoryBtn.addEventListener("click", createCategory);
-}
-
-if (addCategoryModal) {
-    addCategoryModal.addEventListener("click", function (e) {
-        if (e.target === addCategoryModal) closeAddCategoryModal();
+  if (saveCategoryBtn) saveCategoryBtn.addEventListener("click", createCategory);
+  if (addCategoryModal) {
+    addCategoryModal.addEventListener("click", (e) => {
+      if (e.target === addCategoryModal) closeAddCategoryModal();
     });
-}
-
-// Allow Enter key in the category name field to submit
-if (newCategoryName) {
-    newCategoryName.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            createCategory();
-        }
+  }
+  if (newCategoryName) {
+    newCategoryName.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        createCategory();
+      }
     });
-}
+  }
 
-// Initial load
-loadCategories();
+  loadCategories();
 
-function getDerivedStockStatus(stockValue, lowStockValue) {
-
+  // ---------------------------------------------------------------------------
+  // Stock status
+  // ---------------------------------------------------------------------------
+  function getDerivedStockStatus(stockValue, lowStockValue) {
     const stock = Number(stockValue) || 0;
     const lowStock = Number(lowStockValue) || 0;
-
-    if (stock <= 0) {
-
-        return "out";
-
-    }
-
-    if (stock <= lowStock) {
-
-        return "low";
-
-    }
-
+    if (stock <= 0) return "out";
+    if (stock <= lowStock) return "low";
     return "in";
+  }
 
-}
+  function paintStockChips(status) {
+    document.querySelectorAll('input[name="stockStatus"]').forEach((input) => {
+      const chip = input.closest("label.ap-stock-chip");
+      const active = input.value === status;
+      if (chip) chip.classList.toggle("active", active);
+      if (active) input.checked = true;
+    });
+  }
 
-function updateStockStatusUi() {
+  function updateStockStatusUi() {
+    if (stockStatusManual) return; // don't override an explicit user choice
+    paintStockChips(
+      getDerivedStockStatus(
+        prodStock ? prodStock.value : 0,
+        prodLowStock ? prodLowStock.value : 0
+      )
+    );
+  }
 
-    const stockInput = document.getElementById("prodStock");
-    const lowStockInput = document.getElementById("prodLowStock");
-    const selectedStatus = getDerivedStockStatus(
-        stockInput?.value,
-        lowStockInput?.value
+  if (prodStock) prodStock.addEventListener("input", updateStockStatusUi);
+  if (prodLowStock) prodLowStock.addEventListener("input", updateStockStatusUi);
+
+  document.querySelectorAll(".ap-stock-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const input = chip.querySelector('input[name="stockStatus"]');
+      if (!input) return;
+      stockStatusManual = true;
+      paintStockChips(input.value);
+    });
+  });
+
+  updateStockStatusUi();
+
+  // ---------------------------------------------------------------------------
+  // Character counters + slug
+  // ---------------------------------------------------------------------------
+  function updateCount(input, counter, max) {
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = len;
+    counter.parentElement.className = "ap-field-bottom";
+    if (len > max * 0.9) counter.parentElement.classList.add("warning");
+    if (len > max) counter.parentElement.classList.add("over");
+  }
+
+  if (prodDesc)
+    prodDesc.addEventListener("input", () =>
+      updateCount(prodDesc, descCount, 2000)
     );
 
-    document.querySelectorAll('input[name="stockStatus"]').forEach(input => {
+  const seoTitle = el("seoTitle");
+  const seoTitleCount = el("seoTitleCount");
+  const seoDesc = el("seoDesc");
+  const seoDescCount = el("seoDescCount");
+  const seoSlug = el("seoSlug");
 
-        const chip = input.closest("label.ap-stock-chip");
+  if (seoTitle)
+    seoTitle.addEventListener("input", () =>
+      updateCount(seoTitle, seoTitleCount, 60)
+    );
+  if (seoDesc)
+    seoDesc.addEventListener("input", () =>
+      updateCount(seoDesc, seoDescCount, 160)
+    );
 
-        if (chip) {
+  if (prodName && seoSlug) {
+    prodName.addEventListener("input", () => {
+      if (seoSlug.dataset.manual === "true") return;
+      seoSlug.value = prodName.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+    });
+    seoSlug.addEventListener("input", () => {
+      seoSlug.dataset.manual = "true";
+    });
+  }
 
-            chip.classList.toggle("active", input.value === selectedStatus);
+  // ---------------------------------------------------------------------------
+  // Profit calculator
+  // ---------------------------------------------------------------------------
+  function calcProfit() {
+    if (!profitCalc || !prodPrice || !prodCost) return;
+    const price = parseFloat(prodPrice.value) || 0;
+    const cost = parseFloat(prodCost.value) || 0;
 
+    if (price > 0 && cost > 0) {
+      profitCalc.style.display = "";
+      const profit = price - cost;
+      profitValue.textContent = "$" + profit.toFixed(2);
+      marginValue.textContent = ((profit / price) * 100).toFixed(1) + "%";
+      const color = profit >= 0 ? "#16a34a" : "#ef4444";
+      profitValue.style.color = color;
+      marginValue.style.color = color;
+    } else {
+      profitCalc.style.display = "none";
+    }
+  }
+
+  if (prodPrice)
+    prodPrice.addEventListener("input", () => {
+      calcProfit();
+      updateDiscountPreview();
+    });
+  if (prodCost) prodCost.addEventListener("input", calcProfit);
+
+  // ---------------------------------------------------------------------------
+  // Publish status
+  // ---------------------------------------------------------------------------
+  document.querySelectorAll('input[name="publishStatus"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (scheduledDate) {
+        scheduledDate.style.display = radio.value === "scheduled" ? "" : "none";
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Tags  (the `tags` array is the single source of truth)
+  // ---------------------------------------------------------------------------
+  const tags = [];
+
+  function renderTags() {
+    if (!tagsList) return;
+    tagsList.innerHTML = "";
+    tags.forEach((tag, i) => {
+      const span = document.createElement("span");
+      span.className = "ap-tag";
+      span.textContent = tag + " ";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.innerHTML = "&times;";
+      btn.addEventListener("click", () => removeTag(i));
+      span.appendChild(btn);
+      tagsList.appendChild(span);
+    });
+  }
+
+  function addTag(text) {
+    const value = (text || "").trim().toLowerCase();
+    if (!value || tags.includes(value)) return;
+    tags.push(value);
+    renderTags();
+  }
+
+  function removeTag(index) {
+    tags.splice(index, 1);
+    renderTags();
+  }
+
+  if (tagInput && tagsList) {
+    if (tagsWrap) tagsWrap.addEventListener("click", () => tagInput.focus());
+
+    tagInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault(); // also stops Enter from submitting the form
+        addTag(tagInput.value.replace(",", ""));
+        tagInput.value = "";
+      }
+      if (e.key === "Backspace" && tagInput.value === "" && tags.length > 0) {
+        removeTag(tags.length - 1);
+      }
+    });
+  }
+
+  document.querySelectorAll(".suggested-tag").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      addTag(btn.dataset.tag);
+      btn.style.display = "none";
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Variants (UI only — the backend has no variants table yet)
+  // ---------------------------------------------------------------------------
+  function bindVariantRemove() {
+    if (!variantsList) return;
+    variantsList.querySelectorAll(".variant-remove").forEach((btn) => {
+      if (btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        if (variantsList.children.length > 1) {
+          const row = btn.closest(".ap-variant-row");
+          row.style.transition = "all 0.2s";
+          row.style.opacity = "0";
+          row.style.transform = "translateY(-8px)";
+          setTimeout(() => row.remove(), 200);
         }
-
+      });
     });
+  }
 
-    const activeInput = document.querySelector(
-        `input[name="stockStatus"][value="${selectedStatus}"]`
-    );
+  if (addVariantBtn && variantsList) {
+    addVariantBtn.addEventListener("click", () => {
+      const row = document.createElement("div");
+      row.className = "ap-variant-row";
+      row.innerHTML =
+        '<div class="variant-field"><label>Size</label><select class="variant-select"><option value="xs">XS</option><option value="s">S</option><option value="m" selected>M</option><option value="l">L</option><option value="xl">XL</option><option value="xxl">XXL</option></select></div>' +
+        '<div class="variant-field"><label>Color</label><input type="text" class="variant-input" placeholder="e.g. White" /></div>' +
+        '<div class="variant-field"><label>Stock</label><input type="number" class="variant-input" placeholder="0" min="0" value="0" /></div>' +
+        '<div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-input" placeholder="0.00" step="0.01" min="0" /></div></div>' +
+        '<button type="button" class="variant-remove" aria-label="Remove variant"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+      variantsList.appendChild(row);
+      bindVariantRemove();
+    });
+    bindVariantRemove();
+  }
 
-    if (activeInput) {
+  // ---------------------------------------------------------------------------
+  // Sale & discount
+  // ---------------------------------------------------------------------------
+  if (saleToggle) {
+    saleToggle.addEventListener("change", () => {
+      const on = saleToggle.checked;
+      if (saleFields) saleFields.style.display = on ? "" : "none";
+      if (saleOverlay) saleOverlay.style.display = on ? "none" : "";
+      if (on) {
+        updateDiscountPreview();
+        updateBadgePreview();
+        if (saleStartDate && !saleStartDate.value) {
+          const now = new Date();
+          now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+          saleStartDate.value = now.toISOString().slice(0, 16);
+        }
+      }
+    });
+  }
 
-        activeInput.checked = true;
+  function updateDiscountPreview() {
+    if (!salePriceField || !discountPreview) return;
+    const regular = parseFloat(prodPrice ? prodPrice.value : 0) || 0;
+    const sale = parseFloat(salePriceField.value) || 0;
 
+    if (sale > 0 && regular > 0 && sale < regular) {
+      const pct = Math.round(((regular - sale) / regular) * 100);
+      discountPct.textContent = pct + "%";
+      discRegular.textContent = "$" + regular.toFixed(2);
+      discSale.textContent = "$" + sale.toFixed(2);
+      discSave.textContent = "$" + (regular - sale).toFixed(2);
+
+      const circle = discountPreview.querySelector(".discount-circle");
+      if (circle) {
+        if (pct >= 50) {
+          circle.style.background = "#dc2626";
+          circle.style.boxShadow = "0 4px 14px rgba(220, 38, 38, 0.3)";
+        } else if (pct >= 25) {
+          circle.style.background = "#ef4444";
+          circle.style.boxShadow = "0 4px 14px rgba(239, 68, 68, 0.3)";
+        } else {
+          circle.style.background = "#f97316";
+          circle.style.boxShadow = "0 4px 14px rgba(249, 115, 22, 0.3)";
+        }
+      }
+      discountPreview.style.display = "";
+    } else {
+      discountPreview.style.display = "none";
     }
 
-}
+    if (mockRegular && mockSalePrice) {
+      mockRegular.textContent = "$" + regular.toFixed(2);
+      if (sale > 0 && sale < regular) {
+        mockSalePrice.textContent = "$" + sale.toFixed(2);
+        mockSalePrice.style.display = "";
+        mockRegular.classList.add("struck");
+      } else {
+        mockSalePrice.style.display = "none";
+        mockRegular.classList.remove("struck");
+      }
+    }
+  }
 
-if (document.getElementById("prodStock") && document.getElementById("prodLowStock")) {
+  function updateBadgePreview() {
+    if (!saleBadgePreview || !mockBadge) return;
+    const text = saleBadge ? saleBadge.value.trim().toUpperCase() : "";
+    const sale = salePriceField ? parseFloat(salePriceField.value) || 0 : 0;
+    if (text || sale > 0) {
+      saleBadgePreview.style.display = "";
+      mockBadge.textContent = text || "SALE";
+      mockBadge.style.background = selectedSaleColor;
+    } else {
+      saleBadgePreview.style.display = "none";
+    }
+    updateDiscountPreview();
+  }
 
-    document.getElementById("prodStock").addEventListener("input", updateStockStatusUi);
-    document.getElementById("prodLowStock").addEventListener("input", updateStockStatusUi);
+  if (salePriceField) {
+    salePriceField.addEventListener("input", () => {
+      salePriceField.classList.remove("error");
+      updateDiscountPreview();
+    });
+  }
 
-}
+  if (saleBadge && badgeCount) {
+    saleBadge.addEventListener("input", () => {
+      badgeCount.textContent = saleBadge.value.length;
+      updateBadgePreview();
+    });
+  }
 
-updateStockStatusUi();
+  if (saleColorOptions) {
+    saleColorOptions.querySelectorAll(".sale-color-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        saleColorOptions
+          .querySelectorAll(".sale-color-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedSaleColor = btn.dataset.color;
+        updateBadgePreview();
+      });
+    });
+  }
 
-console.log("Form:", form);
+  if (saleEndDate) {
+    saleEndDate.addEventListener("input", () =>
+      saleEndDate.classList.remove("error")
+    );
+  }
 
-form.addEventListener("submit", async (e) => {
+  // ---------------------------------------------------------------------------
+  // Validation
+  // ---------------------------------------------------------------------------
+  function fail(element, message) {
+    if (element) {
+      element.classList.add("error");
+      element.focus();
+      const card = element.closest(".ap-card") || element.closest(".ap-field");
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    if (message) showToast(message);
+    return false;
+  }
 
-    console.log("Submit fired");
+  function validateForm() {
+    document
+      .querySelectorAll("input.error, select.error, textarea.error")
+      .forEach((e) => e.classList.remove("error"));
 
-    e.preventDefault();
+    const required = [
+      [prodName, "Product name is required."],
+      [categorySelect, "Please choose a category."],
+      [prodPrice, "Regular price is required."],
+      [prodStock, "Stock quantity is required."],
+      [prodDesc, "Description is required."],
+    ];
 
-    const formData = new FormData();
+    for (const [element, message] of required) {
+      if (element && !String(element.value).trim()) {
+        return fail(element, message);
+      }
+    }
 
-    // ==========================
-    // Basic Information
-    // ==========================
-    formData.append("title", document.getElementById("prodName").value);
-    formData.append("description", document.getElementById("prodDesc").value);
-    formData.append("brand", document.getElementById("prodBrand").value);
+    if (categorySelect && categorySelect.value === ADD_CATEGORY_VALUE) {
+      return fail(categorySelect, "Please choose a category.");
+    }
 
-    // Category: submit the selected category id + name
+    const price = parseFloat(prodPrice.value);
+    if (!isFinite(price) || price <= 0) {
+      return fail(prodPrice, "Regular price must be greater than 0.");
+    }
+
+    const cost = parseFloat(prodCost && prodCost.value);
+    if (prodCost && prodCost.value !== "" && (!isFinite(cost) || cost < 0)) {
+      return fail(prodCost, "Cost must be a valid, non-negative number.");
+    }
+
+    const stock = parseInt(prodStock.value, 10);
+    if (!Number.isInteger(stock) || stock < 0) {
+      return fail(prodStock, "Stock must be a whole number of 0 or more.");
+    }
+
+    const lowStock = parseInt(prodLowStock && prodLowStock.value, 10);
+    if (
+      prodLowStock &&
+      prodLowStock.value !== "" &&
+      (!Number.isInteger(lowStock) || lowStock < 0)
+    ) {
+      return fail(prodLowStock, "Low-stock threshold must be 0 or more.");
+    }
+
+    return true;
+  }
+
+  function validateSale() {
+    if (!saleToggle || !saleToggle.checked) return true;
+
+    const regular = parseFloat(prodPrice ? prodPrice.value : 0) || 0;
+    const sale = parseFloat(salePriceField ? salePriceField.value : 0) || 0;
+
+    if (sale <= 0) {
+      return fail(salePriceField, "Please enter a sale price.");
+    }
+    if (sale >= regular) {
+      return fail(
+        salePriceField,
+        "Sale price must be lower than the regular price."
+      );
+    }
+    if (saleStartDate && saleEndDate && saleStartDate.value && saleEndDate.value) {
+      if (new Date(saleEndDate.value) <= new Date(saleStartDate.value)) {
+        return fail(saleEndDate, "Sale end date must be after the start date.");
+      }
+    }
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build the payload
+  // ---------------------------------------------------------------------------
+  function getMainImageFile() {
+    // Preferred path: the uploader module in script.js.
+    if (window.ProductImages && typeof window.ProductImages.getMainFile === "function") {
+      return window.ProductImages.getMainFile();
+    }
+    // Fallback: script.js failed to load — read the raw file input directly
+    // so the product image is still uploaded.
+    const input = el("imageInput");
+    return input && input.files && input.files[0] ? input.files[0] : null;
+  }
+
+  function buildFormData(statusOverride) {
+    const fd = new FormData();
+
+    // --- Basic information -------------------------------------------------
+    fd.append("title", prodName.value.trim());
+    fd.append("description", prodDesc.value.trim());
+    fd.append("brand", (el("prodBrand") ? el("prodBrand").value : "").trim());
+
     const selectedOption = categorySelect.selectedOptions[0];
-    const selectedCategoryId = categorySelect.value;
-    const selectedCategoryName = selectedOption ? selectedOption.dataset.name : null;
-
-    formData.append(
-        "category_id",
-        selectedCategoryId && selectedCategoryId !== ADD_CATEGORY_VALUE
-            ? selectedCategoryId
-            : ""
+    const categoryId = categorySelect.value;
+    fd.append(
+      "category_id",
+      categoryId && categoryId !== ADD_CATEGORY_VALUE ? categoryId : ""
     );
-    formData.append("category", selectedCategoryName || "");
-
-    // ==========================
-    // Pricing
-    // ==========================
-    formData.append("price", document.getElementById("prodPrice").value);
-    formData.append("cost", document.getElementById("prodCost").value);
-
-    const salePrice = document.getElementById("salePriceField");
-    if (salePrice) {
-        formData.append("sale_price", salePrice.value);
-    }
-
-    // ==========================
-    // Inventory
-    // ==========================
-    formData.append("stock", document.getElementById("prodStock").value);
-    formData.append("low_stock", document.getElementById("prodLowStock").value);
-
-    const stockStatus = document.querySelector(
-        'input[name="stockStatus"]:checked'
+    fd.append(
+      "category",
+      selectedOption && selectedOption.dataset.name
+        ? selectedOption.dataset.name
+        : ""
     );
 
-    const selectedStockStatus = stockStatus?.value || getDerivedStockStatus(
-        document.getElementById("prodStock").value,
-        document.getElementById("prodLowStock").value
+    // --- Pricing (never send "" — the backend does float() on these) --------
+    fd.append("price", String(parseFloat(prodPrice.value) || 0));
+    fd.append("cost", String(parseFloat(prodCost ? prodCost.value : 0) || 0));
+
+    // --- Inventory ---------------------------------------------------------
+    const stock = parseInt(prodStock.value, 10) || 0;
+    const lowStock = parseInt(prodLowStock ? prodLowStock.value : "", 10);
+    fd.append("stock", String(stock));
+    fd.append("low_stock", String(Number.isInteger(lowStock) ? lowStock : 10));
+
+    // The chips are derived from stock/low_stock unless the admin clicked one.
+    const checked = document.querySelector('input[name="stockStatus"]:checked');
+    const derived = getDerivedStockStatus(
+      stock,
+      Number.isInteger(lowStock) ? lowStock : 10
+    );
+    fd.append(
+      "stock_status",
+      stockStatusManual && checked ? checked.value : derived
     );
 
-    formData.append("stock_status", selectedStockStatus);
+    // --- Tax ---------------------------------------------------------------
+    fd.append("tax_class", prodTax ? prodTax.value : "standard");
 
-    // ==========================
-    // Tax
-    // ==========================
-    formData.append(
-        "tax_class",
-        document.getElementById("prodTax").value
-    );
-
-    // ==========================
-    // Publish Status
-    // ==========================
+    // --- Publish status ----------------------------------------------------
     const publishStatus = document.querySelector(
-        'input[name="publishStatus"]:checked'
+      'input[name="publishStatus"]:checked'
     );
-
-    if (publishStatus) {
-        formData.append("status", publishStatus.value);
+    const status = statusOverride || (publishStatus ? publishStatus.value : "draft");
+    fd.append("status", status);
+    if (status === "scheduled" && scheduleDate && scheduleDate.value) {
+      fd.append("scheduled_at", scheduleDate.value);
     }
 
-    // ==========================
-    // Sale
-    // ==========================
-    formData.append(
-        "sale_enabled",
-        document.getElementById("saleToggle").checked
-    );
+    // --- Sale --------------------------------------------------------------
+    const saleOn = !!(saleToggle && saleToggle.checked);
+    fd.append("sale_enabled", saleOn ? "true" : "false");
 
-    const badge = document.getElementById("saleBadge");
-
-    if (badge) {
-        formData.append("sale_badge", badge.value);
+    if (saleOn) {
+      // Only send sale data when the sale is actually enabled. Sending a
+      // leftover sale price with the toggle off puts the product on sale,
+      // because the backend re-enables it when sale_price < price.
+      fd.append("sale_price", String(parseFloat(salePriceField.value) || 0));
+      if (saleBadge && saleBadge.value.trim()) {
+        fd.append("sale_badge", saleBadge.value.trim());
+      }
+      if (saleStartDate && saleStartDate.value) {
+        fd.append("sale_start", saleStartDate.value);
+      }
+      if (saleEndDate && saleEndDate.value) {
+        fd.append("sale_end", saleEndDate.value);
+      }
+      fd.append("sale_badge_color", selectedSaleColor);
+    } else {
+      fd.append("sale_price", "");
     }
 
-    const saleStart = document.getElementById("saleStartDate")?.value;
-    if (saleStart) {
-        formData.append("sale_start", saleStart);
+    // --- Tags --------------------------------------------------------------
+    fd.append("tags", tags.join(","));
+
+    // --- Image -------------------------------------------------------------
+    const mainImage = getMainImageFile();
+    if (mainImage) fd.append("image", mainImage);
+
+    return fd;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Submit
+  // ---------------------------------------------------------------------------
+  function setBusy(busy, label) {
+    submitting = busy;
+    if (publishBtn) publishBtn.disabled = busy;
+    if (saveDraftBtn) saveDraftBtn.disabled = busy;
+    if (publishBtn && label !== undefined) {
+      if (busy) {
+        publishBtn.dataset.originalHtml = publishBtn.innerHTML;
+        publishBtn.textContent = label;
+      } else if (publishBtn.dataset.originalHtml) {
+        publishBtn.innerHTML = publishBtn.dataset.originalHtml;
+      }
+    }
+  }
+
+  async function submitProduct(statusOverride) {
+    if (submitting) return;
+
+    if (!getToken()) {
+      showToast("Your session expired. Please sign in again.");
+      setTimeout(() => (window.location.href = LOGIN_PAGE), 1200);
+      return;
     }
 
-    const saleEnd = document.getElementById("saleEndDate")?.value;
-    if (saleEnd) {
-        formData.append("sale_end", saleEnd);
-    }
+    if (!validateForm()) return;
+    if (!validateSale()) return;
 
-    const activeColor = document.querySelector(
-        ".sale-color-btn.active"
-    );
-
-    if (activeColor) {
-        formData.append(
-            "sale_badge_color",
-            activeColor.dataset.color
-        );
-    }
-
-    // ==========================
-    // Tags
-    // ==========================
-    const tags = [];
-
-    document.querySelectorAll("#tagsList .tag").forEach(tag => {
-        tags.push(tag.textContent.replace("×", "").trim());
-    });
-
-    formData.append("tags", tags.join(","));
-
-    if (window.uploadedImages.length > 0) {
-
-        formData.append(
-            "image",
-            window.uploadedImages[0].file
-        );
-
-    }
-
-    console.log("Sending request...");
+    setBusy(true, "Saving...");
 
     try {
+      const response = await fetch(API_BASE + "/admin/products", {
+        method: "POST",
+        headers: getAuthHeaders(false), // no Content-Type — FormData sets it
+        body: buildFormData(statusOverride),
+      });
 
-        const response = await fetch(
-            "http://127.0.0.1:5000/admin/products",
-            {
-                method: "POST",
-                headers: getAuthHeaders(false),
-                body: formData
-            }
-        );
+      const data = await readJson(response);
 
-        console.log("Response:", response.status);
+      if (response.status === 401 || response.status === 422) {
+        showToast("Session expired or invalid. Please sign in again.");
+        setTimeout(() => (window.location.href = LOGIN_PAGE), 1200);
+        return;
+      }
+      if (response.status === 403) {
+        showToast("Admin permission is required to add products.");
+        return;
+      }
+      if (!response.ok || !data.success) {
+        showToast(data.message || "Could not save the product.");
+        console.error("Add product failed:", response.status, data);
+        return;
+      }
 
-        const data = await response.json();
+      showToast("Product added successfully!");
 
-        console.log(data);
+      // Reset the page for the next entry
+      form.reset();
+      tags.length = 0;
+      renderTags();
+      if (window.ProductImages && typeof window.ProductImages.clear === "function") {
+        window.ProductImages.clear();
+      }
+      stockStatusManual = false;
+      updateStockStatusUi();
+      calcProfit();
+      updateDiscountPreview();
+      if (saleFields) saleFields.style.display = "none";
+      if (saleOverlay) saleOverlay.style.display = "";
+      await loadCategories();
 
+      setTimeout(() => (window.location.href = PRODUCTS_PAGE), 900);
     } catch (err) {
-
-        console.error("Fetch error:", err);
-
+      console.error("Fetch error:", err);
+      showToast(
+        "Cannot reach the server at " + API_BASE + ". Make sure Flask is running."
+      );
+    } finally {
+      setBusy(false, "");
     }
+  }
 
-});
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    submitProduct(null);
+  });
 
-// =============================================
-// Toast helper (reuse the admin toast)
-// =============================================
-function showToast(msg) {
-    const toast = document.getElementById("apToast");
-    const toastMsg = document.getElementById("apToastMsg");
-    if (!toast || !toastMsg) return;
-    toastMsg.textContent = msg;
-    toast.classList.add("visible");
-    setTimeout(() => toast.classList.remove("visible"), 3000);
-}
-
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      submitProduct("draft");
+    });
+  }
+})();

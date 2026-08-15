@@ -240,7 +240,7 @@ window.selectedFile = null;
     document.querySelectorAll(".ap-stock-chip").forEach(chip =>
       chip.classList.toggle("active", chip.dataset.stock === stockStatus)
     );
-
+    
     currentTags = parseTags(p.tags);
     renderTags();
     currentImage = p.image || "";
