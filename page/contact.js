@@ -1,9 +1,9 @@
 (function () {
   "use strict";
 
-  var EMAILJS_PUBLIC_KEY  = "POyuLcs-3SnIXAd8u";
-  var EMAILJS_SERVICE_ID  = "service_o3h0CDF";
-  var EMAILJS_TEMPLATE_ID = "template_ql3kd9w";
+  var PUBLIC_KEY  = "POyuLcs-3SnIXAd8u";
+  var SERVICE_ID  = "service_o3h0CDF";
+  var TEMPLATE_ID = "template_ql3kd9w";
 
   var form      = document.getElementById("contactForm");
   var submitBtn = document.getElementById("contactSubmitBtn");
@@ -24,7 +24,26 @@
     submitBtn.parentNode.insertBefore(el, submitBtn.nextSibling);
   }
 
-  emailjs.init(EMAILJS_PUBLIC_KEY);
+  // Verify EmailJS loaded
+  if (typeof emailjs === "undefined") {
+    console.error("EmailJS library not loaded!");
+    return;
+  }
+
+  emailjs.init(PUBLIC_KEY);
+
+  // Quick account verification
+  console.log("EmailJS initialized. Testing connection...");
+  emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+    from_name: "Test",
+    from_email: "test@test.com",
+    to_email: "mnmaibrahim@gmail.com",
+    message: "Connection test - ignore this email"
+  }).then(function() {
+    console.log("Connection test PASSED!");
+  }).catch(function(err) {
+    console.error("Connection test FAILED:", err.status, err.text);
+  });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -44,21 +63,19 @@
     submitBtn.textContent = "Sending...";
 
     emailjs
-      .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      .send(SERVICE_ID, TEMPLATE_ID, {
         from_name:  name,
         from_email: email,
-        to_name:    "Mostafa",
         to_email:   "mnmaibrahim@gmail.com",
-        message:    message,
-        subject:    "New message from " + name
+        message:    message
       })
       .then(function () {
         showStatus("Message sent successfully!", true);
         form.reset();
       })
       .catch(function (error) {
-        console.error("Full error:", error);
-        showStatus("Error: " + (error.status || "unknown") + "\n" + (error.text || JSON.stringify(error)), false);
+        console.error("Send error:", error.status, error.text);
+        showStatus("Error " + error.status + ": " + error.text, false);
       })
       .finally(function () {
         submitBtn.disabled    = false;
