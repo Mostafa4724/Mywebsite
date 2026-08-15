@@ -93,15 +93,14 @@
       );
 
 
-      const response = await fetch(
+    const response = await fetch(
         API_BASE + "/orders",
         {
-          method: "GET",
-          headers: headers,
-          credentials: "include",
-          cache: "no-store"
+            method: "GET",
+            headers: headers,
+            cache: "no-store"
         }
-      );
+    );
 
 
       if (!response.ok) {
