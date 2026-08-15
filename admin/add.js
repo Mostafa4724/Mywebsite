@@ -673,16 +673,177 @@
   // ---------------------------------------------------------------------------
   // Build the payload
   // ---------------------------------------------------------------------------
-  function getMainImageFile() {
-    // Preferred path: the uploader module in script.js.
-    if (window.ProductImages && typeof window.ProductImages.getMainFile === "function") {
-      return window.ProductImages.getMainFile();
+  // ---------------------------------------------------------------------------
+// Product Images — maximum 5
+// ---------------------------------------------------------------------------
+
+const imageInput = el("imageInput");
+const uploadArea = el("uploadArea");
+const uploadPlaceholder = el("uploadPlaceholder");
+const previewGrid = el("previewGrid");
+
+let selectedImages = [];
+
+const MAX_IMAGES = 5;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+function renderImagePreviews() {
+  if (!previewGrid) return;
+
+  previewGrid.innerHTML = "";
+
+  if (selectedImages.length === 0) {
+    previewGrid.style.display = "none";
+
+    if (uploadPlaceholder) {
+      uploadPlaceholder.style.display = "";
     }
-    // Fallback: script.js failed to load — read the raw file input directly
-    // so the product image is still uploaded.
-    const input = el("imageInput");
-    return input && input.files && input.files[0] ? input.files[0] : null;
+
+    return;
   }
+
+  previewGrid.style.display = "grid";
+
+  if (uploadPlaceholder) {
+    uploadPlaceholder.style.display = "none";
+  }
+
+  selectedImages.forEach((file, index) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "ap-image-preview";
+
+    const img = document.createElement("img");
+    img.alt = "Product image " + (index + 1);
+
+    const objectUrl = URL.createObjectURL(file);
+    img.src = objectUrl;
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "ap-image-remove";
+    removeBtn.innerHTML = "&times;";
+    removeBtn.setAttribute(
+      "aria-label",
+      "Remove image " + (index + 1)
+    );
+
+    removeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      selectedImages.splice(index, 1);
+
+      // Rebuild the input files
+      updateInputFiles();
+
+      renderImagePreviews();
+    });
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(removeBtn);
+
+    // Show first image as main image
+    if (index === 0) {
+      const mainLabel = document.createElement("span");
+      mainLabel.className = "ap-main-image-label";
+      mainLabel.textContent = "Main";
+      wrapper.appendChild(mainLabel);
+    }
+
+    previewGrid.appendChild(wrapper);
+  });
+}
+
+function updateInputFiles() {
+  if (!imageInput) return;
+
+  const dataTransfer = new DataTransfer();
+
+  selectedImages.forEach((file) => {
+    dataTransfer.items.add(file);
+  });
+
+  imageInput.files = dataTransfer.files;
+}
+
+function handleImages(files) {
+  const newFiles = Array.from(files || []);
+
+  if (!newFiles.length) return;
+
+  for (const file of newFiles) {
+    // Check file type
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      showToast("Only PNG, JPG and WebP images are allowed.");
+      continue;
+    }
+
+    // Check file size
+    if (file.size > MAX_IMAGE_SIZE) {
+      showToast(file.name + " is larger than 5MB.");
+      continue;
+    }
+
+    // Maximum 5
+    if (selectedImages.length >= MAX_IMAGES) {
+      showToast("You can upload a maximum of 5 images.");
+      break;
+    }
+
+    selectedImages.push(file);
+  }
+
+  updateInputFiles();
+  renderImagePreviews();
+}
+
+// Browse files
+if (imageInput) {
+  imageInput.addEventListener("change", () => {
+    handleImages(imageInput.files);
+  });
+}
+
+// Click upload area
+if (uploadArea && imageInput) {
+  uploadArea.addEventListener("click", (e) => {
+    if (e.target.closest(".ap-image-remove")) return;
+
+    imageInput.click();
+  });
+
+  // Drag over
+  uploadArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadArea.classList.add("drag-over");
+  });
+
+  uploadArea.addEventListener("dragleave", () => {
+    uploadArea.classList.remove("drag-over");
+  });
+
+  // Drop
+  uploadArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove("drag-over");
+
+    handleImages(e.dataTransfer.files);
+  });
+}
+
+function clearSelectedImages() {
+  selectedImages = [];
+
+  if (imageInput) {
+    imageInput.value = "";
+  }
+
+  renderImagePreviews();
+}
 
   function buildFormData(statusOverride) {
     const fd = new FormData();
@@ -765,11 +926,14 @@
     // --- Tags --------------------------------------------------------------
     fd.append("tags", tags.join(","));
 
-    // --- Image -------------------------------------------------------------
-    const mainImage = getMainImageFile();
-    if (mainImage) fd.append("image", mainImage);
-
-    return fd;
+   // --- Images ------------------------------------------------------------
+   // Send all selected images.
+   // The first image is the main image.
+   selectedImages.forEach((file) => {
+   fd.append("images", file); 
+   });
+   
+   return fd;
   }
 
   // ---------------------------------------------------------------------------
@@ -833,9 +997,14 @@
       form.reset();
       tags.length = 0;
       renderTags();
-      if (window.ProductImages && typeof window.ProductImages.clear === "function") {
-        window.ProductImages.clear();
-      }
+      clearSelectedImages();
+
+    if (
+      window.ProductImages &&
+      typeof window.ProductImages.clear === "function"
+    ) {
+      window.ProductImages.clear();
+    }
       stockStatusManual = false;
       updateStockStatusUi();
       calcProfit();
