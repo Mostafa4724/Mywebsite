@@ -1264,7 +1264,7 @@ if (typeof setupPromoCode === "function") {
     const token = sessionStorage.getItem("token");
 
     if (!token) {
-      window.location.href = "/admin/login.html";
+      window.location.href = "/page/login.html";
       return false;
     }
 
@@ -1278,7 +1278,7 @@ if (typeof setupPromoCode === "function") {
       if (!response.ok) {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("auth_user");
-        window.location.href = "/admin/login.html";
+        window.location.href = "/page/login.html";
         return false;
       }
 
@@ -1328,7 +1328,7 @@ if (typeof setupPromoCode === "function") {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
       sessionStorage.removeItem("adminLoggedIn");
-      window.location.href = "/admin/login.html";
+      window.location.href = "/page/login.html";
     });
   }
 
