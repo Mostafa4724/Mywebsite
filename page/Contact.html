@@ -82,27 +82,30 @@
           </div>
         </div>
 
-        <form class="contact-form">
+        <form class="contact-form" id="contactForm">
           <label>
             Name
-            <input type="text" placeholder="Enter Your name" required />
+            <input type="text" id="contactName" placeholder="Enter Your name" required />
           </label>
           <label>
             Email
-            <input type="email" placeholder="you@example.com" required />
+            <input type="email" id="contactEmail" placeholder="you@example.com" required />
           </label>
           <label>
             Message
             <textarea
+              id="contactMessage"
               rows="6"
               placeholder="How can we help?"
               required
             ></textarea>
           </label>
-          <button type="submit">Send message</button>
+          <button type="submit" id="contactSubmitBtn">Send message</button>
         </form>
       </section>
     </main>
     <script src="/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="contact.js"></script>
   </body>
 </html>
