@@ -1366,7 +1366,7 @@
         renderStatusControl();
 
         // Refresh the order bubble immediately after the status changes.
-       /* window.dispatchEvent(new Event("orderStatusUpdated"));*/
+        window.dispatchEvent(new Event("orderStatusUpdated"));
 
 
         showToast(
