@@ -651,7 +651,7 @@
             item.quantity
           ) || 1;
 
-
+          alert(item.total)
         div.innerHTML =
           '<div class="vo-item-img">' +
           '<img src="' +
@@ -694,6 +694,7 @@
           '<div class="vo-item-price">' +
           money(
             item.total != null
+            
               ? item.total
               : unitPrice * qty
           ) +
