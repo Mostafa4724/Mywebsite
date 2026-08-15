@@ -1,371 +1,2355 @@
-// ── Mock Data ──
-const DATA = {
-  kpi: {
-    '7d': [
-      { label: 'Revenue',   value: '$18,420',   change: '+12.4%', dir: 'up',   vs: 'vs prev 7 days',  icon: 'fa-dollar-sign', cls: 'revenue-icon' },
-      { label: 'Orders',    value: '312',       change: '+8.1%',  dir: 'up',   vs: 'vs prev 7 days',  icon: 'fa-bag-shopping', cls: 'orders-icon' },
-      { label: 'Customers', value: '198',       change: '+5.3%',  dir: 'up',   vs: 'vs prev 7 days',  icon: 'fa-user-plus',    cls: 'customers-icon' },
-      { label: 'AOV',       value: '$59.04',    change: '-2.1%',  dir: 'down', vs: 'vs prev 7 days',  icon: 'fa-receipt',      cls: 'aov-icon' },
-    ],
-    '30d': [
-      { label: 'Revenue',   value: '$84,310',   change: '+18.7%', dir: 'up',   vs: 'vs prev 30 days', icon: 'fa-dollar-sign', cls: 'revenue-icon' },
-      { label: 'Orders',    value: '1,284',     change: '+14.2%', dir: 'up',   vs: 'vs prev 30 days', icon: 'fa-bag-shopping', cls: 'orders-icon' },
-      { label: 'Customers', value: '847',       change: '+11.6%', dir: 'up',   vs: 'vs prev 30 days', icon: 'fa-user-plus',    cls: 'customers-icon' },
-      { label: 'AOV',       value: '$65.67',    change: '+3.9%',  dir: 'up',   vs: 'vs prev 30 days', icon: 'fa-receipt',      cls: 'aov-icon' },
-    ],
-    '90d': [
-      { label: 'Revenue',   value: '$247,890',  change: '+22.1%', dir: 'up',   vs: 'vs prev 90 days', icon: 'fa-dollar-sign', cls: 'revenue-icon' },
-      { label: 'Orders',    value: '3,671',     change: '+16.8%', dir: 'up',   vs: 'vs prev 90 days', icon: 'fa-bag-shopping', cls: 'orders-icon' },
-      { label: 'Customers', value: '2,134',     change: '+19.4%', dir: 'up',   vs: 'vs prev 90 days', icon: 'fa-user-plus',    cls: 'customers-icon' },
-      { label: 'AOV',       value: '$67.53',    change: '+4.6%',  dir: 'up',   vs: 'vs prev 90 days', icon: 'fa-receipt',      cls: 'aov-icon' },
-    ],
-    '12m': [
-      { label: 'Revenue',   value: '$1,124,500', change: '+31.2%', dir: 'up',  vs: 'vs prev 12 months', icon: 'fa-dollar-sign', cls: 'revenue-icon' },
-      { label: 'Orders',    value: '16,840',    change: '+24.5%', dir: 'up',   vs: 'vs prev 12 months', icon: 'fa-bag-shopping', cls: 'orders-icon' },
-      { label: 'Customers', value: '9,720',     change: '+28.3%', dir: 'up',   vs: 'vs prev 12 months', icon: 'fa-user-plus',    cls: 'customers-icon' },
-      { label: 'AOV',       value: '$66.78',    change: '+5.4%',  dir: 'up',   vs: 'vs prev 12 months', icon: 'fa-receipt',      cls: 'aov-icon' },
-    ],
-  },
-  revenue: {
-    '7d':  { labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], current: [2640,3120,2890,3410,2960,1780,1620], previous: [2340,2780,2510,2980,2670,1520,1380] },
-    '30d': { labels: ['W1','W2','W3','W4'], current: [18200,21400,20800,23910], previous: [15400,17800,18100,19200] },
-    '90d': { labels: ['Jan','Feb','Mar'], current: [74200,82400,91290], previous: [60100,68300,74800] },
-    '12m': { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], current: [74200,82400,91290,88100,95400,102300,97800,104200,112400,108700,96300,71400], previous: [60100,68300,74800,71200,78900,84200,80100,86400,92100,88600,79200,58900] },
-  },
-  status: [
-    { label: 'Delivered',  count: 684, cls: 'delivered',  pct: 53.3 },
-    { label: 'Shipped',    count: 298, cls: 'shipped',    pct: 23.2 },
-    { label: 'Processing', count: 184, cls: 'processing', pct: 14.3 },
-    { label: 'Cancelled',  count: 72,  cls: 'cancelled',  pct: 5.6 },
-    { label: 'Refunded',   count: 46,  cls: 'refunded',   pct: 3.6 },
-  ],
-  donut: [
-    { label: 'Electronics',   value: 34200, color: '#2563eb', pct: 40.6 },
-    { label: 'Clothing',      value: 21800, color: '#16a34a', pct: 25.9 },
-    { label: 'Home & Garden', value: 14200, color: '#d97706', pct: 16.8 },
-    { label: 'Sports',        value: 8900,  color: '#7c3aed', pct: 10.6 },
-    { label: 'Other',         value: 5210,  color: '#94a3b8', pct: 6.1 },
-  ],
-  weekly: [
-    { day: 'Mon', current: 4200, previous: 3600 },
-    { day: 'Tue', current: 5100, previous: 4500 },
-    { day: 'Wed', current: 4800, previous: 4100 },
-    { day: 'Thu', current: 5600, previous: 4900 },
-    { day: 'Fri', current: 4900, previous: 4300 },
-    { day: 'Sat', current: 3200, previous: 2800 },
-    { day: 'Sun', current: 2900, previous: 2500 },
-  ],
-  products: [
-    { name: 'Wireless Noise-Cancel Headphones', cat: 'Electronics',   img: 'https://picsum.photos/seed/headph/88/88.jpg',  revenue: '$12,480', units: 186, conv: 8.4, convGood: true },
-    { name: 'Premium Cotton Crew Neck Tee',     cat: 'Clothing',      img: 'https://picsum.photos/seed/tshirt/88/88.jpg',  revenue: '$8,920',  units: 412, conv: 6.2, convGood: true },
-    { name: 'Smart LED Desk Lamp',              cat: 'Home & Garden', img: 'https://picsum.photos/seed/lamp22/88/88.jpg',  revenue: '$6,340',  units: 142, conv: 5.1, convGood: true },
-    { name: 'Carbon Fiber Running Shoes',       cat: 'Sports',        img: 'https://picsum.photos/seed/shoes9/88/88.jpg',  revenue: '$5,870',  units: 94,  conv: 3.8, convGood: false },
-    { name: 'Organic Matcha Powder 200g',       cat: 'Food & Drink',  img: 'https://picsum.photos/seed/matcha/88/88.jpg',  revenue: '$4,210',  units: 328, conv: 7.1, convGood: true },
-    { name: 'Minimalist Leather Wallet',        cat: 'Accessories',   img: 'https://picsum.photos/seed/wallet/88/88.jpg',  revenue: '$3,760',  units: 156, conv: 4.5, convGood: true },
-  ],
-};
+// ============================================================
+// ADMIN ANALYTICS - LIVE DATABASE VERSION
+// ============================================================
 
-// ── State ──
-let currentPeriod = '30d';
+const API_BASE = "http://127.0.0.1:5000";
+
+// ============================================================
+// State
+// ============================================================
+
+let currentPeriod = "30d";
 let revenueChart = null;
 
-// ── Utilities ──
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => document.querySelectorAll(sel);
+let dashboardData = null;
+let ordersData = [];
 
-function showToast(msg, icon = 'fa-circle-check') {
-  const c = $('#toastContainer');
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.innerHTML = `<i class="fa-solid ${icon}"></i> ${msg}`;
-  c.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+
+// ============================================================
+// DOM HELPERS
+// ============================================================
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => document.querySelectorAll(selector);
+
+
+// ============================================================
+// TOAST
+// ============================================================
+
+function showToast(message, icon = "fa-circle-check") {
+    const container = $("#toastContainer");
+
+    if (!container) return;
+
+    const toast = document.createElement("div");
+
+    toast.className = "toast";
+
+    toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <span>${escapeHtml(message)}</span>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 
-// ── Sidebar toggle (mobile) ──
- $('#menuToggle').addEventListener('click', () => {
-  $('#adminSidebar').classList.toggle('open');
-  $('#sidebarOverlay').classList.toggle('show');
-});
- $('#sidebarOverlay').addEventListener('click', () => {
-  $('#adminSidebar').classList.remove('open');
-  $('#sidebarOverlay').classList.remove('show');
-});
 
-// ── Period Toggle ──
- $('#periodToggle').addEventListener('click', (e) => {
-  const btn = e.target.closest('.aa-period-btn');
-  if (!btn) return;
-  $$('.aa-period-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentPeriod = btn.dataset.period;
-  renderKPIs();
-  renderRevenueChart();
-  const hintMap = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', '12m': 'Last 12 months' };
-  $('#revenueHint').textContent = hintMap[currentPeriod];
-});
+// ============================================================
+// SECURITY / HTML ESCAPE
+// ============================================================
 
-// ── Render KPIs ──
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// ============================================================
+// NUMBER HELPERS
+// ============================================================
+
+function money(value) {
+    const number = Number(value) || 0;
+
+    return "$" + number.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+}
+
+
+function compactMoney(value) {
+    const number = Number(value) || 0;
+
+    if (number >= 1000000) {
+        return "$" + (number / 1000000).toFixed(1) + "M";
+    }
+
+    if (number >= 1000) {
+        return "$" + (number / 1000).toFixed(1) + "k";
+    }
+
+    return "$" + Math.round(number);
+}
+
+
+function number(value) {
+    return (Number(value) || 0).toLocaleString();
+}
+
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+function getToken() {
+    return sessionStorage.getItem("token");
+}
+
+
+// ============================================================
+// FETCH HELPER
+// ============================================================
+
+async function apiFetch(url, options = {}) {
+
+    const token = getToken();
+
+    const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+    };
+
+    if (token) {
+        headers["Authorization"] = "Bearer " + token;
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers,
+    });
+
+    let data = null;
+
+    try {
+        data = await response.json();
+    } catch (error) {
+        data = null;
+    }
+
+    if (!response.ok) {
+
+        const message =
+            data?.message ||
+            data?.error ||
+            `Server error (${response.status})`;
+
+        throw new Error(message);
+    }
+
+    return data;
+}
+
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+
+function initSidebar() {
+
+    const menuToggle = $("#menuToggle");
+    const sidebar = $("#adminSidebar");
+    const overlay = $("#sidebarOverlay");
+
+    if (menuToggle) {
+
+        menuToggle.addEventListener("click", () => {
+
+            sidebar?.classList.toggle("open");
+            overlay?.classList.toggle("show");
+
+        });
+
+    }
+
+    if (overlay) {
+
+        overlay.addEventListener("click", () => {
+
+            sidebar?.classList.remove("open");
+            overlay?.classList.remove("show");
+
+        });
+
+    }
+}
+
+
+// ============================================================
+// PERIOD TOGGLE
+// ============================================================
+
+function initPeriodToggle() {
+
+    const periodToggle = $("#periodToggle");
+
+    if (!periodToggle) return;
+
+    periodToggle.addEventListener("click", async (event) => {
+
+        const button = event.target.closest(".aa-period-btn");
+
+        if (!button) return;
+
+        currentPeriod = button.dataset.period;
+
+        $$(".aa-period-btn").forEach((btn) => {
+            btn.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        updateRevenueHint();
+
+        renderKPIs();
+
+        renderRevenueChart();
+
+        renderStatusBars();
+
+        renderDonutChart();
+
+        renderWeeklyBars();
+
+        renderProductTable();
+    });
+}
+
+
+function updateRevenueHint() {
+
+    const hint = $("#revenueHint");
+
+    if (!hint) return;
+
+    const map = {
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "90d": "Last 90 days",
+        "12m": "Last 12 months",
+    };
+
+    hint.textContent = map[currentPeriod] || "This period";
+}
+
+
+// ============================================================
+// DATE HELPERS
+// ============================================================
+
+function getOrderDate(order) {
+
+    const value =
+        order?.created_at ||
+        order?.createdAt ||
+        order?.date ||
+        order?.order_date;
+
+    if (!value) return null;
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    return date;
+}
+
+
+function startOfDay(date) {
+
+    const d = new Date(date);
+
+    d.setHours(0, 0, 0, 0);
+
+    return d;
+}
+
+
+function addDays(date, amount) {
+
+    const d = new Date(date);
+
+    d.setDate(d.getDate() + amount);
+
+    return d;
+}
+
+
+function startOfMonth(date) {
+
+    return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        1
+    );
+}
+
+
+function addMonths(date, amount) {
+
+    return new Date(
+        date.getFullYear(),
+        date.getMonth() + amount,
+        1
+    );
+}
+
+
+// ============================================================
+// PERIOD RANGE
+// ============================================================
+
+function getPeriodRange(period = currentPeriod) {
+
+    const now = new Date();
+
+    let start;
+
+    if (period === "7d") {
+
+        start = addDays(startOfDay(now), -6);
+
+    } else if (period === "30d") {
+
+        start = addDays(startOfDay(now), -29);
+
+    } else if (period === "90d") {
+
+        start = addDays(startOfDay(now), -89);
+
+    } else {
+
+        start = startOfMonth(
+            addMonths(now, -11)
+        );
+    }
+
+    return {
+        start,
+        end: now,
+    };
+}
+
+
+// ============================================================
+// VALID ORDER
+// ============================================================
+
+function isValidOrder(order) {
+
+    const status =
+        String(order?.status || "")
+            .toLowerCase()
+            .trim();
+
+    return ![
+        "cancelled",
+        "canceled",
+        "refunded",
+    ].includes(status);
+}
+
+
+// ============================================================
+// ORDER TOTAL
+// ============================================================
+
+function getOrderTotal(order) {
+
+    return Number(
+        order?.total ??
+        order?.grand_total ??
+        order?.amount ??
+        order?.total_amount ??
+        0
+    ) || 0;
+}
+
+
+// ============================================================
+// FILTER ORDERS BY PERIOD
+// ============================================================
+
+function getOrdersForPeriod(period = currentPeriod) {
+
+    const { start, end } = getPeriodRange(period);
+
+    return ordersData.filter((order) => {
+
+        const date = getOrderDate(order);
+
+        if (!date) return false;
+
+        return (
+            date >= start &&
+            date <= end
+        );
+    });
+}
+
+
+// ============================================================
+// KPI DATA
+// ============================================================
+
+function calculateKPIs() {
+
+    const orders = getOrdersForPeriod();
+
+    const validOrders = orders.filter(isValidOrder);
+
+    const revenue = validOrders.reduce(
+        (total, order) => {
+            return total + getOrderTotal(order);
+        },
+        0
+    );
+
+    const orderCount = orders.length;
+
+    const averageOrder =
+        validOrders.length > 0
+            ? revenue / validOrders.length
+            : 0;
+
+    let customers = new Set();
+
+    orders.forEach((order) => {
+
+        const customer =
+            order.user_id ??
+            order.userId ??
+            order.customer_email ??
+            order.customerEmail ??
+            order.email ??
+            order.customer_name;
+
+        if (customer !== undefined && customer !== null) {
+            customers.add(String(customer));
+        }
+    });
+
+    // If we cannot determine customers from orders,
+    // use the dashboard's actual customer count.
+    if (
+        customers.size === 0 &&
+        dashboardData?.stats?.customers !== undefined
+    ) {
+        customers = null;
+    }
+
+    return {
+        revenue,
+        orders: orderCount,
+        customers:
+            customers === null
+                ? Number(dashboardData.stats.customers || 0)
+                : customers.size,
+        averageOrder,
+    };
+}
+
+
+// ============================================================
+// KPI PREVIOUS PERIOD
+// ============================================================
+
+function getPreviousPeriodRange() {
+
+    const now = new Date();
+
+    if (currentPeriod === "7d") {
+
+        const end = addDays(startOfDay(now), -7);
+
+        return {
+            start: addDays(end, -6),
+            end,
+        };
+    }
+
+    if (currentPeriod === "30d") {
+
+        const end = addDays(startOfDay(now), -30);
+
+        return {
+            start: addDays(end, -29),
+            end,
+        };
+    }
+
+    if (currentPeriod === "90d") {
+
+        const end = addDays(startOfDay(now), -90);
+
+        return {
+            start: addDays(end, -89),
+            end,
+        };
+    }
+
+    const currentStart = startOfMonth(
+        addMonths(now, -11)
+    );
+
+    const previousEnd = addDays(currentStart, -1);
+
+    return {
+        start: startOfMonth(
+            addMonths(previousEnd, -11)
+        ),
+        end: previousEnd,
+    };
+}
+
+
+function getPreviousPeriodOrders() {
+
+    const range = getPreviousPeriodRange();
+
+    return ordersData.filter((order) => {
+
+        const date = getOrderDate(order);
+
+        if (!date) return false;
+
+        return (
+            date >= range.start &&
+            date <= range.end
+        );
+    });
+}
+
+
+function calculateChange(current, previous) {
+
+    if (previous === 0) {
+
+        if (current === 0) {
+            return {
+                value: "0.0%",
+                direction: "up",
+            };
+        }
+
+        return {
+            value: "+100%",
+            direction: "up",
+        };
+    }
+
+    const percentage =
+        ((current - previous) / previous) * 100;
+
+    return {
+        value:
+            (percentage >= 0 ? "+" : "") +
+            percentage.toFixed(1) +
+            "%",
+        direction:
+            percentage >= 0
+                ? "up"
+                : "down",
+    };
+}
+
+
+// ============================================================
+// RENDER KPIs
+// ============================================================
+
 function renderKPIs() {
-  const grid = $('#kpiGrid');
-  grid.innerHTML = DATA.kpi[currentPeriod].map(k => `
-    <div class="aa-kpi-card">
-      <div class="aa-kpi-icon ${k.cls}"><i class="fa-solid ${k.icon}"></i></div>
-      <div class="aa-kpi-body">
-        <span class="aa-kpi-label">${k.label}</span>
-        <div class="aa-kpi-value-row">
-          <span class="aa-kpi-value">${k.value}</span>
-          <span class="aa-kpi-change ${k.dir}">${k.change}</span>
-        </div>
-        <span class="aa-kpi-vs">${k.vs}</span>
-      </div>
-    </div>
-  `).join('');
-}
 
-// ── Render Revenue Chart (Chart.js) ──
-function renderRevenueChart() {
-  const ctx = $('#revenueChart').getContext('2d');
-  const d = DATA.revenue[currentPeriod];
+    const grid = $("#kpiGrid");
 
-  if (revenueChart) revenueChart.destroy();
+    if (!grid) return;
 
-  const grad = ctx.createLinearGradient(0, 0, 0, 260);
-  grad.addColorStop(0, 'rgba(37, 99, 235, 0.18)');
-  grad.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+    const current = calculateKPIs();
 
-  revenueChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: d.labels,
-      datasets: [
+    const previousOrders =
+        getPreviousPeriodOrders();
+
+    const previousValidOrders =
+        previousOrders.filter(isValidOrder);
+
+    const previousRevenue =
+        previousValidOrders.reduce(
+            (sum, order) =>
+                sum + getOrderTotal(order),
+            0
+        );
+
+    const previousAOV =
+        previousValidOrders.length > 0
+            ? previousRevenue /
+              previousValidOrders.length
+            : 0;
+
+    const previousCustomers =
+        new Set(
+            previousOrders
+                .map((order) =>
+                    order.user_id ??
+                    order.userId ??
+                    order.customer_email ??
+                    order.customerEmail ??
+                    order.email
+                )
+                .filter(Boolean)
+        ).size;
+
+    const revenueChange =
+        calculateChange(
+            current.revenue,
+            previousRevenue
+        );
+
+    const ordersChange =
+        calculateChange(
+            current.orders,
+            previousOrders.length
+        );
+
+    const customersChange =
+        calculateChange(
+            current.customers,
+            previousCustomers
+        );
+
+    const aovChange =
+        calculateChange(
+            current.averageOrder,
+            previousAOV
+        );
+
+    const cards = [
+
         {
-          label: 'Current',
-          data: d.current,
-          borderColor: '#2563eb',
-          backgroundColor: grad,
-          borderWidth: 2.5,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointBackgroundColor: '#2563eb',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointHoverRadius: 7,
+            label: "Revenue",
+            value: money(current.revenue),
+            change: revenueChange,
+            icon: "fa-dollar-sign",
+            cls: "revenue-icon",
         },
+
         {
-          label: 'Previous',
-          data: d.previous,
-          borderColor: '#cbd5e1',
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          borderDash: [6, 4],
-          fill: false,
-          tension: 0.4,
-          pointRadius: 3,
-          pointBackgroundColor: '#cbd5e1',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointHoverRadius: 6,
+            label: "Orders",
+            value: number(current.orders),
+            change: ordersChange,
+            icon: "fa-bag-shopping",
+            cls: "orders-icon",
         },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'end',
-          labels: { boxWidth: 12, boxHeight: 3, borderRadius: 2, useBorderRadius: true, padding: 16, font: { size: 12, weight: '600' }, color: '#64748b' }
+
+        {
+            label: "Customers",
+            value: number(current.customers),
+            change: customersChange,
+            icon: "fa-user-plus",
+            cls: "customers-icon",
         },
-        tooltip: {
-          backgroundColor: '#0f172a',
-          titleFont: { size: 12, weight: '600' },
-          bodyFont: { size: 12 },
-          padding: 12,
-          cornerRadius: 10,
-          displayColors: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          boxPadding: 4,
-          callbacks: {
-            label: (ctx) => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`
-          }
+
+        {
+            label: "AOV",
+            value: money(current.averageOrder),
+            change: aovChange,
+            icon: "fa-receipt",
+            cls: "aov-icon",
         },
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, color: '#94a3b8' } },
-        y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 11 }, color: '#94a3b8', callback: (v) => '$' + (v / 1000).toFixed(0) + 'k' }, border: { display: false } },
-      },
-    },
-  });
-}
 
-// ── Render Status Bars ──
-function renderStatusBars() {
-  const container = $('#statusBars');
-  container.innerHTML = DATA.status.map(s => `
-    <div class="aa-status-bar-item">
-      <div class="aa-status-bar-label">
-        <span>${s.label}</span>
-        <span class="aa-status-bar-count">${s.count} (${s.pct}%)</span>
-      </div>
-      <div class="aa-status-bar-track">
-        <div class="aa-status-bar-fill ${s.cls}" data-width="${s.pct}"></div>
-      </div>
-    </div>
-  `).join('');
+    ];
 
-  requestAnimationFrame(() => {
-    container.querySelectorAll('.aa-status-bar-fill').forEach(bar => {
-      bar.style.width = bar.dataset.width + '%';
-    });
-  });
-}
+    let comparisonText;
 
-// ── Render Donut Chart (custom canvas) ──
-function renderDonutChart() {
-  const canvas = $('#donutChart');
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const size = 200;
-  canvas.width = size * dpr;
-  canvas.height = size * dpr;
-  canvas.style.width = size + 'px';
-  canvas.style.height = size + 'px';
-  ctx.scale(dpr, dpr);
+    if (currentPeriod === "7d") {
+        comparisonText = "vs previous 7 days";
+    } else if (currentPeriod === "30d") {
+        comparisonText = "vs previous 30 days";
+    } else if (currentPeriod === "90d") {
+        comparisonText = "vs previous 90 days";
+    } else {
+        comparisonText = "vs previous 12 months";
+    }
 
-  const cx = size / 2;
-  const cy = size / 2;
-  const outerR = 90;
-  const innerR = 58;
-  const total = DATA.donut.reduce((s, d) => s + d.value, 0);
+    grid.innerHTML = cards.map((card) => {
 
-  let progress = 0;
-  function drawFrame() {
-    progress = Math.min(progress + 0.03, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    ctx.clearRect(0, 0, size, size);
+        return `
+            <div class="aa-kpi-card">
 
-    let angle = -Math.PI / 2;
-    DATA.donut.forEach(seg => {
-      const sweep = (seg.value / total) * Math.PI * 2 * eased;
-      ctx.beginPath();
-      ctx.arc(cx, cy, outerR, angle, angle + sweep);
-      ctx.arc(cx, cy, innerR, angle + sweep, angle, true);
-      ctx.closePath();
-      ctx.fillStyle = seg.color;
-      ctx.fill();
-      angle += sweep;
-    });
+                <div class="aa-kpi-icon ${card.cls}">
+                    <i class="fa-solid ${card.icon}"></i>
+                </div>
 
-    ctx.fillStyle = '#0f1724';
-    ctx.font = '800 22px -apple-system, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('$' + Math.round(total * eased).toLocaleString(), cx, cy - 6);
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '600 11px -apple-system, sans-serif';
-    ctx.fillText('Total Revenue', cx, cy + 14);
+                <div class="aa-kpi-body">
 
-    if (progress < 1) requestAnimationFrame(drawFrame);
-  }
-  drawFrame();
+                    <span class="aa-kpi-label">
+                        ${card.label}
+                    </span>
 
-  const legend = $('#donutLegend');
-  legend.innerHTML = DATA.donut.map(d => `
-    <div class="aa-legend-item">
-      <span class="aa-legend-dot" style="background:${d.color}"></span>
-      <span>${d.label}</span>
-      <span class="aa-legend-pct">${d.pct}%</span>
-    </div>
-  `).join('');
-}
+                    <div class="aa-kpi-value-row">
 
-// ── Render Weekly Bars ──
-function renderWeeklyBars() {
-  const container = $('#weeklyBars');
-  const maxVal = Math.max(...DATA.weekly.map(w => Math.max(w.current, w.previous)));
+                        <span class="aa-kpi-value">
+                            ${escapeHtml(card.value)}
+                        </span>
 
-  container.innerHTML = DATA.weekly.map(w => {
-    const curH = (w.current / maxVal) * 100;
-    const prevH = (w.previous / maxVal) * 100;
-    return `
-      <div class="aa-weekly-col">
-        <div class="aa-weekly-amount">$${(w.current / 1000).toFixed(1)}k</div>
-        <div class="aa-weekly-bar-track">
-          <div class="aa-weekly-bar-pair">
-            <div class="aa-weekly-fill current" data-h="${curH}"></div>
-            <div class="aa-weekly-fill previous" data-h="${prevH}"></div>
-          </div>
-        </div>
-        <div class="aa-weekly-label">${w.day}</div>
-      </div>
-    `;
-  }).join('');
+                        <span class="aa-kpi-change ${card.change.direction}">
+                            ${escapeHtml(card.change.value)}
+                        </span>
 
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      container.querySelectorAll('.aa-weekly-fill').forEach(bar => {
-        bar.style.height = bar.dataset.h + '%';
-      });
-    }, 100);
-  });
-}
+                    </div>
 
-// ── Render Product Table ──
-function renderProductTable() {
-  const tbody = $('#productTableBody');
-  tbody.innerHTML = DATA.products.map(p => {
-    const convCls = p.convGood ? 'good' : 'low';
-    const fillCls = p.convGood ? '' : 'low';
-    return `
-      <tr>
-        <td>
-          <div class="aa-product-cell">
-            <div class="aa-product-thumb"><img src="${p.img}" alt="${p.name}" loading="lazy"></div>
-            <div>
-              <div class="aa-product-name">${p.name}</div>
-              <span class="aa-product-cat">${p.cat}</span>
+                    <span class="aa-kpi-vs">
+                        ${comparisonText}
+                    </span>
+
+                </div>
+
             </div>
-          </div>
-        </td>
-        <td class="num">${p.revenue}</td>
-        <td class="num">${p.units}</td>
-        <td>
-          <span class="aa-conv-rate ${convCls}">
-            ${p.conv}%
-            <span class="conv-bar"><span class="conv-bar-fill ${fillCls}" data-w="${p.conv * 10}"></span></span>
-          </span>
-        </td>
-      </tr>
-    `;
-  }).join('');
+        `;
 
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      tbody.querySelectorAll('.conv-bar-fill').forEach(bar => {
-        bar.style.width = bar.dataset.w + '%';
-      });
-    }, 300);
-  });
+    }).join("");
 }
 
-// ── Init ──
-function init() {
-  renderKPIs();
-  renderRevenueChart();
-  renderStatusBars();
-  renderDonutChart();
-  renderWeeklyBars();
-  renderProductTable();
+
+// ============================================================
+// REVENUE TREND DATA
+// ============================================================
+
+function getRevenueTrend() {
+
+    const orders = ordersData.filter(isValidOrder);
+
+    const now = new Date();
+
+    // --------------------------------------------------------
+    // 7 DAYS
+    // --------------------------------------------------------
+
+    if (currentPeriod === "7d") {
+
+        const labels = [];
+        const current = [];
+
+        for (let i = 6; i >= 0; i--) {
+
+            const date = addDays(
+                startOfDay(now),
+                -i
+            );
+
+            labels.push(
+                date.toLocaleDateString(
+                    undefined,
+                    { weekday: "short" }
+                )
+            );
+
+            const total = orders
+                .filter((order) => {
+
+                    const orderDate =
+                        getOrderDate(order);
+
+                    if (!orderDate) return false;
+
+                    return (
+                        orderDate >= date &&
+                        orderDate < addDays(date, 1)
+                    );
+                })
+                .reduce(
+                    (sum, order) =>
+                        sum + getOrderTotal(order),
+                    0
+                );
+
+            current.push(total);
+        }
+
+        return {
+            labels,
+            current,
+            previous: [],
+        };
+    }
+
+
+    // --------------------------------------------------------
+    // 30 DAYS
+    // --------------------------------------------------------
+
+    if (currentPeriod === "30d") {
+
+        const labels = [];
+        const current = [];
+
+        for (let week = 3; week >= 0; week--) {
+
+            const start = addDays(
+                startOfDay(now),
+                -(week * 7 + 6)
+            );
+
+            const end = addDays(
+                start,
+                7
+            );
+
+            labels.push(
+                "W" + (4 - week)
+            );
+
+            const total = orders
+                .filter((order) => {
+
+                    const date =
+                        getOrderDate(order);
+
+                    return (
+                        date &&
+                        date >= start &&
+                        date < end
+                    );
+                })
+                .reduce(
+                    (sum, order) =>
+                        sum + getOrderTotal(order),
+                    0
+                );
+
+            current.push(total);
+        }
+
+        return {
+            labels,
+            current,
+            previous: [],
+        };
+    }
+
+
+    // --------------------------------------------------------
+    // 90 DAYS
+    // --------------------------------------------------------
+
+    if (currentPeriod === "90d") {
+
+        const labels = [];
+        const current = [];
+
+        for (let month = 2; month >= 0; month--) {
+
+            const date = new Date(
+                now.getFullYear(),
+                now.getMonth() - month,
+                1
+            );
+
+            const end = new Date(
+                date.getFullYear(),
+                date.getMonth() + 1,
+                1
+            );
+
+            labels.push(
+                date.toLocaleDateString(
+                    undefined,
+                    { month: "short" }
+                )
+            );
+
+            const total = orders
+                .filter((order) => {
+
+                    const orderDate =
+                        getOrderDate(order);
+
+                    return (
+                        orderDate &&
+                        orderDate >= date &&
+                        orderDate < end
+                    );
+                })
+                .reduce(
+                    (sum, order) =>
+                        sum + getOrderTotal(order),
+                    0
+                );
+
+            current.push(total);
+        }
+
+        return {
+            labels,
+            current,
+            previous: [],
+        };
+    }
+
+
+    // --------------------------------------------------------
+    // 12 MONTHS
+    // --------------------------------------------------------
+
+    const labels = [];
+    const current = [];
+
+    for (let month = 11; month >= 0; month--) {
+
+        const start = new Date(
+            now.getFullYear(),
+            now.getMonth() - month,
+            1
+        );
+
+        const end = new Date(
+            start.getFullYear(),
+            start.getMonth() + 1,
+            1
+        );
+
+        labels.push(
+            start.toLocaleDateString(
+                undefined,
+                { month: "short" }
+            )
+        );
+
+        const total = orders
+            .filter((order) => {
+
+                const orderDate =
+                    getOrderDate(order);
+
+                return (
+                    orderDate &&
+                    orderDate >= start &&
+                    orderDate < end
+                );
+            })
+            .reduce(
+                (sum, order) =>
+                    sum + getOrderTotal(order),
+                0
+            );
+
+        current.push(total);
+    }
+
+    return {
+        labels,
+        current,
+        previous: [],
+    };
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+
+// ============================================================
+// REVENUE CHART
+// ============================================================
+
+function renderRevenueChart() {
+
+    const canvas = $("#revenueChart");
+
+    if (!canvas || typeof Chart === "undefined") {
+        return;
+    }
+
+    const ctx = canvas.getContext("2d");
+
+    const data = getRevenueTrend();
+
+    if (revenueChart) {
+        revenueChart.destroy();
+    }
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            260
+        );
+
+    gradient.addColorStop(
+        0,
+        "rgba(37, 99, 235, 0.18)"
+    );
+
+    gradient.addColorStop(
+        1,
+        "rgba(37, 99, 235, 0)"
+    );
+
+    revenueChart = new Chart(ctx, {
+
+        type: "line",
+
+        data: {
+
+            labels: data.labels,
+
+            datasets: [
+
+                {
+                    label: "Revenue",
+
+                    data: data.current,
+
+                    borderColor: "#2563eb",
+
+                    backgroundColor: gradient,
+
+                    borderWidth: 2.5,
+
+                    fill: true,
+
+                    tension: 0.4,
+
+                    pointRadius: 4,
+
+                    pointBackgroundColor:
+                        "#2563eb",
+
+                    pointBorderColor: "#fff",
+
+                    pointBorderWidth: 2,
+
+                    pointHoverRadius: 7,
+                },
+
+            ],
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            interaction: {
+                mode: "index",
+                intersect: false,
+            },
+
+            plugins: {
+
+                legend: {
+                    display: true,
+                    position: "top",
+                    align: "end",
+                },
+
+                tooltip: {
+
+                    backgroundColor:
+                        "#0f172a",
+
+                    padding: 12,
+
+                    cornerRadius: 10,
+
+                    callbacks: {
+
+                        label: (context) => {
+
+                            return (
+                                " Revenue: " +
+                                money(context.parsed.y)
+                            );
+                        },
+
+                    },
+                },
+            },
+
+            scales: {
+
+                x: {
+
+                    grid: {
+                        display: false,
+                    },
+
+                    ticks: {
+                        font: {
+                            size: 12,
+                            weight: "600",
+                        },
+
+                        color: "#94a3b8",
+                    },
+                },
+
+                y: {
+
+                    beginAtZero: true,
+
+                    grid: {
+                        color: "#f1f5f9",
+                    },
+
+                    ticks: {
+
+                        color: "#94a3b8",
+
+                        callback: (value) =>
+                            compactMoney(value),
+                    },
+
+                    border: {
+                        display: false,
+                    },
+                },
+            },
+        },
+    });
+}
+
+
+// ============================================================
+// ORDER STATUS
+// ============================================================
+
+function renderStatusBars() {
+
+    const container = $("#statusBars");
+
+    if (!container) return;
+
+    const orders =
+        getOrdersForPeriod();
+
+    const statusMap = {};
+
+    orders.forEach((order) => {
+
+        let status =
+            String(
+                order.status || "Processing"
+            ).toLowerCase();
+
+        if (
+            status === "canceled"
+        ) {
+            status = "cancelled";
+        }
+
+        statusMap[status] =
+            (statusMap[status] || 0) + 1;
+    });
+
+    const statusDefinitions = [
+
+        {
+            label: "Delivered",
+            key: "delivered",
+            cls: "delivered",
+        },
+
+        {
+            label: "Shipped",
+            key: "shipped",
+            cls: "shipped",
+        },
+
+        {
+            label: "Processing",
+            key: "processing",
+            cls: "processing",
+        },
+
+        {
+            label: "Cancelled",
+            key: "cancelled",
+            cls: "cancelled",
+        },
+
+        {
+            label: "Refunded",
+            key: "refunded",
+            cls: "refunded",
+        },
+
+    ];
+
+    const total = orders.length;
+
+    container.innerHTML =
+        statusDefinitions
+            .map((status) => {
+
+                const count =
+                    statusMap[status.key] || 0;
+
+                const percentage =
+                    total > 0
+                        ? (count / total) * 100
+                        : 0;
+
+                return `
+
+                    <div class="aa-status-bar-item">
+
+                        <div class="aa-status-bar-label">
+
+                            <span>
+                                ${status.label}
+                            </span>
+
+                            <span class="aa-status-bar-count">
+                                ${number(count)}
+                                (${percentage.toFixed(1)}%)
+                            </span>
+
+                        </div>
+
+                        <div class="aa-status-bar-track">
+
+                            <div
+                                class="aa-status-bar-fill ${status.cls}"
+                                data-width="${percentage}"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
+
+    requestAnimationFrame(() => {
+
+        container
+            .querySelectorAll(
+                ".aa-status-bar-fill"
+            )
+            .forEach((bar) => {
+
+                bar.style.width =
+                    bar.dataset.width + "%";
+
+            });
+
+    });
+
+    // Update total in card heading
+    const statusHint =
+        document.querySelector(
+            ".aa-charts-row .aa-card:nth-child(2) .aa-card-hint"
+        );
+
+    if (statusHint) {
+        statusHint.textContent =
+            number(total) + " total";
+    }
+}
+
+
+// ============================================================
+// CATEGORY REVENUE
+// ============================================================
+
+function getCategoryData() {
+
+    if (
+        dashboardData &&
+        Array.isArray(
+            dashboardData.categories
+        )
+    ) {
+
+        return dashboardData.categories
+            .map((category) => ({
+
+                label:
+                    category.name ||
+                    "Other",
+
+                value:
+                    Number(
+                        category.revenue
+                    ) || 0,
+
+                pct:
+                    Number(
+                        category.percent
+                    ) || 0,
+
+            }))
+            .filter(
+                (category) =>
+                    category.value > 0
+            );
+    }
+
+    return [];
+}
+
+
+// ============================================================
+// DONUT CHART
+// ============================================================
+
+function renderDonutChart() {
+
+    const canvas = $("#donutChart");
+
+    if (!canvas) return;
+
+    const ctx =
+        canvas.getContext("2d");
+
+    const categories =
+        getCategoryData();
+
+    const colors = [
+        "#2563eb",
+        "#16a34a",
+        "#d97706",
+        "#7c3aed",
+        "#dc2626",
+        "#94a3b8",
+    ];
+
+    const total =
+        categories.reduce(
+            (sum, category) =>
+                sum + category.value,
+            0
+        );
+
+    const size = 200;
+
+    const dpr =
+        window.devicePixelRatio || 1;
+
+    canvas.width =
+        size * dpr;
+
+    canvas.height =
+        size * dpr;
+
+    canvas.style.width =
+        size + "px";
+
+    canvas.style.height =
+        size + "px";
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+
+    const center = size / 2;
+
+    const outerRadius = 90;
+    const innerRadius = 58;
+
+    ctx.clearRect(
+        0,
+        0,
+        size,
+        size
+    );
+
+    if (total <= 0) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+            center,
+            center,
+            outerRadius,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.arc(
+            center,
+            center,
+            innerRadius,
+            0,
+            Math.PI * 2,
+            true
+        );
+
+        ctx.closePath();
+
+        ctx.fillStyle =
+            "#e2e8f0";
+
+        ctx.fill();
+
+    } else {
+
+        let angle =
+            -Math.PI / 2;
+
+        categories.forEach(
+            (category, index) => {
+
+                const percentage =
+                    category.value /
+                    total;
+
+                const sweep =
+                    percentage *
+                    Math.PI *
+                    2;
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    center,
+                    center,
+                    outerRadius,
+                    angle,
+                    angle + sweep
+                );
+
+                ctx.arc(
+                    center,
+                    center,
+                    innerRadius,
+                    angle + sweep,
+                    angle,
+                    true
+                );
+
+                ctx.closePath();
+
+                ctx.fillStyle =
+                    colors[
+                        index %
+                        colors.length
+                    ];
+
+                ctx.fill();
+
+                angle += sweep;
+            }
+        );
+    }
+
+    // Center value
+    ctx.fillStyle =
+        "#0f1724";
+
+    ctx.font =
+        "800 20px -apple-system, sans-serif";
+
+    ctx.textAlign =
+        "center";
+
+    ctx.textBaseline =
+        "middle";
+
+    ctx.fillText(
+        compactMoney(total),
+        center,
+        center - 6
+    );
+
+    ctx.fillStyle =
+        "#94a3b8";
+
+    ctx.font =
+        "600 11px -apple-system, sans-serif";
+
+    ctx.fillText(
+        "Total Revenue",
+        center,
+        center + 14
+    );
+
+    // Legend
+
+    const legend =
+        $("#donutLegend");
+
+    if (!legend) return;
+
+    legend.innerHTML =
+        categories
+            .map(
+                (category, index) => {
+
+                    const percentage =
+                        total > 0
+                            ? (
+                                category.value /
+                                total *
+                                100
+                            )
+                            : 0;
+
+                    return `
+
+                        <div class="aa-legend-item">
+
+                            <span
+                                class="aa-legend-dot"
+                                style="
+                                    background:
+                                    ${colors[
+                                        index %
+                                        colors.length
+                                    ]}
+                                "
+                            ></span>
+
+                            <span>
+                                ${escapeHtml(
+                                    category.label
+                                )}
+                            </span>
+
+                            <span
+                                class="aa-legend-pct"
+                            >
+                                ${percentage.toFixed(1)}%
+                            </span>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+}
+
+
+// ============================================================
+// WEEKLY COMPARISON
+// ============================================================
+
+function getWeeklyData() {
+
+    const now =
+        startOfDay(
+            new Date()
+        );
+
+    const current = [];
+    const previous = [];
+
+    for (let i = 6; i >= 0; i--) {
+
+        const day =
+            addDays(now, -i);
+
+        const nextDay =
+            addDays(day, 1);
+
+        const previousDay =
+            addDays(day, -7);
+
+        const previousNext =
+            addDays(previousDay, 1);
+
+        const currentValue =
+            ordersData
+                .filter((order) => {
+
+                    const date =
+                        getOrderDate(order);
+
+                    return (
+                        date &&
+                        isValidOrder(order) &&
+                        date >= day &&
+                        date < nextDay
+                    );
+                })
+                .reduce(
+                    (sum, order) =>
+                        sum +
+                        getOrderTotal(order),
+                    0
+                );
+
+        const previousValue =
+            ordersData
+                .filter((order) => {
+
+                    const date =
+                        getOrderDate(order);
+
+                    return (
+                        date &&
+                        isValidOrder(order) &&
+                        date >= previousDay &&
+                        date < previousNext
+                    );
+                })
+                .reduce(
+                    (sum, order) =>
+                        sum +
+                        getOrderTotal(order),
+                    0
+                );
+
+        current.push(currentValue);
+        previous.push(previousValue);
+    }
+
+    return {
+        current,
+        previous,
+    };
+}
+
+
+function renderWeeklyBars() {
+
+    const container =
+        $("#weeklyBars");
+
+    if (!container) return;
+
+    const data =
+        getWeeklyData();
+
+    const days = [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+    ];
+
+    const maxValue =
+        Math.max(
+            ...data.current,
+            ...data.previous,
+            1
+        );
+
+    container.innerHTML =
+        data.current
+            .map((value, index) => {
+
+                const currentHeight =
+                    (value /
+                        maxValue) *
+                    100;
+
+                const previousHeight =
+                    (data.previous[index] /
+                        maxValue) *
+                    100;
+
+                const date =
+                    addDays(
+                        startOfDay(
+                            new Date()
+                        ),
+                        index - 6
+                    );
+
+                const day =
+                    days[
+                        date.getDay()
+                    ];
+
+                return `
+
+                    <div class="aa-weekly-col">
+
+                        <div class="aa-weekly-amount">
+                            ${compactMoney(value)}
+                        </div>
+
+                        <div class="aa-weekly-bar-track">
+
+                            <div class="aa-weekly-bar-pair">
+
+                                <div
+                                    class="aa-weekly-fill current"
+                                    data-h="${currentHeight}"
+                                    title="Current: ${money(value)}"
+                                ></div>
+
+                                <div
+                                    class="aa-weekly-fill previous"
+                                    data-h="${previousHeight}"
+                                    title="Previous: ${money(
+                                        data.previous[index]
+                                    )}"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="aa-weekly-label">
+                            ${day}
+                        </div>
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
+
+    requestAnimationFrame(() => {
+
+        setTimeout(() => {
+
+            container
+                .querySelectorAll(
+                    ".aa-weekly-fill"
+                )
+                .forEach((bar) => {
+
+                    bar.style.height =
+                        bar.dataset.h +
+                        "%";
+
+                });
+
+        }, 100);
+
+    });
+}
+
+
+// ============================================================
+// TOP PRODUCTS
+// ============================================================
+
+function getTopProducts() {
+
+    // Prefer real best sellers from your backend.
+    if (
+        dashboardData &&
+        Array.isArray(
+            dashboardData.best_sellers
+        )
+    ) {
+
+        return dashboardData.best_sellers
+            .map((product) => ({
+
+                name:
+                    product.name ||
+                    product.product_name ||
+                    "Unknown Product",
+
+                category:
+                    product.category ||
+                    "Other",
+
+                revenue:
+                    Number(
+                        product.revenue
+                    ) || 0,
+
+                units:
+                    Number(
+                        product.units
+                    ) || 0,
+
+                image:
+                    product.image ||
+                    product.image_url ||
+                    "",
+
+            }))
+            .sort(
+                (a, b) =>
+                    b.revenue -
+                    a.revenue
+            )
+            .slice(0, 6);
+    }
+
+    return [];
+}
+
+
+// ============================================================
+// PRODUCT IMAGE
+// ============================================================
+
+function getProductImage(image) {
+
+    if (!image) {
+        return "";
+    }
+
+    if (
+        image.startsWith("http://") ||
+        image.startsWith("https://") ||
+        image.startsWith("data:")
+    ) {
+        return image;
+    }
+
+    if (image.startsWith("/")) {
+        return API_BASE + image;
+    }
+
+    return (
+        API_BASE +
+        "/uploads/products/" +
+        encodeURIComponent(image)
+    );
+}
+
+
+// ============================================================
+// PRODUCT TABLE
+// ============================================================
+
+function renderProductTable() {
+
+    const tbody =
+        $("#productTableBody");
+
+    if (!tbody) return;
+
+    const products =
+        getTopProducts();
+
+    if (products.length === 0) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="4"
+                    style="
+                        text-align:center;
+                        padding:30px;
+                        color:#94a3b8;
+                    "
+                >
+                    No product sales data available
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+    }
+
+    const totalRevenue =
+        products.reduce(
+            (sum, product) =>
+                sum + product.revenue,
+            0
+        );
+
+    tbody.innerHTML =
+        products
+            .map((product) => {
+
+                const conversion =
+                    totalRevenue > 0
+                        ? (
+                            product.revenue /
+                            totalRevenue *
+                            100
+                        )
+                        : 0;
+
+                const good =
+                    conversion >= 5;
+
+                const image =
+                    getProductImage(
+                        product.image
+                    );
+
+                const imageHtml =
+                    image
+                        ? `
+                            <img
+                                src="${escapeHtml(image)}"
+                                alt="${escapeHtml(
+                                    product.name
+                                )}"
+                                loading="lazy"
+                                onerror="
+                                    this.style.display='none'
+                                "
+                            >
+                          `
+                        : `
+                            <div
+                                style="
+                                    width:100%;
+                                    height:100%;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                    color:#94a3b8;
+                                "
+                            >
+                                <i class="fa-solid fa-box"></i>
+                            </div>
+                          `;
+
+                return `
+
+                    <tr>
+
+                        <td>
+
+                            <div class="aa-product-cell">
+
+                                <div class="aa-product-thumb">
+                                    ${imageHtml}
+                                </div>
+
+                                <div>
+
+                                    <div class="aa-product-name">
+                                        ${escapeHtml(
+                                            product.name
+                                        )}
+                                    </div>
+
+                                    <span class="aa-product-cat">
+                                        ${escapeHtml(
+                                            product.category
+                                        )}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td class="num">
+                            ${money(
+                                product.revenue
+                            )}
+                        </td>
+
+                        <td class="num">
+                            ${number(
+                                product.units
+                            )}
+                        </td>
+
+                        <td>
+
+                            <span
+                                class="
+                                    aa-conv-rate
+                                    ${good
+                                        ? "good"
+                                        : "low"}
+                                "
+                            >
+
+                                ${conversion.toFixed(1)}%
+
+                                <span
+                                    class="conv-bar"
+                                >
+
+                                    <span
+                                        class="
+                                            conv-bar-fill
+                                            ${good
+                                                ? ""
+                                                : "low"}
+                                        "
+                                        data-w="${Math.min(
+                                            conversion * 10,
+                                            100
+                                        )}"
+                                    ></span>
+
+                                </span>
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            })
+            .join("");
+
+    requestAnimationFrame(() => {
+
+        setTimeout(() => {
+
+            tbody
+                .querySelectorAll(
+                    ".conv-bar-fill"
+                )
+                .forEach((bar) => {
+
+                    bar.style.width =
+                        bar.dataset.w +
+                        "%";
+
+                });
+
+        }, 300);
+
+    });
+}
+
+
+// ============================================================
+// LOAD DASHBOARD DATA
+// ============================================================
+
+async function loadDashboardData() {
+
+    const data =
+        await apiFetch(
+            API_BASE +
+            "/admin/dashboard"
+        );
+
+    if (!data.success) {
+
+        throw new Error(
+            data.message ||
+            "Could not load dashboard data"
+        );
+    }
+
+    dashboardData = data;
+
+    console.log(
+        "Analytics dashboard data:",
+        dashboardData
+    );
+}
+
+
+// ============================================================
+// LOAD ORDERS
+// ============================================================
+
+async function loadOrders() {
+
+    /*
+     * Your orders blueprint may return the data
+     * under different property names.
+     *
+     * This function supports the common structures.
+     */
+
+    try {
+
+        const data =
+            await apiFetch(
+                API_BASE +
+                "/orders"
+            );
+
+        console.log(
+            "Analytics orders response:",
+            data
+        );
+
+        if (Array.isArray(data)) {
+
+            ordersData = data;
+
+        } else if (
+            Array.isArray(data.orders)
+        ) {
+
+            ordersData = data.orders;
+
+        } else if (
+            Array.isArray(data.data)
+        ) {
+
+            ordersData = data.data;
+
+        } else if (
+            data.success &&
+            Array.isArray(data.orders)
+        ) {
+
+            ordersData = data.orders;
+
+        } else {
+
+            ordersData = [];
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Could not load /orders:",
+            error
+        );
+
+        ordersData = [];
+
+    }
+}
+
+
+// ============================================================
+// FALLBACK ORDERS FROM DASHBOARD
+// ============================================================
+
+function createFallbackOrders() {
+
+    if (
+        ordersData.length > 0 ||
+        !dashboardData
+    ) {
+        return;
+    }
+
+    /*
+     * The dashboard endpoint gives us totals and
+     * monthly revenue but not individual orders.
+     *
+     * Therefore, keep orders empty rather than
+     * inventing order information.
+     */
+
+    ordersData = [];
+}
+
+
+// ============================================================
+// LOADING STATE
+// ============================================================
+
+function showLoading() {
+
+    const grid =
+        $("#kpiGrid");
+
+    if (grid) {
+
+        grid.innerHTML = `
+
+            <div
+                class="aa-kpi-card"
+                style="
+                    grid-column:1/-1;
+                    justify-content:center;
+                "
+            >
+
+                <div class="aa-kpi-body">
+
+                    <span
+                        class="aa-kpi-label"
+                        style="
+                            text-align:center;
+                        "
+                    >
+                        Loading analytics...
+                    </span>
+
+                </div>
+
+            </div>
+
+        `;
+    }
+}
+
+
+// ============================================================
+// ERROR STATE
+// ============================================================
+
+function showError(error) {
+
+    console.error(
+        "Analytics error:",
+        error
+    );
+
+    const grid =
+        $("#kpiGrid");
+
+    if (grid) {
+
+        grid.innerHTML = `
+
+            <div
+                class="aa-kpi-card"
+                style="
+                    grid-column:1/-1;
+                    border-color:#fecaca;
+                "
+            >
+
+                <div
+                    class="aa-kpi-icon"
+                    style="
+                        background:#fee2e2;
+                        color:#dc2626;
+                    "
+                >
+
+                    <i
+                        class="fa-solid fa-triangle-exclamation"
+                    ></i>
+
+                </div>
+
+                <div class="aa-kpi-body">
+
+                    <span
+                        class="aa-kpi-label"
+                        style="color:#dc2626"
+                    >
+                        Analytics Error
+                    </span>
+
+                    <div
+                        style="
+                            color:#475569;
+                            margin-top:8px;
+                        "
+                    >
+                        ${escapeHtml(
+                            error?.message ||
+                            "Unable to load analytics"
+                        )}
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+    showToast(
+        error?.message ||
+        "Could not load analytics",
+        "fa-triangle-exclamation"
+    );
+}
+
+
+// ============================================================
+// RENDER EVERYTHING
+// ============================================================
+
+function renderAll() {
+
+    renderKPIs();
+
+    renderRevenueChart();
+
+    renderStatusBars();
+
+    renderDonutChart();
+
+    renderWeeklyBars();
+
+    renderProductTable();
+
+    updateRevenueHint();
+}
+
+
+// ============================================================
+// INITIALIZE
+// ============================================================
+
+async function initAnalytics() {
+
+    showLoading();
+
+    initSidebar();
+
+    initPeriodToggle();
+
+    try {
+
+        const token =
+            getToken();
+
+        if (!token) {
+
+            throw new Error(
+                "Admin login session not found. Please log in again."
+            );
+        }
+
+        // Load both sources.
+        await Promise.all([
+            loadDashboardData(),
+            loadOrders(),
+        ]);
+
+        createFallbackOrders();
+
+        renderAll();
+
+        console.log(
+            "Analytics loaded successfully."
+        );
+
+    } catch (error) {
+
+        showError(error);
+
+    }
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initAnalytics
+    );
+
 } else {
-  init();
+
+    initAnalytics();
+
 }
