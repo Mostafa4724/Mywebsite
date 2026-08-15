@@ -157,7 +157,7 @@
     if (!token) {
       showError("You are not logged in. Please log in as an administrator.");
       setTimeout(() => {
-        window.location.href = "login.html";
+        window.location.href = "/admin/login.html";
       }, 1200);
       return;
     }
@@ -176,7 +176,7 @@
         sessionStorage.removeItem("user");
         showError(data.message || "Admin access is required.");
         setTimeout(() => {
-          window.location.href = "login.html";
+          window.location.href = "/admin/login.html";
         }, 1200);
         return;
       }
