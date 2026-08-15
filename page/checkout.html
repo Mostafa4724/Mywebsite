@@ -223,7 +223,7 @@
               </div>
               <div class="form-group full-width">
                 <label>Phone Number <span class="required">*</span></label>
-                <input type="tel" id="phoneInput" placeholder="+1 (555) 000-0000" required />
+                <input type="tel" id="phoneInput" placeholder="XXXXXXXXXX" required />
                 <span class="field-error" id="phoneError"></span>
               </div>
             </div>
@@ -464,5 +464,85 @@
     ></script>
     <script src="checkout-map.js"></script>
     <script src="checkout-form.js"></script>
+    <script>
+      (function() {
+        var phoneInput = document.getElementById('phoneInput');
+        if (!phoneInput) return;
+
+        phoneInput.setAttribute('maxlength', '10');
+
+        // Inject the +20 prefix as a fixed span inside the input's parent
+        var parent = phoneInput.parentElement;
+        parent.style.position = 'relative';
+
+        var prefix = document.createElement('span');
+        prefix.textContent = '+20 ';
+        prefix.id = 'phonePrefix';
+        // Copy the input's computed font so it blends in perfectly
+        var cs = window.getComputedStyle(phoneInput);
+        prefix.style.cssText =
+          'position:absolute;' +
+          'left:' + cs.paddingLeft + ';' +
+          'top:50%;' +
+          'transform:translateY(-50%);' +
+          'font-family:' + cs.fontFamily + ';' +
+          'font-size:' + cs.fontSize + ';' +
+          'font-weight:' + cs.fontWeight + ';' +
+          'color:' + cs.color + ';' +
+          'pointer-events:none;' +
+          'user-select:none;' +
+          'z-index:1;' +
+          'line-height:1;';
+        parent.insertBefore(prefix, phoneInput);
+
+        // Push the input's text right so it doesn't overlap the +20
+        var prefixWidth = prefix.offsetWidth + 4;
+        phoneInput.style.paddingLeft = prefixWidth + 'px';
+
+        // Digits only, max 10
+        phoneInput.addEventListener('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+        });
+
+        phoneInput.addEventListener('keydown', function(e) {
+          if ([8,46,9,27,13,37,38,39,40].indexOf(e.keyCode) > -1) return;
+          if ((e.ctrlKey || e.metaKey) && [65,67,86,88].indexOf(e.keyCode) > -1) return;
+          if ((e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+          }
+          if (this.value.length >= 10 && [8,46,37,38,39,40].indexOf(e.keyCode) === -1) {
+            e.preventDefault();
+          }
+        });
+
+        phoneInput.addEventListener('paste', function(e) {
+          e.preventDefault();
+          var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 10);
+          this.value = pasted;
+          this.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        // On submit: prepend +20 so checkout-form.js reads the full number
+        var confirmBtn = document.getElementById('confirmPayBtn');
+        if (confirmBtn) {
+          confirmBtn.addEventListener('click', function(e) {
+            var phoneError = document.getElementById('phoneError');
+            var val = phoneInput.value.trim();
+            if (!val) {
+              if (phoneError) phoneError.textContent = 'Phone number is required';
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            } else if (val.length !== 10) {
+              if (phoneError) phoneError.textContent = 'Phone number must be exactly 10 digits after +20';
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            } else {
+              phoneInput.value = '+20' + val;
+              setTimeout(function() { phoneInput.value = val; }, 0);
+            }
+          }, true);
+        }
+      })();
+    </script>
   </body>
 </html>
