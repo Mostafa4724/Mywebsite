@@ -2,7 +2,7 @@
   "use strict";
 
   var EMAILJS_PUBLIC_KEY  = "POyuLcs-3SnIXAd8u";
-  var EMAILJS_SERVICE_ID  = "service_9h4e13r";
+  var EMAILJS_SERVICE_ID  = "service_o3h0cdf";
   var EMAILJS_TEMPLATE_ID = "template_ql3kd9w";
 
   var form      = document.getElementById("contactForm");
@@ -20,7 +20,6 @@
     var el = document.createElement("p");
     el.className = "contact-status" + (isSuccess ? " contact-status-success" : " contact-status-error");
     el.textContent = message;
-    el.style.whiteSpace = "pre-wrap";
     submitBtn.parentNode.insertBefore(el, submitBtn.nextSibling);
   }
 
@@ -54,9 +53,8 @@
         form.reset();
       })
       .catch(function (error) {
-        console.error("EmailJS full error:", error);
-        var msg = "Failed to send.\n\nError: " + (error.status || "unknown") + " - " + (error.text || JSON.stringify(error));
-        showStatus(msg, false);
+        console.error("EmailJS error:", error);
+        showStatus("Failed to send message. Please try again later.", false);
       })
       .finally(function () {
         submitBtn.disabled    = false;
