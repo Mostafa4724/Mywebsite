@@ -2,7 +2,7 @@
   "use strict";
 
   var EMAILJS_PUBLIC_KEY  = "POyuLcs-3SnIXAd8u";
-  var EMAILJS_SERVICE_ID  = "service_o3h0cdf";
+  var EMAILJS_SERVICE_ID  = "service_o3h0CDF";
   var EMAILJS_TEMPLATE_ID = "template_ql3kd9w";
 
   var form      = document.getElementById("contactForm");
