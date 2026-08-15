@@ -20,6 +20,7 @@
     var el = document.createElement("p");
     el.className = "contact-status" + (isSuccess ? " contact-status-success" : " contact-status-error");
     el.textContent = message;
+    el.style.whiteSpace = "pre-wrap";
     submitBtn.parentNode.insertBefore(el, submitBtn.nextSibling);
   }
 
@@ -49,12 +50,12 @@
         message:    message,
       })
       .then(function () {
-        showStatus("Message sent successfully! We'll get back to you soon.", true);
+        showStatus("Message sent successfully!", true);
         form.reset();
       })
       .catch(function (error) {
-        console.error("EmailJS error:", error);
-        showStatus("Failed to send message. Please try again later.", false);
+        console.error("Full error:", error);
+        showStatus("Error: " + (error.status || "unknown") + "\n" + (error.text || JSON.stringify(error)), false);
       })
       .finally(function () {
         submitBtn.disabled    = false;
