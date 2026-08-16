@@ -329,13 +329,22 @@
                     </div>
                   </div>
                   <div class="ap-field">
-                    <label>Tax Class</label>
-                    <select id="prodTax">
-                      <option value="standard" selected>Standard (8%)</option>
-                      <option value="reduced">Reduced (4%)</option>
-                      <option value="zero">Zero (0%)</option>
-                      <option value="none">None</option>
-                    </select>
+                    <label for="prodTax">Tax Percentage</label>
+                    <div class="ap-input-prefix">
+                      <span>%</span>
+                      <input
+                        type="number"
+                        id="prodTax"
+                        placeholder="0"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value="8"
+                      />
+                    </div>
+                    <span class="ap-field-hint">
+                      Enter the tax percentage for this product, for example 9 for 9%.
+                    </span>
                   </div>
                 </div>
               </div>
