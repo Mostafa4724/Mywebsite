@@ -37,12 +37,14 @@ function getCart() {
   }
 }
 
+
 function saveCart(cart) {
   const key = getCartStorageKey();
   if (key) {
     sessionStorage.setItem(key, JSON.stringify(cart));
   }
   updateCartBubble();
+  scheduleBackInStockCheck();
 }
 
 const SHOP_API_BASE = "http://127.0.0.1:5000";
@@ -274,6 +276,286 @@ function getCartCount() {
   return cart.reduce((sum, item) => sum + item.quantity, 0);
 }
 
+
+// ============================================================================
+// BACK-IN-STOCK NOTIFICATIONS (browser-only)
+// ----------------------------------------------------------------------------
+// No backend sync, no database writes, no email.
+// A product is remembered as "out" when it is found out-of-stock while it is
+// still in the user's cart. When a later product check finds it back "in",
+// a small notification is shown above the cart icon in the navigation.
+// ============================================================================
+
+function getBackInStockStateKey() {
+  const accountId = getCurrentAccountId();
+  return accountId
+    ? `back_in_stock_state_user_${accountId}`
+    : null;
+}
+
+function getBackInStockNotificationsKey() {
+  const accountId = getCurrentAccountId();
+  return accountId
+    ? `back_in_stock_notifications_user_${accountId}`
+    : null;
+}
+
+function readBackInStockState() {
+  const key = getBackInStockStateKey();
+  if (!key) return {};
+  try {
+    return JSON.parse(localStorage.getItem(key) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function writeBackInStockState(state) {
+  const key = getBackInStockStateKey();
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch (err) {
+    console.warn("Could not save stock notification state:", err);
+  }
+}
+
+function readBackInStockNotifications() {
+  const key = getBackInStockNotificationsKey();
+  if (!key) return [];
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeBackInStockNotifications(list) {
+  const key = getBackInStockNotificationsKey();
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(list.slice(0, 20)));
+  } catch (err) {
+    console.warn("Could not save stock notifications:", err);
+  }
+}
+
+function escapeNotificationText(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function ensureBackInStockNotificationUi() {
+  const carts = document.querySelectorAll(".icon-btn.cart");
+
+  carts.forEach((cart) => {
+    if (cart.querySelector(".back-in-stock-notification")) return;
+
+    const notification = document.createElement("div");
+    notification.className = "back-in-stock-notification";
+    notification.hidden = true;
+    notification.setAttribute("role", "status");
+    notification.setAttribute("aria-live", "polite");
+
+    cart.appendChild(notification);
+  });
+}
+
+function getBackInStockNotificationForDisplay() {
+  const notes = readBackInStockNotifications();
+  return notes.length ? notes[0] : null;
+}
+
+function dismissDisplayedBackInStockNotification(productId) {
+  const notes = readBackInStockNotifications().filter(function (note) {
+    return String(note.productId) !== String(productId);
+  });
+  writeBackInStockNotifications(notes);
+}
+
+let _backInStockToastTimer = null;
+
+function showBackInStockNotification(note) {
+  if (!note) return;
+
+  const textTitle = escapeNotificationText(note.name || "Your product");
+  const productId = note.productId != null ? String(note.productId) : "";
+
+  document.querySelectorAll(".back-in-stock-notification").forEach(function (notification) {
+    clearTimeout(_backInStockToastTimer);
+
+    notification.innerHTML =
+      '<div class="back-in-stock-toast-icon">✓</div>' +
+      '<div class="back-in-stock-toast-content">' +
+        '<strong>Your Product is Available</strong>' +
+        '<span>' + textTitle + ' is back in stock.</span>' +
+        (productId
+          ? '<button type="button" class="back-in-stock-buy" data-product-id="' +
+            escapeNotificationText(productId) +
+            '">Buy it now</button>'
+          : "") +
+      '</div>' +
+      '<button type="button" class="back-in-stock-close" aria-label="Dismiss notification">×</button>';
+
+    notification.hidden = false;
+    notification.classList.remove("show");
+    void notification.offsetWidth;
+    notification.classList.add("show");
+
+    const buyButton = notification.querySelector(".back-in-stock-buy");
+    if (buyButton) {
+      buyButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        dismissDisplayedBackInStockNotification(productId);
+        notification.classList.remove("show");
+        notification.hidden = true;
+
+        if (productId) {
+          window.location.href = "product.html?id=" + encodeURIComponent(productId);
+        }
+      });
+    }
+
+    const closeButton = notification.querySelector(".back-in-stock-close");
+    if (closeButton) {
+      closeButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        dismissDisplayedBackInStockNotification(productId);
+        notification.classList.remove("show");
+        notification.hidden = true;
+      });
+    }
+  });
+
+  _backInStockToastTimer = setTimeout(function () {
+    document.querySelectorAll(".back-in-stock-notification").forEach(function (notification) {
+      notification.classList.remove("show");
+      setTimeout(function () {
+        notification.hidden = true;
+      }, 220);
+    });
+
+    if (note.productId != null) {
+      dismissDisplayedBackInStockNotification(note.productId);
+    }
+  }, 7000);
+}
+
+function updateBackInStockNotificationBadge() {
+  // Notification is shown automatically. There is intentionally no
+  // clickable cart-bubble badge/panel for this feature.
+  ensureBackInStockNotificationUi();
+}
+
+function addBackInStockNotification(product) {
+  if (!product || product.id == null) return;
+
+  const notes = readBackInStockNotifications();
+  const productId = String(product.id);
+
+  if (notes.some(function (n) {
+    return String(n.productId) === productId;
+  })) {
+    return;
+  }
+
+  const note = {
+    productId: Number(product.id),
+    name: product.title || "Your product",
+    createdAt: Date.now(),
+  };
+
+  notes.unshift(note);
+  writeBackInStockNotifications(notes);
+  ensureBackInStockNotificationUi();
+  showBackInStockNotification(note);
+}
+
+async function checkBackInStockNotifications() {
+  const cart = getCart();
+  if (!cart.length) {
+    updateBackInStockNotificationBadge();
+    return;
+  }
+
+  const state = readBackInStockState();
+  let stateChanged = false;
+
+  await Promise.all(cart.map(async function (item) {
+    const productId = item.productId || item.id;
+    if (!productId) return;
+
+    const product = await fetchProductById(productId);
+    if (!product) return;
+
+    const key = String(product.id);
+    const currentStatus = String(product.stock_status || "in").toLowerCase();
+    const previousStatus = state[key];
+
+    if (previousStatus === "out" && currentStatus !== "out") {
+      addBackInStockNotification(product);
+    }
+
+    if (state[key] !== currentStatus) {
+      state[key] = currentStatus;
+      stateChanged = true;
+    }
+  }));
+
+  // Drop state for products no longer in the cart so a future re-add can be tracked fresh.
+  const cartIds = new Set(cart.map(function (item) {
+    return String(item.productId || item.id);
+  }));
+
+  Object.keys(state).forEach(function (id) {
+    if (!cartIds.has(String(id))) {
+      delete state[id];
+      stateChanged = true;
+    }
+  });
+
+  if (stateChanged) {
+    writeBackInStockState(state);
+  }
+
+  updateBackInStockNotificationBadge();
+}
+
+let _backInStockCheckTimer = null;
+
+function scheduleBackInStockCheck() {
+  clearTimeout(_backInStockCheckTimer);
+  _backInStockCheckTimer = setTimeout(function () {
+    checkBackInStockNotifications().catch(function (err) {
+      console.warn("Back-in-stock notification check failed:", err);
+    });
+  }, 150);
+}
+
+function initBackInStockNotifications() {
+  ensureBackInStockNotificationUi();
+  updateBackInStockNotificationBadge();
+  scheduleBackInStockCheck();
+
+  // Check periodically while the user is on the site without reloading the page.
+  setInterval(function () {
+    if (document.visibilityState === "visible") {
+      checkBackInStockNotifications().catch(function (err) {
+        console.warn("Back-in-stock notification check failed:", err);
+      });
+    }
+  }, 30000);
+}
+
 // A product is considered OUT OF STOCK only when:
 //   1. The product no longer exists/is no longer available in the store (null), OR
 //   2. The admin explicitly marked it out of stock via `stock_status === "out"`.
@@ -319,14 +601,6 @@ async function fetchAllProducts() {
     console.error("Failed to fetch product list", err);
     return [];
   }
-}
-
-function getProductTaxRate(product) {
-  if (!product) return 8;
-  const raw = product.tax_rate ?? product.tax_class;
-  const legacy = { standard: 8, reduced: 4, zero: 0, none: 0 };
-  const rate = legacy[String(raw).toLowerCase()] ?? Number(raw);
-  return Number.isFinite(rate) ? Math.max(0, Math.min(100, rate)) : 8;
 }
 
 function matchCartItemToProduct(item, product) {
@@ -423,7 +697,6 @@ const statusText = currentProduct
     price: productPrice,
     image: productImage,
     status: statusText,
-    taxRate: getProductTaxRate(currentProduct),
     currentProduct: currentProduct,
   };
 }
@@ -486,7 +759,6 @@ async function renderCartItems() {
       article.dataset.name = state.name;
       article.dataset.price = state.price;
       article.dataset.available = state.available ? "true" : "false";
-      article.dataset.taxRate = String(state.taxRate);
 
       const availabilityMessage = state.available
         ? ""
@@ -499,7 +771,6 @@ async function renderCartItems() {
       <div class="cart-item-info">
         <h3>${state.name}</h3>
         <p class="item-price">$${state.price.toFixed(2)}</p>
-        <p class="item-tax">Tax: ${state.taxRate}%</p>
         ${availabilityMessage}
       </div>
       <div class="cart-item-actions">
@@ -527,7 +798,6 @@ async function renderCartItems() {
 function updateOrderSummary() {
   const items = document.querySelectorAll("#cart-items .cart-item");
   let subtotal = 0;
-  let tax = 0;
   let totalItems = 0;
   let hasUnavailable = false;
 
@@ -538,14 +808,12 @@ function updateOrderSummary() {
     }
     const price = parseFloat(item.dataset.price) || 0;
     const qty = parseInt(item.querySelector(".qty-value").textContent) || 0;
-    const taxRate = parseFloat(item.dataset.taxRate) || 0;
     subtotal += price * qty;
-    tax += price * qty * (taxRate / 100);
     totalItems += qty;
   });
 
   const shipping = totalItems > 0 ? 12.0 : 0;
-  tax = Number(tax.toFixed(2));
+  const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
   const subtotalEl = document.getElementById("subtotal-value");
@@ -939,7 +1207,6 @@ if (confirmBtn) {
   }
 
   let subtotal = 0;
-  let tax = 0;
   let totalItems = 0;
   let unavailableCount = 0;
 
@@ -957,7 +1224,6 @@ if (confirmBtn) {
 
       const itemTotal = state.price * item.quantity;
       subtotal += itemTotal;
-      tax += itemTotal * (state.taxRate / 100);
       totalItems += item.quantity;
 
       const itemEl = document.createElement("div");
@@ -969,7 +1235,7 @@ if (confirmBtn) {
         </div>
         <div class="order-item-info">
           <h4>${state.name}</h4>
-          <span>$${state.price.toFixed(2)} each · Tax: ${state.taxRate}%</span>
+          <span>$${state.price.toFixed(2)} each</span>
         </div>
         <span class="order-item-price">$${itemTotal.toFixed(2)}</span>
       `;
@@ -986,7 +1252,7 @@ if (confirmBtn) {
   }
 
   const shipping = totalItems > 0 ? 12.0 : 0;
-  tax = Number(tax.toFixed(2));
+  const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
   if (checkoutSubtotal)
@@ -1127,6 +1393,8 @@ if (typeof setupPromoCode === "function") {
   }
   setupCheckout();
   updateCartBubble();
+
+  initBackInStockNotifications();
 
   // Check if we're on the product page
   if (document.querySelector(".product-page")) {

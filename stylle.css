@@ -62,9 +62,6 @@ body {
   gap: 16px;
   box-shadow: none;
 }
-.logo {
-  text-decoration: none;
-}
 
 .logo {
   font-weight: 700;
@@ -6526,4 +6523,139 @@ footer {
   font-size: 0.78rem;
   font-weight: 500;
   margin-left: 5px;
+}
+
+/* Back-in-stock cart notification */
+.icon-btn.cart {
+  position: relative;
+  overflow: visible;
+}
+
+.back-in-stock-notification {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 50%;
+  transform: translateX(50%) translateY(-8px);
+  width: min(300px, 82vw);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 12px 13px 13px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, .20);
+  z-index: 1200;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+}
+
+.back-in-stock-notification.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(50%) translateY(0);
+  pointer-events: auto;
+}
+
+.back-in-stock-notification[hidden] {
+  display: flex;
+}
+
+.back-in-stock-notification::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 13px;
+  height: 13px;
+  background: #ffffff;
+  border-left: 1px solid #dbeafe;
+  border-top: 1px solid #dbeafe;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.back-in-stock-toast-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.back-in-stock-toast-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+}
+
+.back-in-stock-toast-content strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.back-in-stock-toast-content span {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.back-in-stock-buy {
+  align-self: flex-start;
+  margin-top: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.back-in-stock-buy:hover {
+  text-decoration: underline;
+}
+
+.back-in-stock-close {
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0 2px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.back-in-stock-close:hover {
+  color: #475569;
+}
+
+@media (max-width: 600px) {
+  .back-in-stock-notification {
+    right: 0;
+    transform: translateY(-8px);
+    width: min(300px, calc(100vw - 24px));
+  }
+
+  .back-in-stock-notification.show {
+    transform: translateY(0);
+  }
+
+  .back-in-stock-notification::after {
+    left: auto;
+    right: 14px;
+    transform: rotate(45deg);
+  }
 }
