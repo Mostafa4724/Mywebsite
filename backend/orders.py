@@ -100,6 +100,19 @@ def _current_unit_price(product):
         product.price
     )
 
+    print(
+        "🔥 PRICE DEBUG:",
+        {
+            "product_id": product.id,
+            "product": product.title,
+            "raw_price": product.price,
+            "parsed_regular": regular,
+            "raw_sale_price": product.sale_price,
+            "sale_active": _sale_active(product),
+            "parsed_sale": _parse_float(product.sale_price),
+        }
+    )
+
     if _sale_active(product):
 
         sale = _parse_float(
@@ -234,6 +247,7 @@ def _order_to_dict(order):
 )
 @user_required
 def create_order():
+    print("🔥 CREATE ORDER CALLED")
 
     """
     Create an order.
@@ -357,6 +371,16 @@ def create_order():
         unit_price = _current_unit_price(
             product
         )
+        unit_price = _current_unit_price(product)
+
+        print(
+            "🔥 ORDER PRICE:",
+            product.id,
+            product.title,
+            "DB PRICE =", product.price,
+            "SALE PRICE =", product.sale_price,
+            "UNIT PRICE =", unit_price
+        )
 
         order_lines.append(
             (
@@ -365,6 +389,7 @@ def create_order():
                 unit_price
             )
         )
+
 
     # ---------------------------------------------------------
     # Calculate totals
@@ -510,11 +535,13 @@ def create_order():
                 order_id=order.id,
                 product_id=product.id,
                 product_name=product.title,
-
-                # SAVE THE PRODUCT IMAGE INTO THE ORDER ITEM
                 image=product.image,
-
                 quantity=qty,
+                original_price=original_price,
+                sale_price=sale_price,
+                unit_price=unit_price,
+                discount=line_discount,
+                total=line_total,
             )
         )
 
