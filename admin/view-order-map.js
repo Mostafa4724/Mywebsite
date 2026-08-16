@@ -79,8 +79,8 @@
       ].filter(function (p) { return p && String(p).trim(); });
 
       return {
-        lat: DEFAULT_LAT,
-        lng: DEFAULT_LNG,
+        lat: hasCoords ? customerLat : DEFAULT_LAT,
+        lng: hasCoords ? customerLng : DEFAULT_LNG,
         name: fullName,
         address: addressParts.join(", ") || "Delivery address on file",
         city: "",
