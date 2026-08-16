@@ -256,7 +256,7 @@ window.selectedFile = null;
     }
     // Clear any selected file from previous session
     window.selectedFile = null;
-    imageInput.value = ""; // reset file input
+    imageInput.value = "";
 
     salePriceField.value = p.sale_price ?? "";
     saleStartDate.value = toDateTimeLocal(p.sale_start);
@@ -313,7 +313,6 @@ window.selectedFile = null;
     const selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
     const selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
 
-    // ── validation ──
     if (!name) throw new Error("Please enter a product name.");
     if (!description) throw new Error("Description is required.");
     if (!categoryId || categoryId === "__add_category__") throw new Error("Please select a category.");
@@ -348,40 +347,17 @@ window.selectedFile = null;
     body.append("sale_badge_color", selectedSaleColor);
     body.append("tags", currentTags.join(","));
 
-    // ── IMAGE ──
     let file = window.selectedFile;
-
-    // If no file stored, check the input directly (fallback)
     if (!file) {
       if (imageInput && imageInput.files && imageInput.files[0]) {
         file = imageInput.files[0];
-        console.log("📁 Fallback: retrieved file from input:", file.name);
       }
     }
-
-    console.log("📤 FINAL FILE TO UPLOAD:", file);
 
     if (file) {
-      console.log(`✅ Uploading: ${file.name} (${file.size} bytes, ${file.type})`);
-      console.log('About to append file:', file);
-      console.log('File instanceof File?', file instanceof File);
       body.append("image", file, file.name);
-    } else {
-      console.log("ℹ️ No new image – keeping existing.");
     }
 
-    // ── debug log ──
-    console.log("========== PRODUCT UPDATE ==========");
-    for (const [key, value] of body.entries()) {
-      if (value instanceof File) {
-        console.log(key, "FILE:", value.name, value.type, value.size);
-      } else {
-        console.log(key, value);
-      }
-    }
-    console.log("====================================");
-
-    // ── send ──
     body.append("_method", "PUT");
     const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
       method: "POST",
@@ -390,7 +366,6 @@ window.selectedFile = null;
     });
 
     const data = await responseJson(response);
-    console.log("Server updated product:", data.product);
     fillForm(data.product);
     showToast("Product updated successfully!", "success");
 
@@ -410,6 +385,46 @@ window.selectedFile = null;
     setTimeout(() => {
       window.location.href = "admin_product.html";
     }, 700);
+  }
+
+  // ─── VARIANTS (with $ prefix on price) ────────────────
+
+  function bindVariantRemove() {
+    if (!variantsList) return;
+    variantsList.querySelectorAll(".variant-remove").forEach((btn) => {
+      if (btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        if (variantsList.children.length > 0) {
+          const row = btn.closest(".ap-variant-row");
+          row.style.transition = "all 0.2s";
+          row.style.opacity = "0";
+          row.style.transform = "translateY(-8px)";
+          setTimeout(() => row.remove(), 200);
+          markDirty();
+        }
+      });
+    });
+  }
+
+  function setupVariants() {
+    if (!variantsList || !addVariantBtn) return;
+
+    addVariantBtn.addEventListener("click", () => {
+      const row = document.createElement("div");
+      row.className = "ap-variant-row";
+      row.innerHTML =
+        '<div class="variant-field"><label>Size</label><select class="variant-select"><option value="xs">XS</option><option value="s">S</option><option value="m" selected>M</option><option value="l">L</option><option value="xl">XL</option><option value="xxl">XXL</option></select></div>' +
+        '<div class="variant-field"><label>Color</label><input type="text" class="variant-input" placeholder="e.g. White" /></div>' +
+        '<div class="variant-field"><label>Stock</label><input type="number" class="variant-input" placeholder="0" min="0" value="0" /></div>' +
+        '<div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-input" placeholder="0.00" step="0.01" min="0" /></div></div>' +
+        '<button type="button" class="variant-remove" aria-label="Remove variant"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+      variantsList.appendChild(row);
+      bindVariantRemove();
+      markDirty();
+    });
+
+    bindVariantRemove();
   }
 
   // ─── EVENT SETUP ──────────────────────────────────────
@@ -466,26 +481,17 @@ window.selectedFile = null;
       btn.addEventListener("click", () => addTag(btn.dataset.tag))
     );
 
-    // ── FILE INPUT HANDLING (SIMPLIFIED) ──
     if (imageInput) {
       imageInput.addEventListener("change", function (e) {
-        console.log("========== FILE CHANGE ==========");
         const file = e.target.files[0];
-        console.log("Raw file object:", file);
-
-        // Store globally
         window.selectedFile = file || null;
 
         if (!file) {
-          console.log("❌ No file selected (user cancelled or error).");
           imagePreview.style.display = "none";
           uploadPlaceholder.style.display = "flex";
           return;
         }
 
-        console.log("✅ FILE SELECTED:", file.name, file.type, file.size);
-
-        // Validate type
         const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
         if (!allowedTypes.includes(file.type)) {
           showToast("Please select PNG, JPG, or WEBP image.", "warn");
@@ -496,7 +502,6 @@ window.selectedFile = null;
           return;
         }
 
-        // Show preview using FileReader
         const reader = new FileReader();
         reader.onload = function (ev) {
           imagePreview.src = ev.target.result;
@@ -510,7 +515,6 @@ window.selectedFile = null;
       });
     }
 
-    // ── form submit ──
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       try {
@@ -558,7 +562,6 @@ window.selectedFile = null;
       }
     });
 
-    // ── category add modal ──
     categorySelect.addEventListener("change", async () => {
       if (categorySelect.value !== "__add_category__") return;
       categorySelect.value = product ? String(product.category_id || "") : "";
@@ -602,25 +605,11 @@ window.selectedFile = null;
       }
     });
 
-    // ── variants placeholder ──
-    if (variantsList && addVariantBtn) {
-      const note = document.createElement("div");
-      note.style.cssText = "margin-top:10px;font-size:12px;opacity:.7";
-      note.textContent = "Variants are not stored in the current product database, so they are not included in updates.";
-      variantsList.parentElement?.appendChild(note);
-      addVariantBtn.disabled = true;
-      addVariantBtn.title = "Variants are not supported by the current database schema";
-    }
+    // Variants
+    setupVariants();
   }
 
   // ─── INIT ─────────────────────────────────────────────
-
-  console.log("IMAGE ELEMENT:", imageInput);
-  if (imageInput) {
-    console.log("IMAGE INPUT TYPE:", imageInput.type);
-    console.log("IMAGE INPUT MULTIPLE:", imageInput.multiple);
-    console.log("IMAGE INPUT ACCEPT:", imageInput.accept);
-  }
 
   setupEvents();
   loadProduct();
