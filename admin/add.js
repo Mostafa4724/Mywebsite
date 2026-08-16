@@ -40,6 +40,12 @@
   const saveCategoryBtn = el("saveCategoryBtn");
   const newCategoryName = el("newCategoryName");
   const newCategoryError = el("newCategoryError");
+  const newCategoryImage = el("newCategoryImage");
+  const categoryImageDropzone = el("categoryImageDropzone");
+  const newCategoryImagePreview = el("newCategoryImagePreview");
+  const categoryImagePlaceholder = el("categoryImagePlaceholder");
+  const removeCategoryImageBtn = el("removeCategoryImageBtn");
+  const newCategoryImageError = el("newCategoryImageError");
 
   const saleToggle = el("saleToggle");
   const saleFields = el("saleFields");
@@ -78,6 +84,102 @@
   let selectedSaleColor = "#ef4444";
   let stockStatusManual = false; // true once the user clicks a stock chip
   let submitting = false;
+
+  const CATEGORY_IMAGES_STORAGE_KEY = "shop_category_images";
+  let pendingCategoryImageData = "";
+
+  function getCategoryImages() {
+    try {
+      const raw = localStorage.getItem(CATEGORY_IMAGES_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) {
+      console.warn("Could not read saved category images:", err);
+      return {};
+    }
+  }
+
+  function saveCategoryImage(categoryId, dataUrl) {
+    if (!categoryId || !dataUrl) return;
+    const images = getCategoryImages();
+    images[String(categoryId)] = dataUrl;
+    try {
+      localStorage.setItem(CATEGORY_IMAGES_STORAGE_KEY, JSON.stringify(images));
+    } catch (err) {
+      console.error("Could not save category image:", err);
+      showToast("Category created, but the image could not be saved locally.");
+    }
+  }
+
+  function resetCategoryImagePicker() {
+    pendingCategoryImageData = "";
+    if (newCategoryImage) newCategoryImage.value = "";
+    if (newCategoryImagePreview) {
+      newCategoryImagePreview.hidden = true;
+      newCategoryImagePreview.removeAttribute("src");
+    }
+    if (categoryImagePlaceholder) categoryImagePlaceholder.hidden = false;
+    if (removeCategoryImageBtn) removeCategoryImageBtn.hidden = true;
+    if (newCategoryImageError) newCategoryImageError.textContent = "";
+  }
+
+  function resizeCategoryImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read image."));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error("Invalid image file."));
+        image.onload = () => {
+          const maxWidth = 1000;
+          const maxHeight = 700;
+          const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+          const width = Math.max(1, Math.round(image.width * scale));
+          const height = Math.max(1, Math.round(image.height * scale));
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Image processing is not supported."));
+            return;
+          }
+          ctx.drawImage(image, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleCategoryImageChange(file) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      resetCategoryImagePicker();
+      if (newCategoryImageError) newCategoryImageError.textContent = "Please choose an image file.";
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      resetCategoryImagePicker();
+      if (newCategoryImageError) newCategoryImageError.textContent = "Image must be 8MB or smaller.";
+      return;
+    }
+
+    try {
+      if (newCategoryImageError) newCategoryImageError.textContent = "";
+      pendingCategoryImageData = await resizeCategoryImage(file);
+      if (newCategoryImagePreview) {
+        newCategoryImagePreview.src = pendingCategoryImageData;
+        newCategoryImagePreview.hidden = false;
+      }
+      if (categoryImagePlaceholder) categoryImagePlaceholder.hidden = true;
+      if (removeCategoryImageBtn) removeCategoryImageBtn.hidden = false;
+    } catch (err) {
+      console.error("Failed to process category image:", err);
+      resetCategoryImagePicker();
+      if (newCategoryImageError) newCategoryImageError.textContent = "Could not process this image. Please try another one.";
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Toast — exposed globally because script.js's image uploader calls it
@@ -170,6 +272,7 @@
     if (!addCategoryModal || !newCategoryName || !newCategoryError) return;
     newCategoryName.value = "";
     newCategoryError.textContent = "";
+    resetCategoryImagePicker();
     addCategoryModal.removeAttribute("hidden");
     addCategoryModal.classList.add("show");
     addCategoryModal.style.display = "flex";
@@ -199,6 +302,10 @@
     }
 
     newCategoryError.textContent = "";
+    if (!pendingCategoryImageData) {
+      if (newCategoryImageError) newCategoryImageError.textContent = "Please choose a category image.";
+      return;
+    }
     saveCategoryBtn.disabled = true;
     saveCategoryBtn.textContent = "Saving...";
 
@@ -217,6 +324,10 @@
       }
 
       // Update the existing dropdown in place. Do not reload/rebuild the page.
+      if (data.category && pendingCategoryImageData) {
+        saveCategoryImage(data.category.id, pendingCategoryImageData);
+      }
+
       if (categorySelect && data.category) {
         const option = document.createElement("option");
         option.value = String(data.category.id);
@@ -237,6 +348,7 @@
       }
 
       closeAddCategoryModal();
+      resetCategoryImagePicker();
       showToast('Category "' + data.category.name + '" created!');
     } catch (err) {
       console.error("Failed to create category:", err);
@@ -245,6 +357,26 @@
       saveCategoryBtn.disabled = false;
       saveCategoryBtn.textContent = "Add Category";
     }
+  }
+
+  if (categoryImageDropzone && newCategoryImage) {
+    categoryImageDropzone.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      newCategoryImage.click();
+    });
+
+    newCategoryImage.addEventListener("change", () => {
+      handleCategoryImageChange(newCategoryImage.files && newCategoryImage.files[0]);
+    });
+  }
+
+  if (removeCategoryImageBtn) {
+    removeCategoryImageBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      resetCategoryImagePicker();
+    });
   }
 
   if (categorySelect) {

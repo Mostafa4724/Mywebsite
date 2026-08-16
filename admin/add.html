@@ -911,6 +911,29 @@
             <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
             <span class="form-error" id="newCategoryError"></span>
           </div>
+          <div class="form-field category-image-field">
+            <label for="newCategoryImage">Category Image <span class="req">*</span></label>
+            <div class="category-image-upload" id="categoryImageUpload">
+              <input
+                type="file"
+                id="newCategoryImage"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+              />
+              <button type="button" class="category-image-dropzone" id="categoryImageDropzone">
+                <span class="category-image-placeholder" id="categoryImagePlaceholder">
+                  <span class="category-image-plus">+</span>
+                  <span>Choose an image</span>
+                  <small>PNG, JPG or WebP</small>
+                </span>
+                <img id="newCategoryImagePreview" alt="Category preview" hidden />
+              </button>
+              <button type="button" class="category-image-remove" id="removeCategoryImageBtn" hidden>
+                Remove image
+              </button>
+            </div>
+            <span class="form-error" id="newCategoryImageError"></span>
+          </div>
         </div>
         <div class="admin-modal-foot">
           <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancel</button>

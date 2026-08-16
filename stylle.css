@@ -62,9 +62,6 @@ body {
   gap: 16px;
   box-shadow: none;
 }
-.logo {
-  text-decoration: none;
-}
 
 .logo {
   font-weight: 700;
@@ -4746,6 +4743,81 @@ footer {
 
 .btn-secondary:hover {
   background: #e2e8f0;
+}
+
+/* ===== CATEGORY IMAGE UPLOAD ===== */
+.category-image-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-image-dropzone {
+  width: 100%;
+  min-height: 180px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: inherit;
+  transition: border-color 0.2s, background 0.2s;
+  padding: 12px;
+}
+
+.category-image-dropzone:hover {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.category-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.category-image-placeholder small {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.category-image-plus {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.category-image-dropzone img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.category-image-remove {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0;
 }
 
 /* ===== CUSTOMERS PAGE ===== */
