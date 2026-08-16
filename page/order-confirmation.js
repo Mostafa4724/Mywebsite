@@ -515,11 +515,18 @@
             item.unit_price
           ) +
           " each</p></div>";
+          var qty = Number(item.quantity) || 1;
+          var unitPrice = Number(item.unit_price) || 0;
+          var total = Number(item.total);
 
-        h +=
-          '<div class="oc-item-price">' +
-          money(item.total) +
-          "</div>";
+          if (!Number.isFinite(total) || total <= 0) {
+            total = unitPrice * qty;
+          }
+
+          h +=
+            '<div class="oc-item-price">' +
+            money(total) +
+            "</div>";
 
         h += "</div>";
       }

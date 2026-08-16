@@ -572,141 +572,71 @@
 
 
   function renderItems() {
-
-    if (!elms.orderItemsEl) {
-      return;
-    }
-
-    elms.orderItemsEl.innerHTML = "";
-
-
-    var items =
-      orderData.items || [];
-
-
-    var countEl =
-      document.querySelector(
-        ".vo-card-count"
-      );
-
-
-    if (countEl) {
-
-      countEl.textContent =
-        items.length +
-        " items";
-    }
-
-
-    if (items.length === 0) {
-
-      elms.orderItemsEl.innerHTML =
-        '<p style="color:#94a3b8;padding:20px;">No items.</p>';
-
-      return;
-    }
-
-
-    items.forEach(
-      function (item) {
-
-        var div =
-          document.createElement(
-            "div"
-          );
-
-        div.className =
-          "vo-item";
-
-
-        // IMPORTANT:
-        // Use product_id to get the current product directly from
-        // /products, which reads the products table in shopping.db.
-        // This makes the admin View Order image source identical to
-        // the image source used by home.html.
-        var product =
-          productsById[String(
-            item.product_id
-          )];
-
-        var databaseImage =
-          product && product.image
-            ? product.image
-            : item.image;
-
-        var image = getProductImage(
-          databaseImage,
-          item.product_id || item.id
-        );
-
-
-        var unitPrice =
-          Number(
-            item.unit_price
-          ) || 0;
-
-
-        var qty =
-          Number(
-            item.quantity
-          ) || 1;
-
-          alert(item.total)
-        div.innerHTML =
-          '<div class="vo-item-img">' +
-          '<img src="' +
-          escapeHtml(image) +
-          '" alt="' +
-          escapeHtml(
-            item.product_name
-          ) +
-          '" /></div>' +
-
-          '<div class="vo-item-info">' +
-          '<h4>' +
-          escapeHtml(
-            item.product_name ||
-            "Product"
-          ) +
-          "</h4>" +
-
-          '<p class="vo-item-qty">' +
-          "Qty: " +
-          qty +
-          "</p>" +
-
-          (
-            item.original_price &&
-            item.original_price >
-              unitPrice
-
-              ? '<p class="vo-item-variant">Was ' +
-                money(
-                  item.original_price
-                ) +
-                " each</p>"
-
-              : ""
-          ) +
-
-          "</div>" +
-
-          '<div class="vo-item-price">' +
-          money(
-            item.total != null
-            
-              ? item.total
-              : unitPrice * qty
-          ) +
-          "</div>";
-
-
-        elms.orderItemsEl.appendChild(
-          div
-        );
-      }
-    );
+  if (!elms.orderItemsEl) {
+    return;
   }
+  elms.orderItemsEl.innerHTML = "";
+  var items = orderData.items || [];
+  var countEl = document.querySelector(".vo-card-count");
+  if (countEl) {
+    countEl.textContent = items.length + " items";
+  }
+  if (items.length === 0) {
+    elms.orderItemsEl.innerHTML =
+      '<p style="color:#94a3b8;padding:20px;">No items.</p>';
+    return;
+  }
+  console.log("ORDER ITEMS:", items);
+  items.forEach(function (item) {
+    console.log("ORDER ITEM DEBUG:", {
+        product_id: item.product_id,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        original_price: item.original_price,
+        sale_price: item.sale_price,
+        unit_price: item.unit_price,
+        discount: item.discount,
+        total: item.total
+    });
+    var div = document.createElement("div");
+    div.className = "vo-item";
+
+    var product = productsById[String(item.product_id)];
+    var databaseImage =
+      product && product.image ? product.image : item.image;
+    var image = getProductImage(databaseImage, item.product_id || item.id);
+
+    var unitPrice = Number(item.unit_price) || 0;
+    var qty = Number(item.quantity) || 1;
+
+    div.innerHTML =
+      '<div class="vo-item-img">' +
+      '<img src="' +
+      escapeHtml(image) +
+      '" alt="' +
+      escapeHtml(item.product_name) +
+      '" /></div>' +
+      '<div class="vo-item-info">' +
+      "<h4>" +
+      escapeHtml(item.product_name || "Product") +
+      "</h4>" +
+      '<p class="vo-item-qty">' +
+      "Qty: " +
+      qty +
+      "</p>" +
+      (item.original_price && item.original_price > unitPrice
+        ? '<p class="vo-item-variant">Was ' +
+          money(item.original_price) +
+          " each</p>"
+        : "") +
+      "</div>" +
+      '<div class="vo-item-price">' +
+      money(item.total != null ? item.total : unitPrice * qty) +
+      "</div>";
+
+    elms.orderItemsEl.appendChild(div);
+  });
+}
 
 
   function renderSummary() {
