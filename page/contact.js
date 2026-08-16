@@ -20,7 +20,6 @@
     var el = document.createElement("p");
     el.className = "contact-status" + (isSuccess ? " contact-status-success" : " contact-status-error");
     el.textContent = message;
-    el.style.whiteSpace = "pre-wrap";
     submitBtn.parentNode.insertBefore(el, submitBtn.nextSibling);
   }
 
@@ -47,6 +46,7 @@
       .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
         from_name:  name,
         from_email: email,
+        reply_to:   email,
         to_email:   "mnmaibrahim@gmail.com",
         message:    message
       })
@@ -56,7 +56,7 @@
       })
       .catch(function (error) {
         console.error("Send error:", error.status, error.text);
-        showStatus("Error " + error.status + ": " + error.text, false);
+        showStatus("Failed to send message. Please try again later.", false);
       })
       .finally(function () {
         submitBtn.disabled    = false;
