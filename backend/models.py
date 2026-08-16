@@ -183,8 +183,31 @@ class Product(db.Model):
 
     tax_class = db.Column(
         db.String(20),
-        default="standard"
+        default="8"
     )
+
+    @property
+    def tax_rate(self):
+        """Return this product's tax percentage.
+
+        New products store the admin-entered percentage in tax_class for
+        backward compatibility with the existing database. Older products
+        using the previous named tax classes are mapped to their old rates.
+        """
+        value = self.tax_class
+        legacy_rates = {
+            "standard": 8.0,
+            "reduced": 4.0,
+            "zero": 0.0,
+            "none": 0.0,
+        }
+        if value in legacy_rates:
+            return legacy_rates[value]
+        try:
+            rate = float(value)
+        except (TypeError, ValueError):
+            return 8.0
+        return max(0.0, min(100.0, rate))
 
     # ---------------------------------------------------------
     # Main Image
@@ -293,6 +316,8 @@ class Product(db.Model):
             "stock_status": self.stock_status,
 
             "tax_class": self.tax_class,
+
+            "tax_rate": self.tax_rate,
 
             "image": self.image,
 

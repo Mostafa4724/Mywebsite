@@ -321,6 +321,14 @@ async function fetchAllProducts() {
   }
 }
 
+function getProductTaxRate(product) {
+  if (!product) return 8;
+  const raw = product.tax_rate ?? product.tax_class;
+  const legacy = { standard: 8, reduced: 4, zero: 0, none: 0 };
+  const rate = legacy[String(raw).toLowerCase()] ?? Number(raw);
+  return Number.isFinite(rate) ? Math.max(0, Math.min(100, rate)) : 8;
+}
+
 function matchCartItemToProduct(item, product) {
   if (!product) return false;
   if (item.productId && Number(item.productId) === Number(product.id)) {
@@ -415,6 +423,7 @@ const statusText = currentProduct
     price: productPrice,
     image: productImage,
     status: statusText,
+    taxRate: getProductTaxRate(currentProduct),
     currentProduct: currentProduct,
   };
 }
@@ -477,6 +486,7 @@ async function renderCartItems() {
       article.dataset.name = state.name;
       article.dataset.price = state.price;
       article.dataset.available = state.available ? "true" : "false";
+      article.dataset.taxRate = String(state.taxRate);
 
       const availabilityMessage = state.available
         ? ""
@@ -489,6 +499,7 @@ async function renderCartItems() {
       <div class="cart-item-info">
         <h3>${state.name}</h3>
         <p class="item-price">$${state.price.toFixed(2)}</p>
+        <p class="item-tax">Tax: ${state.taxRate}%</p>
         ${availabilityMessage}
       </div>
       <div class="cart-item-actions">
@@ -516,6 +527,7 @@ async function renderCartItems() {
 function updateOrderSummary() {
   const items = document.querySelectorAll("#cart-items .cart-item");
   let subtotal = 0;
+  let tax = 0;
   let totalItems = 0;
   let hasUnavailable = false;
 
@@ -526,12 +538,14 @@ function updateOrderSummary() {
     }
     const price = parseFloat(item.dataset.price) || 0;
     const qty = parseInt(item.querySelector(".qty-value").textContent) || 0;
+    const taxRate = parseFloat(item.dataset.taxRate) || 0;
     subtotal += price * qty;
+    tax += price * qty * (taxRate / 100);
     totalItems += qty;
   });
 
   const shipping = totalItems > 0 ? 12.0 : 0;
-  const tax = subtotal * 0.08;
+  tax = Number(tax.toFixed(2));
   const total = subtotal + shipping + tax;
 
   const subtotalEl = document.getElementById("subtotal-value");
@@ -925,6 +939,7 @@ if (confirmBtn) {
   }
 
   let subtotal = 0;
+  let tax = 0;
   let totalItems = 0;
   let unavailableCount = 0;
 
@@ -942,6 +957,7 @@ if (confirmBtn) {
 
       const itemTotal = state.price * item.quantity;
       subtotal += itemTotal;
+      tax += itemTotal * (state.taxRate / 100);
       totalItems += item.quantity;
 
       const itemEl = document.createElement("div");
@@ -953,7 +969,7 @@ if (confirmBtn) {
         </div>
         <div class="order-item-info">
           <h4>${state.name}</h4>
-          <span>$${state.price.toFixed(2)} each</span>
+          <span>$${state.price.toFixed(2)} each · Tax: ${state.taxRate}%</span>
         </div>
         <span class="order-item-price">$${itemTotal.toFixed(2)}</span>
       `;
@@ -970,7 +986,7 @@ if (confirmBtn) {
   }
 
   const shipping = totalItems > 0 ? 12.0 : 0;
-  const tax = subtotal * 0.08;
+  tax = Number(tax.toFixed(2));
   const total = subtotal + shipping + tax;
 
   if (checkoutSubtotal)

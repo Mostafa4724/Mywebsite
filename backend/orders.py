@@ -19,7 +19,17 @@ orders_bp = Blueprint(
 
 
 SHIPPING_FLAT_RATE = 12.0
-TAX_RATE = 0.08
+TAX_RATE = 0.08  # fallback only for legacy products with no valid tax value
+
+def _product_tax_rate(product):
+    """Return the product tax percentage entered by the admin."""
+    if product is None:
+        return TAX_RATE
+    try:
+        return max(0.0, min(100.0, float(getattr(product, "tax_rate", product.tax_class)))) / 100.0
+    except (TypeError, ValueError):
+        legacy_rates = {"standard": 0.08, "reduced": 0.04, "zero": 0.0, "none": 0.0}
+        return legacy_rates.get(str(getattr(product, "tax_class", "")).strip().lower(), TAX_RATE)
 
 
 def _parse_float(value, default=0.0):
@@ -411,7 +421,7 @@ def create_order():
     )
 
     tax = round(
-        subtotal * TAX_RATE,
+        sum(qty * price * _product_tax_rate(product) for product, qty, price in order_lines),
         2
     )
 

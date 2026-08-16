@@ -224,7 +224,13 @@ window.selectedFile = null;
     document.getElementById("prodDesc").value = p.description || "";
     document.getElementById("prodPrice").value = p.price ?? "";
     document.getElementById("prodCost").value = p.cost ?? 0;
-    document.getElementById("prodTax").value = p.tax_class || "standard";
+    const existingTax = p.tax_rate ?? p.tax_class;
+    const normalizedTax =
+      existingTax === "standard" ? 8 :
+      existingTax === "reduced" ? 4 :
+      existingTax === "zero" || existingTax === "none" ? 0 :
+      Number(existingTax);
+    document.getElementById("prodTax").value = Number.isFinite(normalizedTax) ? normalizedTax : 8;
     document.getElementById("prodStock").value = p.stock ?? 0;
     document.getElementById("prodLowStock").value = p.low_stock ?? 10;
 
@@ -333,7 +339,11 @@ window.selectedFile = null;
     body.append("category", categoryOption ? categoryOption.textContent.trim() : "");
     body.append("price", String(price));
     body.append("cost", String(Number(costInput.value) || 0));
-    body.append("tax_class", document.getElementById("prodTax").value || "standard");
+    const taxRate = Number(document.getElementById("prodTax").value);
+    if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) {
+      throw new Error("Tax must be between 0% and 100%.");
+    }
+    body.append("tax_class", String(taxRate));
     body.append("stock", String(stock));
     body.append("low_stock", String(lowStock));
     body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
