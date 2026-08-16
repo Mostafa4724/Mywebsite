@@ -10,7 +10,7 @@ from security import (
     current_user
 )
 from flask_jwt_extended import get_jwt_identity
-from variant import get_variants, find_variant, find_size, set_variants_on_product
+from variant import split_tags_and_variants
 
 
 orders_bp = Blueprint(
@@ -138,21 +138,31 @@ def _current_unit_price(product):
 
 
 def _order_item_to_dict(item):
-    """Return an order item using the live Product.image from shopping.db."""
+    """Return an order item including the selected variant snapshot."""
     data = item.to_dict()
-
-    product = None
-    if item.product_id is not None:
-        product = Product.query.get(item.product_id)
-
+    product = Product.query.get(item.product_id) if item.product_id is not None else None
     if product is not None:
-        # Preserve the order-time variant snapshot image/name when present.
-        data["image"] = getattr(item, "image", None) or product.image
         data["product_id"] = product.id
-        data["product_name"] = item.product_name or product.title
+        raw_name = item.product_name or product.title
+        data["product_name"] = raw_name
+        data["image"] = item.image or product.image
+        marker = " | Color: "
+        if marker in raw_name:
+            base, rest = raw_name.split(marker,1)
+            data["product_name"] = base
+            if " | Size: " in rest:
+                color, size = rest.split(" | Size: ",1)
+                data["color"] = color
+                data["size"] = size
+                _, variants = split_tags_and_variants(product.tags)
+                v = next((x for x in variants if str(x.get("color","" )).strip().lower()==color.strip().lower()), None)
+                if v:
+                    data["variant_id"] = v.get("id")
+                    if v.get("image"):
+                        data["image"] = v.get("image")
+                data["variant_price"] = data.get("unit_price")
     else:
         data["image"] = getattr(item, "image", None)
-
     return data
 
 def _order_to_dict(order):
@@ -350,7 +360,32 @@ def create_order():
                 )
             }), 400
 
-        if not _is_available(product):
+        variant = None
+        variant_id = item.get("variant_id")
+        color = str(item.get("color") or "").strip()
+        size = str(item.get("size") or "").strip()
+        if variant_id:
+            _, product_variants = split_tags_and_variants(product.tags)
+            variant = next((v for v in product_variants if str(v.get("id")) == str(variant_id)), None)
+            if not variant:
+                return jsonify({"success": False, "message": f"Selected variant for '{product.title}' is no longer available."}), 400
+            if color and str(variant.get("color","" )).strip().lower() != color.lower():
+                return jsonify({"success": False, "message": "Variant color is invalid."}), 400
+            if not color: color=str(variant.get("color") or "")
+            sizes=variant.get("sizes") or []
+            size_entry=next((x for x in sizes if str(x.get("size","" )).strip().lower()==size.lower()), None)
+            if not size_entry:
+                return jsonify({"success": False, "message": "Selected variant size is no longer available."}), 400
+            if not size: size=str(size_entry.get("size") or "")
+            try: variant_stock=int(variant.get("stock",0))
+            except (TypeError,ValueError): variant_stock=0
+            if qty > variant_stock:
+                return jsonify({"success": False, "message": f"Only {variant_stock} of the selected {color} variant are in stock."}), 400
+            unit_price=float(size_entry.get("price",0) or 0)
+        else:
+            unit_price = None
+
+        if not variant and not _is_available(product):
 
             return jsonify({
                 "success": False,
@@ -367,36 +402,42 @@ def create_order():
             )
         )
 
-        selected_variant = item.get("variant") or None
-        variant = None
-        variant_size = None
+        if (
+            not variant and product.stock is not None
+            and qty > product.stock
+        ):
 
-        if selected_variant:
-            variants = get_variants(product)
-            variant = find_variant(
-                variants,
-                variant_id=selected_variant.get("id"),
-                color=selected_variant.get("color")
-            )
-            if not variant:
-                return jsonify({"success": False, "message": f"Selected color for '{product.title}' is no longer available."}), 400
-            variant_size = find_size(variant, selected_variant.get("size"))
-            if not variant_size:
-                return jsonify({"success": False, "message": f"Selected size for '{product.title}' is no longer available."}), 400
-            if int(variant.get("stock", 0)) < qty:
-                return jsonify({"success": False, "message": f"Only {variant.get('stock', 0)} of '{product.title}' in color {variant.get('color')} are in stock."}), 400
-            unit_price = _parse_float(variant_size.get("price"))
-        else:
-            if product.stock is not None and qty > product.stock:
-                return jsonify({
-                    "success": False,
-                    "message": f"Only {product.stock} of '{product.title}' are in stock."
-                }), 400
+            return jsonify({
+                "success": False,
+                "message": (
+                    f"Only {product.stock} of "
+                    f"'{product.title}' are in stock."
+                )
+            }), 400
+
+        if unit_price is None:
             unit_price = _current_unit_price(product)
 
-        print("🔥 ORDER PRICE:", product.id, product.title, "UNIT PRICE =", unit_price)
+        print(
+            "🔥 ORDER PRICE:",
+            product.id,
+            product.title,
+            "DB PRICE =", product.price,
+            "SALE PRICE =", product.sale_price,
+            "UNIT PRICE =", unit_price
+        )
 
-        order_lines.append((product, qty, unit_price, variant, variant_size))
+        order_lines.append(
+            (
+                product,
+                qty,
+                unit_price,
+                variant_id,
+                color,
+                size,
+                variant
+            )
+        )
 
 
     # ---------------------------------------------------------
@@ -409,8 +450,7 @@ def create_order():
             _,
             qty,
             price,
-            _variant,
-            _variant_size
+            *_
         ) in order_lines
     )
 
@@ -421,7 +461,7 @@ def create_order():
     )
 
     tax = round(
-        sum(qty * price * _product_tax_rate(product) for product, qty, price, _variant, _variant_size in order_lines),
+        sum(qty * price * _product_tax_rate(product) for product, qty, price, *_ in order_lines),
         2
     )
 
@@ -513,8 +553,10 @@ def create_order():
         product,
         qty,
         unit_price,
-        variant,
-        variant_size
+        variant_id,
+        color,
+        size,
+        variant
     ) in order_lines:
 
         original_price = _parse_float(
@@ -542,18 +584,12 @@ def create_order():
             2
         )
 
-        variant_suffix = ""
-        order_image = product.image
-        if variant:
-            variant_suffix = f" — Color: {variant.get('color')} — Size: {variant_size.get('size')}"
-            order_image = variant.get("image") or product.image
-
         db.session.add(
             OrderItem(
                 order_id=order.id,
                 product_id=product.id,
-                product_name=product.title + variant_suffix,
-                image=order_image,
+                product_name=(f"{product.title} | Color: {color} | Size: {size}" if variant_id else product.title),
+                image=(variant.get("image") if variant_id and variant else product.image),
                 quantity=qty,
                 original_price=original_price,
                 sale_price=sale_price,
@@ -563,17 +599,25 @@ def create_order():
             )
         )
 
-        # Decrease inventory. Variant stock is stored in the existing tags TEXT field.
-        if variant:
-            variants = get_variants(product)
-            live_variant = find_variant(variants, variant_id=variant.get("id"))
-            if live_variant:
-                live_variant["stock"] = max(0, int(live_variant.get("stock", 0)) - qty)
-                set_variants_on_product(product, variants)
+        # Decrease inventory.
+        if variant_id and variant:
+            _, current_variants = split_tags_and_variants(product.tags)
+            for vv in current_variants:
+                if str(vv.get("id")) == str(variant_id):
+                    vv["stock"] = max(0, int(vv.get("stock",0)) - qty)
+                    break
+            from variant import pack_tags_and_variants
+            visible_tags, _ = split_tags_and_variants(product.tags)
+            product.tags = pack_tags_and_variants(visible_tags, current_variants)
+        elif product.stock is not None:
 
-        if product.stock is not None:
-            product.stock = max(0, product.stock - qty)
+            product.stock = max(
+                0,
+                product.stock - qty
+            )
+
             if product.stock <= 0:
+
                 product.stock_status = "out"
 
     # ---------------------------------------------------------
@@ -618,15 +662,12 @@ def create_order():
                 "product_id": product.id,
                 "quantity": quantity,
                 "price": price,
-                "variant_id": variant.get("id") if variant else None,
             }
 
             for (
                 product,
                 quantity,
-                price,
-                variant,
-                _variant_size
+                price
             ) in order_lines
         ],
 

@@ -1,10 +1,10 @@
+from variant import split_tags_and_variants
 from werkzeug.security import (
     check_password_hash,
     generate_password_hash
 )
 
 from database import db
-from variant import get_variants, unpack_variant_data
 
 
 class User(db.Model):
@@ -336,9 +336,9 @@ class Product(db.Model):
 
             "sale_badge_color": self.sale_badge_color,
 
-            "tags": ",".join(unpack_variant_data(self.tags)[0]),
+            "tags": split_tags_and_variants(self.tags)[0],
 
-            "variants": get_variants(self),
+            "variants": split_tags_and_variants(self.tags)[1],
 
             "created_at": self.created_at,
 

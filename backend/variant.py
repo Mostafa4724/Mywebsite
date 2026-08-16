@@ -1,152 +1,101 @@
-"""
-Variant storage/validation helpers.
+"""Product variant storage helpers.
 
-Database compatibility:
-- No new database table or column is required.
-- Variant data is stored inside the existing products.tags TEXT column as JSON:
-  {"tags": ["tag1", ...], "variants": [...]}
-- Legacy comma-separated tags remain readable.
+Variants are stored inside the existing Product.tags TEXT column so the
+existing database schema is not changed. The visible tags are kept intact and
+variant JSON is stored behind a private marker.
 """
-import json
-import os
-import uuid
+import json, os, uuid
 from werkzeug.utils import secure_filename
 
+VARIANT_MARKER = "\n__PRODUCT_VARIANTS__="
+ALLOWED = {"png", "jpg", "jpeg", "webp"}
 
-def _clean_tags(value):
-    if isinstance(value, list):
-        return [str(x).strip() for x in value if str(x).strip()]
-    if not value:
-        return []
+
+def split_tags_and_variants(raw):
+    raw = raw or ""
+    if VARIANT_MARKER not in raw:
+        return raw, []
+    tags, payload = raw.split(VARIANT_MARKER, 1)
     try:
-        obj = json.loads(value)
-        if isinstance(obj, dict) and isinstance(obj.get("tags"), list):
-            return [str(x).strip() for x in obj["tags"] if str(x).strip()]
-        if isinstance(obj, list):
-            return [str(x).strip() for x in obj if str(x).strip()]
-    except Exception:
-        pass
-    return [x.strip() for x in str(value).split(",") if x.strip()]
+        variants = json.loads(payload)
+        if not isinstance(variants, list):
+            variants = []
+    except (TypeError, ValueError, json.JSONDecodeError):
+        variants = []
+    return tags, variants
 
 
-def unpack_variant_data(raw):
-    """Return (normal_tags, variants) from legacy or variant-aware tags data."""
-    if not raw:
-        return [], []
-    try:
-        obj = json.loads(raw)
-        if isinstance(obj, dict):
-            tags = _clean_tags(obj.get("tags", []))
-            variants = obj.get("variants", [])
-            return tags, normalize_variants(variants)
-    except Exception:
-        pass
-    return _clean_tags(raw), []
-
-
-def pack_variant_data(tags, variants):
-    tags = _clean_tags(tags)
-    variants = normalize_variants(variants)
-    if not variants:
-        return ",".join(tags)
-    return json.dumps({"tags": tags, "variants": variants}, separators=(",", ":"))
-
-
-def normalize_variants(variants):
-    if not isinstance(variants, list):
-        return []
-    result = []
-    for idx, v in enumerate(variants):
+def pack_tags_and_variants(tags, variants):
+    tags = (tags or "").strip()
+    clean=[]
+    for v in variants or []:
         if not isinstance(v, dict):
             continue
-        color = str(v.get("color", "")).strip()
+        clean.append(v)
+    return tags + VARIANT_MARKER + json.dumps(clean, separators=(",", ":"))
+
+
+def _save_variant_image(file_obj, upload_folder):
+    if not file_obj or not getattr(file_obj, "filename", ""):
+        return ""
+    original = secure_filename(file_obj.filename)
+    ext = original.rsplit(".",1)[-1].lower() if "." in original else ""
+    if ext not in ALLOWED:
+        raise ValueError("Variant images must be PNG, JPG or WebP.")
+    file_obj.seek(0, os.SEEK_END)
+    size=file_obj.tell()
+    file_obj.seek(0)
+    if size > 5*1024*1024:
+        raise ValueError("Each variant image must be 5MB or smaller.")
+    name=f"{uuid.uuid4()}_{original}"
+    file_obj.save(os.path.join(upload_folder,name))
+    return name
+
+
+def normalize_variants(raw_variants):
+    result=[]
+    if not isinstance(raw_variants,list):
+        return result
+    for index,v in enumerate(raw_variants):
+        if not isinstance(v,dict):
+            continue
+        color=str(v.get("color","")).strip()
         if not color:
             continue
-        sizes = []
-        for size in v.get("sizes", []) if isinstance(v.get("sizes"), list) else []:
-            if not isinstance(size, dict):
-                continue
-            name = str(size.get("size", "")).strip()
-            if not name:
-                continue
-            try:
-                price = float(size.get("price", 0))
-            except (TypeError, ValueError):
-                price = 0
-            sizes.append({"size": name, "price": round(max(0, price), 2)})
-        try:
-            stock = int(v.get("stock", 0))
-        except (TypeError, ValueError):
-            stock = 0
+        try: stock=max(0,int(v.get("stock",0)))
+        except (TypeError,ValueError): stock=0
+        sizes=[]
+        raw_sizes=v.get("sizes",[])
+        if isinstance(raw_sizes,list):
+            for s in raw_sizes[:7]:
+                if not isinstance(s,dict): continue
+                size=str(s.get("size","")).strip()
+                if not size: continue
+                try: price=float(s.get("price",0))
+                except (TypeError,ValueError): price=0
+                sizes.append({"size":size,"price":max(0,price)})
         result.append({
-            "id": str(v.get("id") or uuid.uuid4().hex[:12]),
+            "id": str(v.get("id") or f"variant-{index+1}"),
             "color": color,
-            "image": str(v.get("image", "") or ""),
-            "stock": max(0, stock),
-            "sizes": sizes[:7],
+            "image": str(v.get("image","") or ""),
+            "stock": stock,
+            "sizes": sizes,
         })
     return result
 
 
-def get_variants(product):
-    _, variants = unpack_variant_data(getattr(product, "tags", "") or "")
-    return variants
-
-
-def set_variants_on_product(product, variants):
-    tags, _ = unpack_variant_data(getattr(product, "tags", "") or "")
-    product.tags = pack_variant_data(tags, variants)
-
-
-def find_variant(variants, variant_id=None, color=None):
-    if not isinstance(variants, list):
-        return None
-    if variant_id:
-        for v in variants:
-            if str(v.get("id")) == str(variant_id):
-                return v
-    if color:
-        wanted = str(color).strip().lower()
-        for v in variants:
-            if str(v.get("color", "")).strip().lower() == wanted:
-                return v
-    return None
-
-
-def find_size(variant, size):
-    if not variant:
-        return None
-    wanted = str(size or "").strip().lower()
-    for s in variant.get("sizes", []):
-        if str(s.get("size", "")).strip().lower() == wanted:
-            return s
-    return None
-
-
-def save_variant_images(request, variants, upload_folder, field_prefix="variant_image_"):
-    """
-    Save uploaded variant images referenced by image_key.
-    The frontend sends files under variant_image_0, variant_image_1, ...
-    """
+def process_variant_request(request, upload_folder, existing=None):
+    """Read variant_data and matching variant_image_<id> uploads."""
+    raw=request.form.get("variant_data", "[]")
+    try: incoming=json.loads(raw)
+    except (TypeError,ValueError,json.JSONDecodeError):
+        raise ValueError("Invalid variant data.")
+    variants=normalize_variants(incoming)
+    existing_by_id={str(v.get("id")):v for v in (existing or []) if isinstance(v,dict)}
     for v in variants:
-        key = v.get("image_key")
-        if not key:
-            continue
-        f = request.files.get(str(key))
-        if not f or not f.filename:
-            v.pop("image_key", None)
-            continue
-        filename = secure_filename(f.filename)
-        ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-        if ext not in {"png", "jpg", "jpeg", "webp"}:
-            raise ValueError("Variant images must be PNG, JPG or WebP.")
-        f.seek(0, os.SEEK_END)
-        size = f.tell()
-        f.seek(0)
-        if size > 5 * 1024 * 1024:
-            raise ValueError("Each variant image must be 5MB or smaller.")
-        stored = f"{uuid.uuid4()}_{filename}"
-        f.save(os.path.join(upload_folder, stored))
-        v["image"] = stored
-        v.pop("image_key", None)
+        file_obj=request.files.get(f"variant_image_{v['id']}")
+        if file_obj and file_obj.filename:
+            v["image"]=_save_variant_image(file_obj,upload_folder)
+        elif not v.get("image") and v["id"] in existing_by_id:
+            v["image"]=existing_by_id[v["id"]].get("image","") or ""
     return variants

@@ -224,31 +224,19 @@ function refreshCartAfterAdd(btn, name) {
   updateCartBubble();
 }
 
-function addToCart(name, price, image, productId) {
-  console.log("addToCart called");
-  console.log(name, price, image, productId);
+function addToCart(name, price, image, productId, variant) {
   const cart = getCart();
-  const id = productId ? String(productId) : generateId(name);
+  const variantKey = variant && variant.variantKey ? String(variant.variantKey) : String(productId || generateId(name));
+  const id = variantKey;
   const existing = cart.find((item) => item.id === id);
-
-  if (existing) {
-    existing.quantity += 1;
-  } else {
-    const newItem = {
-      id: id,
-      name: name,
-      price: parseFloat(price) || 0,
-      image: image || "",
-      quantity: 1,
-    };
-    if (productId !== undefined && productId !== null) {
-      newItem.productId = Number(productId);
-    }
+  if (existing) existing.quantity += 1;
+  else {
+    const newItem = { id, name, price: parseFloat(price)||0, image:image||"", quantity:1 };
+    if(productId!==undefined&&productId!==null) newItem.productId=Number(productId);
+    if(variant){ newItem.variantId=variant.variantId||null; newItem.color=variant.color||""; newItem.size=variant.size||""; newItem.variantImage=variant.variantImage||""; newItem.variantStock=Number(variant.stock??0); newItem.variantKey=variantKey; }
     cart.push(newItem);
   }
-
-  saveCart(cart);
-  return cart;
+  saveCart(cart); return cart;
 }
 
 function removeFromCart(id) {
@@ -647,21 +635,21 @@ async function normalizeCartItems(cart) {
     }
 
     if (currentProduct) {
-      const currentPrice = Number(currentProduct.sale_price) > 0 && Number(currentProduct.sale_price) < Number(currentProduct.price)
-        ? Number(currentProduct.sale_price)
-        : Number(currentProduct.price || 0);
-
-      if (item.price !== currentPrice) {
-        item.price = currentPrice;
-        updated = true;
+      let currentPrice = Number(currentProduct.sale_price) > 0 && Number(currentProduct.sale_price) < Number(currentProduct.price)
+        ? Number(currentProduct.sale_price) : Number(currentProduct.price || 0);
+      if(item.variantId && Array.isArray(currentProduct.variants)) {
+        const v=currentProduct.variants.find(x=>String(x.id)===String(item.variantId));
+        const sz=v && Array.isArray(v.sizes) ? v.sizes.find(x=>String(x.size).toLowerCase()===String(item.size||"").toLowerCase()) : null;
+        if(v && sz){ currentPrice=Number(sz.price)||0; if(item.variantImage!==v.image){item.variantImage=v.image||"";updated=true;} item.variantStock=Number(v.stock)||0; }
       }
+      if (item.price !== currentPrice) { item.price = currentPrice; updated = true; }
       if (item.name !== currentProduct.title) {
         item.name = currentProduct.title;
         updated = true;
       }
-      const currentImage = currentProduct.image && currentProduct.image !== ""
-        ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}`
-        : item.image;
+      const currentImage = item.variantId && item.variantImage
+        ? `${SHOP_API_BASE}/uploads/products/${item.variantImage}`
+        : (currentProduct.image && currentProduct.image !== "" ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}` : item.image);
       if (item.image !== currentImage) {
         item.image = currentImage;
         updated = true;
@@ -676,42 +664,15 @@ async function normalizeCartItems(cart) {
   return cart;
 }
 
-function escapeCartText(value) {
-  return String(value ?? "").replace(/[&<>"']/g, function (c) {
-    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];
-  });
-}
-
 function buildCartItemState(item, currentProduct) {
-  let isAvailable = isProductAvailable(currentProduct);
+  const isAvailable = isProductAvailable(currentProduct);
   const productName = currentProduct ? currentProduct.title : item.name;
-  let productPrice = currentProduct
-    ? Number(currentProduct.sale_price) > 0 && Number(currentProduct.sale_price) < Number(currentProduct.price)
-      ? Number(currentProduct.sale_price)
-      : Number(currentProduct.price || 0)
-    : Number(item.price || 0);
-  let productImage = currentProduct && currentProduct.image
-    ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}`
-    : item.image;
-  let statusText = currentProduct ? (currentProduct.stock_status || "in").toLowerCase() : "missing";
-
-  // A selected variant is authoritative for the cart display.
-  if (item.variant && currentProduct && Array.isArray(currentProduct.variants)) {
-    const v = currentProduct.variants.find(x => String(x.id) === String(item.variant.id));
-    const sz = v && Array.isArray(v.sizes)
-      ? v.sizes.find(x => String(x.size).toLowerCase() === String(item.variant.size).toLowerCase())
-      : null;
-    if (!v || !sz || Number(v.stock) <= 0) {
-      isAvailable = false;
-    } else {
-      isAvailable = true;
-      productPrice = Number(sz.price) || 0;
-      productImage = v.image
-        ? `${SHOP_API_BASE}/uploads/products/${v.image}`
-        : productImage;
-      statusText = Number(v.stock) <= 0 ? "out" : "in";
-    }
-  }
+  let productPrice = currentProduct ? (Number(currentProduct.sale_price) > 0 && Number(currentProduct.sale_price) < Number(currentProduct.price) ? Number(currentProduct.sale_price) : Number(currentProduct.price || 0)) : Number(item.price || 0);
+  let productImage = currentProduct && currentProduct.image ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}` : item.image;
+  if(currentProduct && item.variantId && Array.isArray(currentProduct.variants)){ const v=currentProduct.variants.find(x=>String(x.id)===String(item.variantId)); const sz=v&&Array.isArray(v.sizes)?v.sizes.find(x=>String(x.size).toLowerCase()===String(item.size||"").toLowerCase()):null; if(v&&sz){productPrice=Number(sz.price)||0; productImage=v.image?`${SHOP_API_BASE}/uploads/products/${v.image}`:productImage;} }
+const statusText = currentProduct
+    ? (currentProduct.stock_status || "in").toLowerCase()
+    : "missing";
 
   return {
     available: isAvailable,
@@ -792,7 +753,8 @@ async function renderCartItems() {
       </div>
       <div class="cart-item-info">
         <h3>${state.name}</h3>
-        ${item.variant ? `<p class="cart-variant-info">Color: ${escapeCartText(item.variant.color)}<br>Size: ${escapeCartText(item.variant.size)}</p>` : ""}
+        ${item.color ? `<p class="item-variant">Color: ${item.color}</p>` : ""}
+        ${item.size ? `<p class="item-variant">Size: ${item.size}</p>` : ""}
         <p class="item-price">$${state.price.toFixed(2)}</p>
         ${availabilityMessage}
       </div>
@@ -1142,26 +1104,10 @@ async function handleBuyNow() {
     )
   );
 
-  const selectedVariant = window.VariantUI && typeof window.VariantUI.getSelected === "function"
-    ? window.VariantUI.getSelected()
-    : null;
-
-  if (selectedVariant) {
-    const liveVariant = Array.isArray(product.variants)
-      ? product.variants.find(v => String(v.id) === String(selectedVariant.id))
-      : null;
-    if (!liveVariant || Number(liveVariant.stock) < quantity) {
-      showMessage("The selected color is out of stock.");
-      return;
-    }
-  }
-
   const image =
-    selectedVariant && selectedVariant.image
-      ? `${SHOP_API_BASE}/uploads/products/${selectedVariant.image}`
-      : (product.image && product.image !== ""
-        ? `${SHOP_API_BASE}/uploads/products/${product.image}`
-        : "https://picsum.photos/500/400?random=" + product.id);
+    product.image && product.image !== ""
+      ? `${SHOP_API_BASE}/uploads/products/${product.image}`
+      : "https://picsum.photos/500/400?random=" + product.id;
 
   // Store a dedicated Buy-Now payload. This does NOT touch the user's cart,
   // keeping the Buy Now and Cart checkout flows fully independent.
@@ -1183,7 +1129,6 @@ async function handleBuyNow() {
       status: product.status,
       image: image,
       quantity: quantity,
-      variant: selectedVariant || null,
       source: "buy-now",
     })
   );
@@ -1275,7 +1220,6 @@ if (confirmBtn) {
         </div>
         <div class="order-item-info">
           <h4>${state.name}</h4>
-          ${item.variant ? `<small>Color: ${escapeCartText(item.variant.color)} · Size: ${escapeCartText(item.variant.size)}</small>` : ""}
           <span>$${state.price.toFixed(2)} each</span>
         </div>
         <span class="order-item-price">$${itemTotal.toFixed(2)}</span>
@@ -1350,7 +1294,9 @@ async function placeOrder(extraData) {
       availableItems.push({
         product_id: Number(state.currentProduct.id),
         quantity: Math.max(1, Number(item.quantity) || 1),
-        variant: item.variant || null,
+        variant_id: item.variantId || null,
+        color: item.color || "",
+        size: item.size || "",
       });
     }
   }
@@ -1410,13 +1356,8 @@ function clearConsumedCheckout(placedItems) {
   const buyNowKey = getBuyNowStorageKey();
   if (buyNowKey) sessionStorage.removeItem(buyNowKey);
   if (placedItems && placedItems.length > 0) {
-    const placedKeys = new Set(placedItems.map((i) =>
-      String(i.product_id) + "|" + String(i.variant_id || "")
-    ));
-    const cart = getCart().filter((item) => {
-      const key = String(item.productId || item.id) + "|" + String(item.variant ? item.variant.id : "");
-      return !placedKeys.has(key);
-    });
+    const placedIds = new Set(placedItems.map((i) => String(i.product_id)));
+    const cart = getCart().filter((item) => !placedIds.has(String(item.id)));
     saveCart(cart);
   }
 }

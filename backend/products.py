@@ -1,12 +1,10 @@
 import os
-import json
 import uuid
 from models import Product, Category
 from database import db
 from security import admin_required
 from models import Review
 from datetime import datetime
-from variant import normalize_variants, set_variants_on_product, save_variant_images, unpack_variant_data
 
 
 def _parse_bool(value):
@@ -25,6 +23,7 @@ from werkzeug.utils import secure_filename
 from flask import current_app
 
 from flask import Blueprint, request, jsonify
+from variant import split_tags_and_variants, pack_tags_and_variants, process_variant_request
 
 
 
@@ -221,22 +220,16 @@ def add_product():
         sale_badge=data.get("sale_badge"),
         sale_badge_color=data.get("sale_badge_color"),
 
-        # Tags
-        tags=data.get("tags", "")
+        # Tags + variants (stored together in existing TEXT column)
+        tags=data.get("tags", ""),
 
     )
 
-    # Variants use the existing products.tags TEXT column; no DB schema change.
-    raw_variants = data.get("variants", "")
     try:
-        variants = normalize_variants(json.loads(raw_variants)) if raw_variants else []
-    except Exception:
-        variants = []
-    try:
-        variants = save_variant_images(request, variants, current_app.config["UPLOAD_FOLDER"])
+        variants = process_variant_request(request, current_app.config["UPLOAD_FOLDER"])
     except ValueError as exc:
         return jsonify({"success": False, "message": str(exc)}), 400
-    set_variants_on_product(product, variants)
+    product.tags = pack_tags_and_variants(data.get("tags", ""), variants)
 
     db.session.add(product)
 
@@ -382,22 +375,13 @@ def edit_product(id):
     product.sale_end = sale_end
     product.sale_badge = (value("sale_badge", product.sale_badge) or "").strip() or None
     product.sale_badge_color = (value("sale_badge_color", product.sale_badge_color) or "").strip() or None
-    # Variants use the existing products.tags TEXT column; no DB schema change.
-    raw_variants = value("variants", "")
+    visible_tags = (value("tags", split_tags_and_variants(product.tags)[0]) or "").strip()
     try:
-        variants = normalize_variants(json.loads(raw_variants)) if raw_variants else unpack_variant_data(product.tags or "")[1]
-    except Exception:
-        variants = unpack_variant_data(product.tags or "")[1]
-    try:
-        variants = save_variant_images(request, variants, current_app.config["UPLOAD_FOLDER"])
+        existing_variants = split_tags_and_variants(product.tags)[1]
+        variants = process_variant_request(request, current_app.config["UPLOAD_FOLDER"], existing_variants)
     except ValueError as exc:
         return jsonify({"success": False, "message": str(exc)}), 400
-    # Preserve normal tags while storing the variant payload in the same TEXT field.
-    tags_value = value("tags", None)
-    if tags_value is None:
-        tags_value = ",".join(unpack_variant_data(product.tags or "")[0])
-    product.tags = (tags_value or "").strip()
-    set_variants_on_product(product, variants)
+    product.tags = pack_tags_and_variants(visible_tags, variants)
 
 # ===== INSERT NEW DEBUG CODE HERE =====
     print("========== IMAGE DEBUG (BACKEND) ==========")

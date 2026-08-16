@@ -602,7 +602,8 @@
     div.className = "vo-item";
 
     var product = productsById[String(item.product_id)];
-    var databaseImage = item.image || (product && product.image ? product.image : null);
+    var databaseImage =
+      product && product.image ? product.image : item.image;
     var image = getProductImage(databaseImage, item.product_id || item.id);
 
     var unitPrice = Number(item.unit_price) || 0;

@@ -599,42 +599,6 @@
   });
 
   // ---------------------------------------------------------------------------
-  // Variants (UI only — the backend has no variants table yet)
-  // ---------------------------------------------------------------------------
-  function bindVariantRemove() {
-    if (!variantsList) return;
-    variantsList.querySelectorAll(".variant-remove").forEach((btn) => {
-      if (btn.dataset.bound === "1") return;
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", () => {
-        if (variantsList.children.length > 0) {
-          const row = btn.closest(".ap-variant-row");
-          row.style.transition = "all 0.2s";
-          row.style.opacity = "0";
-          row.style.transform = "translateY(-8px)";
-          setTimeout(() => row.remove(), 200);
-        }
-      });
-    });
-  }
-
-  if (addVariantBtn && variantsList) {
-    addVariantBtn.addEventListener("click", () => {
-      const row = document.createElement("div");
-      row.className = "ap-variant-row";
-      row.innerHTML =
-        '<div class="variant-field"><label>Size</label><select class="variant-select"><option value="xs">XS</option><option value="s">S</option><option value="m" selected>M</option><option value="l">L</option><option value="xl">XL</option><option value="xxl">XXL</option></select></div>' +
-        '<div class="variant-field"><label>Color</label><input type="text" class="variant-input" placeholder="e.g. White" /></div>' +
-        '<div class="variant-field"><label>Stock</label><input type="number" class="variant-input" placeholder="0" min="0" value="0" /></div>' +
-        '<div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-input" placeholder="0.00" step="0.01" min="0" /></div></div>' +
-        '<button type="button" class="variant-remove" aria-label="Remove variant"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-      variantsList.appendChild(row);
-      bindVariantRemove();
-    });
-    bindVariantRemove();
-  }
-
-  // ---------------------------------------------------------------------------
   // Sale & discount
   // ---------------------------------------------------------------------------
   if (saleToggle) {
@@ -929,12 +893,11 @@
 
     // --- Tags --------------------------------------------------------------
     fd.append("tags", tags.join(","));
+    if (window.ProductVariants) window.ProductVariants.appendToFormData(fd);
 
     // --- Image -------------------------------------------------------------
     const mainImage = getMainImageFile();
     if (mainImage) fd.append("image", mainImage);
-
-    if (window.VariantUI) window.VariantUI.getFormData(fd);
 
     return fd;
   }
