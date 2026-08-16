@@ -446,7 +446,7 @@
       if (btn.dataset.bound === "1") return;
       btn.dataset.bound = "1";
       btn.addEventListener("click", () => {
-        if (variantsList.children.length > 1) {
+        if (variantsList.children.length > 0) {
           const row = btn.closest(".ap-variant-row");
           row.style.transition = "all 0.2s";
           row.style.opacity = "0";
