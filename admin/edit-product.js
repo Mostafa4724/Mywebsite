@@ -175,9 +175,9 @@ window.selectedFile = null;
       if (valid) {
         const pct = Math.round(((regular - sale) / regular) * 100);
         document.getElementById("discountPct").textContent = pct + "%";
-        document.getElementById("discRegular").textContent = "\u0024" + regular.toFixed(2);
-        document.getElementById("discSale").textContent = "\u0024" + sale.toFixed(2);
-        document.getElementById("discSave").textContent = "\u0024" + (regular - sale).toFixed(2);
+        document.getElementById("discRegular").textContent = "$" + regular.toFixed(2);
+        document.getElementById("discSale").textContent = "$" + sale.toFixed(2);
+        document.getElementById("discSave").textContent = "$" + (regular - sale).toFixed(2);
       }
     }
     if (saleBadgePreview) {
@@ -190,8 +190,8 @@ window.selectedFile = null;
       mockBadge.textContent = (saleBadge.value.trim() || "SALE").toUpperCase();
       mockBadge.style.background = selectedSaleColor;
     }
-    if (mockRegular) mockRegular.textContent = "\u0024" + regular.toFixed(2);
-    if (mockSalePrice) mockSalePrice.textContent = "\u0024" + sale.toFixed(2);
+    if (mockRegular) mockRegular.textContent = "$" + regular.toFixed(2);
+    if (mockSalePrice) mockSalePrice.textContent = "$" + sale.toFixed(2);
   }
 
   function setSaleState(enabled) {
@@ -203,32 +203,15 @@ window.selectedFile = null;
 
   function updateProfit() {
     const price = Number(priceInput.value) || 0;
-    const cost  = Number(costInput.value) || 0;
-    const box   = document.getElementById("profitCalc");
+    const cost = Number(costInput.value) || 0;
+    const box = document.getElementById("profitCalc");
     if (!box) return;
-
-    if (price > 0) {
+    if (cost > 0) {
       box.style.display = "flex";
       const profit = price - cost;
-      const margin = price > 0 ? (profit / price) * 100 : 0;
-
-      const profitEl = document.getElementById("profitValue");
-      const marginEl = document.getElementById("marginValue");
-
-      const profitText = "\u0024" + profit.toFixed(2);
-      profitEl.textContent = profitText;
-      profitEl.style.display = "inline";
-      profitEl.style.visibility = "visible";
-      profitEl.style.opacity = "1";
-
-      marginEl.textContent = margin.toFixed(1) + "%";
-      marginEl.style.display = "inline";
-      marginEl.style.visibility = "visible";
-      marginEl.style.opacity = "1";
-
-      profitEl.style.color = profit >= 0 ? "#16a34a" : "#dc2626";
-      box.style.background = profit >= 0 ? "#f0fdf4" : "#fef2f2";
-      box.style.borderColor = profit >= 0 ? "#bbf7d0" : "#fecaca";
+      const margin = price ? (profit / price) * 100 : 0;
+      document.getElementById("profitValue").textContent = "$" + profit.toFixed(2);
+      document.getElementById("marginValue").textContent = margin.toFixed(1) + "%";
     } else {
       box.style.display = "none";
     }
