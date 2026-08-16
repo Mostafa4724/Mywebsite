@@ -187,6 +187,7 @@
     if (!newCategoryName || !newCategoryError || !saveCategoryBtn) return;
 
     const name = newCategoryName.value.trim();
+
     if (!name) {
       newCategoryError.textContent = "Category name is required.";
       return;
@@ -202,6 +203,7 @@
         headers: getAuthHeaders(true),
         body: JSON.stringify({ name: name }),
       });
+
       const data = await readJson(response);
 
       if (!response.ok || !data.success) {
@@ -210,15 +212,44 @@
         return;
       }
 
-      await loadCategories();
+      // Add the newly-created category directly to the dropdown.
+      // No page reload and no second request required.
       if (categorySelect && data.category) {
+        const option = document.createElement("option");
+
+        option.value = String(data.category.id);
+        option.dataset.name = data.category.name;
+        option.textContent = data.category.name;
+
+        // Insert before "+ Add Category"
+        const addCategoryOption = Array.from(
+          categorySelect.options
+        ).find((option) => option.value === ADD_CATEGORY_VALUE);
+
+        if (addCategoryOption) {
+          categorySelect.insertBefore(option, addCategoryOption);
+        } else {
+          categorySelect.appendChild(option);
+        }
+
+        // Select the new category
         categorySelect.value = String(data.category.id);
       }
+
+      // Close modal
       closeAddCategoryModal();
-      showToast('Category "' + data.category.name + '" created!');
+
+      // Clear input
+      newCategoryName.value = "";
+
+      showToast(
+        'Category "' + data.category.name + '" created!'
+      );
+
     } catch (err) {
       console.error("Failed to create category:", err);
-      newCategoryError.textContent = "Failed to connect. Please try again.";
+      newCategoryError.textContent =
+        "Failed to connect. Please try again.";
     } finally {
       saveCategoryBtn.disabled = false;
       saveCategoryBtn.textContent = "Add Category";
@@ -237,7 +268,14 @@
     addCategoryClose.addEventListener("click", closeAddCategoryModal);
   if (cancelCategoryBtn)
     cancelCategoryBtn.addEventListener("click", closeAddCategoryModal);
-  if (saveCategoryBtn) saveCategoryBtn.addEventListener("click", createCategory);
+  if (saveCategoryBtn) {
+    saveCategoryBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      createCategory();
+    });
+  }
   if (addCategoryModal) {
     addCategoryModal.addEventListener("click", (e) => {
       if (e.target === addCategoryModal) closeAddCategoryModal();

@@ -879,6 +879,27 @@
           </div>
         </form>
 
+        <!-- Add Category Modal -->
+      <div class="admin-modal-overlay" id="addCategoryModal" hidden>
+        <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="addCategoryTitle">
+          <div class="admin-modal-head">
+            <h3 id="addCategoryTitle">Add Category</h3>
+            <button type="button" class="admin-modal-close" id="addCategoryClose" aria-label="Close">&times;</button>
+          </div>
+          <div class="admin-modal-body">
+            <div class="form-field">
+              <label for="newCategoryName">Category Name <span class="req">*</span></label>
+              <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
+              <span class="form-error" id="newCategoryError"></span>
+            </div>
+          </div>
+          <div class="admin-modal-foot">
+            <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancel</button>
+            <button type="button" class="btn-primary" id="saveCategoryBtn">Add Category</button>
+          </div>
+        </div>
+      </div>
+
         <!-- Success Toast -->
         <div class="ap-toast" id="apToast">
           <svg
@@ -898,26 +919,6 @@
       </div>
     </div>
 
-    <!-- Add Category Modal -->
-    <div class="admin-modal-overlay" id="addCategoryModal" hidden>
-      <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="addCategoryTitle">
-        <div class="admin-modal-head">
-          <h3 id="addCategoryTitle">Add Category</h3>
-          <button type="button" class="admin-modal-close" id="addCategoryClose" aria-label="Close">&times;</button>
-        </div>
-        <div class="admin-modal-body">
-          <div class="form-field">
-            <label for="newCategoryName">Category Name <span class="req">*</span></label>
-            <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
-            <span class="form-error" id="newCategoryError"></span>
-          </div>
-        </div>
-        <div class="admin-modal-foot">
-          <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancel</button>
-          <button type="button" class="btn-primary" id="saveCategoryBtn">Add Category</button>
-        </div>
-      </div>
-    </div>
     <script src="order-bubble.js"></script>
     <script src="/script.js"></script>
     <script src="add.js"></script>
