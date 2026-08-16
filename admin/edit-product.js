@@ -798,23 +798,6 @@ window.selectedFile = null;
 
   function fillForm(p) {
     product = p;
-<<<<<<< HEAD
-=======
-    document.getElementById("prodName").value = p.title || "";
-    document.getElementById("prodBrand").value = p.brand || "";
-    document.getElementById("prodDesc").value = p.description || "";
-    document.getElementById("prodPrice").value = p.price ?? "";
-    document.getElementById("prodCost").value = p.cost ?? 0;
-    const existingTax = p.tax_rate ?? p.tax_class;
-    const normalizedTax =
-      existingTax === "standard" ? 8 :
-      existingTax === "reduced" ? 4 :
-      existingTax === "zero" || existingTax === "none" ? 0 :
-      Number(existingTax);
-    document.getElementById("prodTax").value = Number.isFinite(normalizedTax) ? normalizedTax : 8;
-    document.getElementById("prodStock").value = p.stock ?? 0;
-    document.getElementById("prodLowStock").value = p.low_stock ?? 10;
->>>>>>> 2494d25c12aea4c5896a8f72154e7e800653e93f
 
     document.getElementById(
       "prodName"
@@ -1162,7 +1145,6 @@ window.selectedFile = null;
       );
     }
 
-<<<<<<< HEAD
     if (
       !categoryId ||
       categoryId ===
@@ -1172,32 +1154,6 @@ window.selectedFile = null;
         "Please select a category."
       );
     }
-=======
-    body.append("title", name);
-    body.append("description", description);
-    body.append("brand", document.getElementById("prodBrand").value.trim());
-    body.append("category_id", categoryId);
-    body.append("category", categoryOption ? categoryOption.textContent.trim() : "");
-    body.append("price", String(price));
-    body.append("cost", String(Number(costInput.value) || 0));
-    const taxRate = Number(document.getElementById("prodTax").value);
-    if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) {
-      throw new Error("Tax must be between 0% and 100%.");
-    }
-    body.append("tax_class", String(taxRate));
-    body.append("stock", String(stock));
-    body.append("low_stock", String(lowStock));
-    body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
-    body.append("status", selectedStatus ? selectedStatus.value : "draft");
-    body.append("scheduled_date", selectedStatus && selectedStatus.value === "scheduled" ? scheduleDate.value || "" : "");
-    body.append("sale_enabled", saleToggle.checked ? "true" : "false");
-    body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
-    body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
-    body.append("sale_end", saleToggle.checked ? saleEndDate.value : "");
-    body.append("sale_badge", saleBadge.value.trim());
-    body.append("sale_badge_color", selectedSaleColor);
-    body.append("tags", currentTags.join(","));
->>>>>>> 2494d25c12aea4c5896a8f72154e7e800653e93f
 
     if (
       !Number.isFinite(price) ||

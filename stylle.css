@@ -62,6 +62,9 @@ body {
   gap: 16px;
   box-shadow: none;
 }
+.logo {
+  text-decoration: none;
+}
 
 .logo {
   font-weight: 700;
