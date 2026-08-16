@@ -519,7 +519,7 @@
   width: 1px;
   height: 1px;
   opacity: 0.01;
-  pointer-events: auto;  /* THE KEY FIX */
+  pointer-events: auto;
   z-index: -1;
 }
 
@@ -617,7 +617,7 @@
 
 .ap-variant-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 80px 120px 36px;
+  grid-template-columns: 1fr 1fr 80px 140px 36px;
   gap: 10px;
   align-items: end;
   padding: 16px;
