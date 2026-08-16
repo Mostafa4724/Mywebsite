@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart - Website</title>
+    <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="../variant.css" />
+  </head>
+
+  <body>
+    <!-- ========================= -->
+    <!-- Navigation -->
+    <!-- ========================= -->
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <a href="home.html" class="logo">Logo Here.</a>
+
+        <ul class="nav-links" role="menu" aria-label="Main navigation">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="Catagory.html">Catagory</a></li>
+          <li><a href="Contact.html">Contact Us</a></li>
+          <li><a href="About us.html">About us</a></li>
+        </ul>
+
+        <div class="nav-icons">
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="white"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path
+                d="M6 6h15l-1.5 9h-12L4 2H2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1" fill="currentColor" />
+              <circle cx="18" cy="20" r="1" fill="currentColor" />
+            </svg>
+          </button>
+
+              <path
+                d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle
+                cx="12"
+                cy="7"
+                r="4"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ========================= -->
+    <!-- Main -->
+    <!-- ========================= -->
+
+    <main class="cart-page">
+      <!-- Hero -->
+
+      <section class="cart-hero">
+        <div class="cart-copy">
+          <h1>Shopping Cart</h1>
+
+          <p>Review your selected products before continuing to checkout.</p>
+        </div>
+      </section>
+
+      <!-- Cart Layout -->
+
+      <section class="cart-layout" id="cart-layout">
+        <!-- Cart Items -->
+
+        <div class="cart-items" id="cart-items">
+          <!-- Cart items are dynamically rendered from  via script.js -->
+        </div>
+        <!-- End Cart Items -->
+
+        <!-- ========================= -->
+        <!-- Order Summary -->
+        <!-- ========================= -->
+
+        <aside class="cart-summary" id="cart-summary">
+          <h2>Order Summary</h2>
+
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="subtotal-value">$0.00</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span id="shipping-value">$0.00</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Tax</span>
+            <span id="tax-value">$0.00</span>
+          </div>
+
+          <div class="summary-row total">
+            <span>Total</span>
+            <span id="total-value">$0.00</span>
+          </div>
+
+          <a id="cart-checkout-btn" class="checkout-btn" href="checkout.html"> Proceed to Checkout </a>
+
+        </aside>
+      </section>
+    </main>
+
+    <!-- ========================= -->
+    <!-- Footer -->
+    <!-- ========================= -->
+
+    <footer>
+      <p>&copy; 2026 Your Shop. All Rights Reserved.</p>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script src="../variant.js"></script>
+  </body>
+</html>

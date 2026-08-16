@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Details - Website</title>
+    <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="../variant.css" />
+  </head>
+
+  <body>
+    <!-- ========================= -->
+    <!-- Navigation -->
+    <!-- ========================= -->
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <a href="home.html" class="logo">Logo Here.</a>
+
+        <ul class="nav-links" role="menu" aria-label="Main navigation">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="Catagory.html">Catagory</a></li>
+          <li><a href="Contact.html">Contact Us</a></li>
+          <li><a href="About us.html">About us</a></li>
+        </ul>
+
+        <div class="nav-icons">
+
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
+            <i class="fa-solid fa-cart-shopping"></i> 
+            <span class="cart-bubble">0</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path
+                d="M6 6h15l-1.5 9h-12L4 2H2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1" fill="currentColor" />
+              <circle cx="18" cy="20" r="1" fill="currentColor" />
+            </svg>
+            
+          </a>
+
+         
+        </div>
+      </div>
+    </nav>
+
+    <!-- ========================= -->
+    <!-- Main -->
+    <!-- ========================= -->
+
+    <main class="product-page">
+      <!-- Header with X button -->
+
+      <section class="product-hero">
+        <div class="product-hero-copy">
+          <h1>Product Details</h1>
+          <p>View product information, reviews, and pricing.</p>
+        </div>
+
+        <a href="home.html" class="back-btn" aria-label="Close">✕</a>
+      </section>
+
+      <!-- Product Detail -->
+
+      <section class="product-detail">
+        <div class="product-image-container">
+          <img
+            src="https://picsum.photos/500/400?product"
+            alt="Wireless Headphone"
+            id="product-image"
+          />
+        </div>
+
+        <div class="product-info">
+          <h2 class="product-name" id="product-name">Wireless Headphone</h2>
+
+          <div class="product-meta">
+            <div class="meta-pill">
+              <span class="meta-label">Brand</span>
+              <span class="meta-value" id="product-brand">Loading...</span>
+            </div>
+            <div class="meta-pill">
+              <span class="meta-label">Category</span>
+              <span class="meta-value" id="product-category">Loading...</span>
+            </div>
+          </div>
+
+          <!-- Rating Display -->
+          <div class="rating-display">
+            <div class="stars-display"></div>
+            <span class="average-text">0.0</span>
+            <span class="review-count">(0 reviews)</span>
+          </div>
+
+          <div class="product-price-block">
+            <p class="product-price" id="product-price">$0.00</p>
+            <p class="product-original-price" id="product-original-price"></p>
+          </div>
+
+          <div class="sale-highlight" id="product-sale-card" style="display: none">
+            <span class="sale-badge" id="sale-badge">Sale</span>
+            <span class="sale-text" id="sale-price-text"></span>
+            <span class="sale-text sale-discount" id="sale-discount-text"></span>
+          </div>
+
+          <!-- Availability Badge -->
+          <div class="availability-badge in-stock" id="availability-badge">
+            <span class="dot"></span>
+            <span id="availability-text">Available</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="product-actions">
+            <button class="btn-primary" id="addToCartBtn">Add to Cart</button>
+            <a class="btn-secondary" id="buyNowBtn" href="checkout.html">Buy Now</a>
+          </div>
+          <p id="buyNowMessage" class="buy-now-message" style="display: none"></p>
+        </div>
+      </section>
+
+      <!-- About Section -->
+
+      <section class="about-section">
+        <h2>About This Product</h2>
+        <p id="product-description">
+          Loading...
+        </p>
+      </section>
+
+      <!-- Reviews Section -->
+
+      <section class="reviews-section">
+        <h2>Customer Reviews</h2>
+
+        <!-- Review Form -->
+        <div class="review-form">
+          <h3>Write a Review</h3>
+
+          <!-- Star Input -->
+          <div class="star-input">
+            <button class="star-btn" data-value="5" aria-label="5 stars">
+              ★
+            </button>
+            <button class="star-btn" data-value="4" aria-label="4 stars">
+              ★
+            </button>
+            <button class="star-btn" data-value="3" aria-label="3 stars">
+              ★
+            </button>
+            <button class="star-btn" data-value="2" aria-label="2 stars">
+              ★
+            </button>
+            <button class="star-btn" data-value="1" aria-label="1 star">
+              ★
+            </button>
+          </div>
+
+          <textarea
+              id="reviewComment"
+              placeholder="Share your thoughts about this product..."
+              rows="4">
+          </textarea>
+
+          <button
+              class="submit-review-btn"
+              id="submitReviewBtn">
+
+              Submit Review
+
+          </button>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="reviews-list"></div>
+      </section>
+    </main>
+
+    <!-- ========================= -->
+    <!-- Footer -->
+    <!-- ========================= -->
+
+    <footer>
+      <p>&copy; 2026 Your Shop. All Rights Reserved.</p>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script src="../variant.js"></script>
+    <script src="product.js"></script>
+  </body>
+</html>

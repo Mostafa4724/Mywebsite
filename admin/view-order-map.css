@@ -1,0 +1,443 @@
+/* ── Map card (inline) ── */
+.vo-map-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(15, 23, 36, 0.04);
+  border: 1px solid #e8edf3;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.vo-map-card .vo-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.vo-map-card .vo-card-head h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f1724;
+  margin: 0;
+}
+
+/* ── Map container ── */
+.vo-map-container {
+  width: 100%;
+  height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e8edf3;
+  position: relative;
+}
+
+.vo-map-container .leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ── Zoom controls (shared) ── */
+.vo-map-container .leaflet-control-zoom,
+.vo-map-overlay-body .leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 36, 0.12) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+.vo-map-container .leaflet-control-zoom a,
+.vo-map-overlay-body .leaflet-control-zoom a {
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  font-size: 16px !important;
+  color: #0f1724 !important;
+  background: #fff !important;
+  border: none !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  transition: background 0.15s ease;
+}
+
+.vo-map-container .leaflet-control-zoom a:hover,
+.vo-map-overlay-body .leaflet-control-zoom a:hover {
+  background: #f1f5f9 !important;
+}
+
+.vo-map-container .leaflet-control-zoom a:last-child,
+.vo-map-overlay-body .leaflet-control-zoom a:last-child {
+  border-bottom: none !important;
+}
+
+/* Expanded map slightly larger controls */
+.vo-map-overlay-body .leaflet-control-zoom a {
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
+}
+
+/* ── Attribution (shared) ── */
+.vo-map-container .leaflet-control-attribution,
+.vo-map-overlay-body .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #94a3b8 !important;
+  padding: 2px 8px !important;
+  border-radius: 6px 0 0 0 !important;
+}
+
+.vo-map-container .leaflet-control-attribution {
+  font-size: 0.65rem !important;
+}
+
+.vo-map-overlay-body .leaflet-control-attribution {
+  font-size: 0.7rem !important;
+}
+
+.vo-map-container .leaflet-control-attribution a,
+.vo-map-overlay-body .leaflet-control-attribution a {
+  color: #2563eb !important;
+}
+
+/* ── Custom marker ── */
+.vo-custom-marker {
+  position: relative;
+}
+
+.vo-marker-pin {
+  width: 38px;
+  height: 46px;
+  position: relative;
+  filter: drop-shadow(0 3px 6px rgba(37, 99, 235, 0.35));
+  animation: voMarkerDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes voMarkerDrop {
+  0% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.vo-marker-pin svg {
+  width: 100%;
+  height: 100%;
+}
+
+.vo-marker-pulse {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.25);
+  animation: voMarkerPulse 2.5s ease-out infinite;
+}
+
+@keyframes voMarkerPulse {
+  0% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(-50%) scale(3.5);
+    opacity: 0;
+  }
+}
+
+/* ── Popup ── */
+.vo-map-popup .leaflet-popup-content-wrapper {
+  border-radius: 14px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 30px rgba(15, 23, 36, 0.15) !important;
+  border: 1px solid #e8edf3 !important;
+  overflow: hidden;
+}
+
+.vo-map-popup .leaflet-popup-content {
+  margin: 0 !important;
+  min-width: 200px;
+}
+
+.vo-map-popup .leaflet-popup-tip {
+  box-shadow: 0 4px 10px rgba(15, 23, 36, 0.08) !important;
+  border: 1px solid #e8edf3 !important;
+  border-top: none !important;
+  border-left: none !important;
+}
+
+.vo-map-popup .leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  font-size: 20px !important;
+  top: 8px !important;
+  right: 10px !important;
+  z-index: 1;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.vo-map-popup .leaflet-popup-close-button:hover {
+  color: #0f1724 !important;
+  background: #f1f5f9;
+}
+
+.vo-popup-inner {
+  padding: 16px 18px;
+}
+
+.vo-popup-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #2563eb;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vo-popup-label-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+.vo-popup-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f1724;
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+
+.vo-popup-address {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.vo-popup-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
+}
+
+.vo-popup-coords {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Expand button ── */
+.vo-map-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  font-family: inherit;
+}
+
+.vo-map-expand-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+/* ── Expanded map overlay (fixed: no transition on backdrop-filter) ── */
+.vo-map-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 36, 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  padding: 24px;
+}
+
+.vo-map-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.vo-map-overlay-inner {
+  background: #fff;
+  border-radius: 22px;
+  width: 100%;
+  max-width: 800px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(15, 23, 36, 0.25);
+  transform: scale(0.93) translateY(12px);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vo-map-overlay.show .vo-map-overlay-inner {
+  transform: scale(1) translateY(0);
+}
+
+.vo-map-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.vo-map-overlay-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f1724;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vo-map-overlay-header h3 svg {
+  color: #2563eb;
+}
+
+.vo-map-overlay-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+}
+
+.vo-map-overlay-close:hover {
+  background: #e2e8f0;
+  color: #0f1724;
+}
+
+.vo-map-overlay-body {
+  height: 480px;
+  position: relative;
+}
+
+.vo-map-overlay-body .leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+.vo-map-overlay-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.vo-map-overlay-address {
+  font-size: 0.85rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vo-map-overlay-address svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.vo-map-overlay-open-external {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.vo-map-overlay-open-external:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+/* ── Small map locked state when expanded map is open ── */
+.vo-map-container.vo-map-locked {
+  pointer-events: none;
+  opacity: 0.4;
+  filter: grayscale(0.5);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.vo-map-container:not(.vo-map-locked) {
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .vo-map-container {
+    height: 180px;
+  }
+
+  .vo-map-overlay-body {
+    height: 360px;
+  }
+
+  .vo-map-overlay-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .vo-map-overlay-open-external {
+    justify-content: center;
+  }
+}

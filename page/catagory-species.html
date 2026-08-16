@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Footwear</title>
+    <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="catagory-species.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <a href="home.html" class="logo">Logo Here.</a>
+
+        <ul class="nav-links" role="menu" aria-label="Main navigation">
+          <li><a href="home.html">Home</a></li>
+          <li>
+            <a href="Catagory.html"><b>Catagory</b></a>
+          </li>
+          <li><a href="Contact.html">Contact Us</a></li>
+          <li><a href="About us.html">About us</a></li>
+        </ul>
+
+        <div class="nav-icons">
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-bubble">0</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path
+                d="M6 6h15l-1.5 9h-12L4 2H2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1" fill="currentColor" />
+              <circle cx="18" cy="20" r="1" fill="currentColor" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="footwear-page">
+      <!-- BREADCRUMB -->
+      <div class="breadcrumb reveal">
+        <a href="Catagory.html">Category</a>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span id="crumbName">Loading...</span>
+      </div>
+
+      <!-- HERO -->
+      <section class="fw-hero reveal">
+        <div class="fw-hero-inner">
+          <div class="fw-hero-text">
+            <div class="fw-hero-eyebrow">
+              <span class="pulse-dot"></span>
+              <span id="heroCount">0 Products</span>
+            </div>
+            <h1 class="fw-hero-title">
+              <span class="highlight" id="heroTitle">Loading...</span>
+            </h1>
+            <p class="fw-hero-desc" id="heroDesc">
+              Browse curated products in this category.
+            </p>
+            <div class="fw-hero-tags" id="heroTags"></div>
+          </div>
+          <div class="fw-hero-preview">
+            <div class="preview-float preview-float--1">
+              <img src="https://picsum.photos/seed/fw-hero1/320/400.jpg" alt="Preview" loading="lazy" />
+            </div>
+            <div class="preview-float preview-float--2">
+              <img src="https://picsum.photos/seed/fw-hero2/280/340.jpg" alt="Preview" loading="lazy" />
+            </div>
+            <div class="preview-float preview-float--3">
+              <img src="https://picsum.photos/seed/fw-hero3/240/280.jpg" alt="Preview" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRODUCT GRID -->
+      <div class="product-grid" id="productGrid"></div>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <p>&copy; 2026 Your Shop. All Rights Reserved.</p>
+      </div>
+    </footer>
+
+    <script src="/script.js"></script>
+    <script src="catagory-species.js"></script>
+  </body>
+</html>

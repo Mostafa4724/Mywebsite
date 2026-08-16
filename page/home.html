@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home - Website</title>
+    <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="home.css" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <a href="home.html" class="logo">Logo Here.</a>
+
+        <ul class="nav-links" role="menu" aria-label="Main navigation">
+          <li>
+            <a href="home.html"><b>Home</b></a>
+          </li>
+          <li><a href="Catagory.html">Catagory</a></li>
+          <li><a href="Contact.html">Contact Us</a></li>
+          <li><a href="About us.html">About us</a></li>
+        </ul>
+
+        <div class="nav-icons">
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-bubble">0</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path
+                d="M6 6h15l-1.5 9h-12L4 2H2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1" fill="currentColor" />
+              <circle cx="18" cy="20" r="1" fill="currentColor" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-text">
+          <span class="hero-badge">New Collection 2026</span>
+          <h1>Discover Amazing Products</h1>
+          <p>Quality products with the best prices. Curated for people who appreciate design and function.</p>
+          <button id="shop-now-btn">Shop Now</button>
+        </div>
+        <div class="hero-visual">
+          <div class="geo-shape geo-1"></div>
+          <div class="geo-shape geo-2"></div>
+          <div class="geo-shape geo-3"></div>
+          <div class="geo-shape geo-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="products">
+      <div class="section-title">
+        <span class="section-badge">Curated</span>
+        <h2>Featured Products</h2>
+      </div>
+      <div id="product-container" class="products-grid"></div>
+    </section>
+
+    <footer>
+      <div class="footer-inner">
+        <p>&copy; 2026 Your Shop. All Rights Reserved.</p>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script src="home.js"></script>
+  </body>
+</html>

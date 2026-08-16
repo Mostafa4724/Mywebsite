@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us</title>
+    <link rel="stylesheet" href="../stylle.css" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <a href="home.html" class="logo">Logo Here.</a>
+
+        <ul class="nav-links" role="menu" aria-label="Main navigation">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="Catagory.html">Catagory</a></li>
+          <li>
+            <a href="Contact.html"><b>Contact Us</b></a>
+          </li>
+          <li><a href="About us.html">About us</a></li>
+        </ul>
+
+        <div class="nav-icons">
+
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
+            <i class="fa-solid fa-cart-shopping"></i> 
+            <span class="cart-bubble">0</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path
+                d="M6 6h15l-1.5 9h-12L4 2H2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1" fill="currentColor" />
+              <circle cx="18" cy="20" r="1" fill="currentColor" />
+            </svg>
+          </a>
+
+          
+        </div>
+      </div>
+    </nav>
+    <main class="contact-page">
+      <section class="contact-hero">
+        <div class="contact-copy">
+          <p class="eyebrow">Get in touch</p>
+          <h1>Contact Us</h1>
+          <p>
+            Send your question, request, or feedback and we will reply as soon
+            as possible.
+          </p>
+        </div>
+      </section>
+
+      <section class="contact-card">
+        <div class="contact-info">
+          <h2>Contact information</h2>
+          <p>
+            We are always happy to help. Reach out with questions about orders,
+            shipping, or product details.
+          </p>
+          <div class="contact-detail">
+            <span>Email</span>
+            <a href="mailto:hello@example.com">hello@example.com</a>
+          </div>
+          <div class="contact-detail">
+            <span>Whatsapp</span>
+            <a href="tel:+1234567890">+20**********</a>
+          </div>
+          <div class="contact-detail">
+            <span>Address</span>
+            <address>123 Market Street, City, Country</address>
+          </div>
+        </div>
+
+        <form class="contact-form" id="contactForm">
+          <label>
+            Name
+            <input type="text" id="contactName" placeholder="Enter Your name" required />
+          </label>
+          <label>
+            Email
+            <input type="email" id="contactEmail" placeholder="you@example.com" required />
+          </label>
+          <label>
+            Message
+            <textarea
+              id="contactMessage"
+              rows="6"
+              placeholder="How can we help?"
+              required
+            ></textarea>
+          </label>
+          <button type="submit" id="contactSubmitBtn">Send message</button>
+        </form>
+      </section>
+    </main>
+    <script src="/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script src="contact.js"></script>
+  </body>
+</html>

@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Product - Admin Panel</title>
+    <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="../variant.css" />
+  </head>
+  <body class="admin-body">
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo-icon">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+        </div>
+        <span>Admin Panel</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-link" data-section="overview"
+          ><svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" /></svg
+          >Overview</a
+        >
+        <a href="orders.html" class="sidebar-link" data-section="orders"
+          ><svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" /></svg
+          >Orders<span class="sidebar-badge" id="orderBubble" hidden></span></a
+        >
+        <a
+          href="admin_product.html"
+          class="sidebar-link active"
+          data-section="products"
+          ><svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+            /></svg
+          >Products</a
+        >
+        <a
+          href="admin-analytics.html"
+          class="sidebar-link"
+          data-section="analytics"
+          ><svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" /></svg
+          >Analytics</a
+        >
+      </nav>
+      <div class="sidebar-footer">
+        <a href="login.html" class="sidebar-logout" id="adminLogout">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" /></svg
+          >Log Out
+        </a>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div class="topbar-title"><h2>Add New Product</h2></div>
+        <div class="topbar-right">
+          <div class="admin-user-chip">
+            <div class="admin-user-avatar">A</div>
+            <span>Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Breadcrumb -->
+        <div class="ap-breadcrumb">
+          <a href="admin_product.html">Products</a>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span>Add New</span>
+        </div>
+
+        <form class="ap-form" id="addProductForm" novalidate>
+          <div class="ap-grid">
+            <!-- LEFT COLUMN -->
+            <div class="ap-left">
+              <!-- Images -->
+              <div class="ap-card">
+                <div class="ap-card-head">
+                  <h3>Product Images</h3>
+                  <span class="ap-card-hint">Max 5 images</span>
+                </div>
+                <div class="ap-upload-area" id="uploadArea">
+                  <div class="upload-placeholder" id="uploadPlaceholder">
+                    <div class="upload-icon">
+                      <svg
+                        width="36"
+                        height="36"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <rect
+                          x="3"
+                          y="3"
+                          width="18"
+                          height="18"
+                          rx="2"
+                          ry="2"
+                        />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                      </svg>
+                    </div>
+                    <p class="upload-main-text">Drag & drop images here</p>
+                    <p class="upload-sub-text">or click to browse files</p>
+                    <p class="upload-formats">PNG, JPG, WebP up to 5MB each</p>
+                  </div>
+                  <input
+                    type="file"
+                    id="imageInput"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    hidden
+                  />
+                  <div
+                    class="ap-preview-grid"
+                    id="previewGrid"
+                    style="display: none"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Basic Info -->
+              <div class="ap-card">
+                <div class="ap-card-head"><h3>Basic Information</h3></div>
+                <div class="ap-fields">
+                  <div class="ap-field">
+                    <label for="prodName"
+                      >Product Name <span class="req">*</span></label
+                    >
+                    <input
+                      type="text"
+                      id="prodName"
+                      placeholder="e.g. Premium Running Shoes"
+                      required
+                    />
+                    <span class="ap-field-hint"
+                      >A clear, descriptive name for your product.</span
+                    >
+                  </div>
+                  <div class="ap-row-2">
+                    <div class="ap-field">
+                      <label for="prodBrand">Brand</label>
+                      <input
+                        type="text"
+                        id="prodBrand"
+                        placeholder="e.g. Nike"
+                      />
+                    </div>
+<div class="ap-field">
+                      <label for="prodCategory"
+                        >Category <span class="req">*</span></label
+                      >
+                      <select id="prodCategory" required>
+                        <option value="" disabled selected>
+                          Select category
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="ap-field">
+                    <label for="prodDesc"
+                      >Description <span class="req">*</span></label
+                    >
+                    <textarea
+                      id="prodDesc"
+                      rows="6"
+                      placeholder="Describe your product in detail — materials, fit, features, care instructions..."
+                      required
+                    ></textarea>
+                    <div class="ap-field-bottom">
+                      <span class="ap-field-hint"
+                        >Supports plain text. Be as detailed as possible.</span
+                      >
+                      <span class="ap-char-count"
+                        ><span id="descCount">0</span>/2000</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pricing -->
+              <div class="ap-card">
+                <div class="ap-card-head"><h3>Pricing</h3></div>
+                <div class="ap-fields">
+                  <div class="ap-row-2">
+                    <div class="ap-field">
+                      <label for="prodPrice"
+                        >Regular Price <span class="req">*</span></label
+                      >
+                      <div class="ap-input-prefix">
+                        <span>$</span>
+                        <input
+                          type="number"
+                          id="prodPrice"
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="ap-field">
+                      <label for="prodCost">Cost per Item</label>
+                      <div class="ap-input-prefix">
+                        <span>$</span>
+                        <input
+                          type="number"
+                          id="prodCost"
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="ap-profit-calc"
+                    id="profitCalc"
+                    style="display: none"
+                  >
+                    <div class="profit-row">
+                      <span>Profit per item</span>
+                      <strong id="profitValue">$0.00</strong>
+                    </div>
+                    <div class="profit-row">
+                      <span>Profit margin</span>
+                      <strong id="marginValue">0%</strong>
+                    </div>
+                  </div>
+                  <div class="ap-field">
+                    <label for="prodTax">Tax Percentage</label>
+                    <div class="ap-input-prefix">
+                      <span>%</span>
+                      <input
+                        type="number"
+                        id="prodTax"
+                        placeholder="0"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value="8"
+                      />
+                    </div>
+                    <span class="ap-field-hint">
+                      Enter the tax percentage for this product, for example 9 for 9%.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Variants -->
+              <div class="ap-card">
+                <div class="ap-card-head">
+                  <h3>Variants</h3>
+                  <button
+                    type="button"
+                    class="ap-add-variant-btn"
+                    id="addVariantBtn"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Add Variant
+                  </button>
+                </div>
+                <div class="ap-variants-list" id="variantsList">
+                  <div class="ap-variant-row">
+                    <div class="variant-field">
+                      <label>Size</label>
+                      <select class="variant-select">
+                        <option value="xs">XS</option>
+                        <option value="s">S</option>
+                        <option value="m" selected>M</option>
+                        <option value="l">L</option>
+                        <option value="xl">XL</option>
+                        <option value="xxl">XXL</option>
+                      </select>
+                    </div>
+                    <div class="variant-field">
+                      <label>Color</label>
+                      <input
+                        type="text"
+                        class="variant-input"
+                        placeholder="e.g. Black"
+                        value="Black"
+                      />
+                    </div>
+                    <div class="variant-field">
+                      <label>Stock</label>
+                      <input
+                        type="number"
+                        class="variant-input"
+                        placeholder="0"
+                        value="25"
+                        min="0"
+                      />
+                    </div>
+                    <div class="variant-field">
+                      <label>Price</label>
+                      <div class="ap-input-prefix sm">
+                        <span>$</span>
+                        <input
+                          type="number"
+                          class="variant-input"
+                          placeholder="0.00"
+                          value="129.99"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="variant-remove"
+                      aria-label="Remove variant"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="ap-right">
+              <!-- Publish Status -->
+              <div class="ap-card">
+                <div class="ap-card-head"><h3>Publish Status</h3></div>
+                <div class="ap-fields">
+                  <div class="ap-status-toggle">
+                    <label class="ap-radio-option">
+                      <input
+                        type="radio"
+                        name="publishStatus"
+                        value="draft"
+                        checked
+                      />
+                      <span class="ap-radio-circle"></span>
+                      <div class="ap-radio-text">
+                        <strong>Draft</strong>
+                        <span>Save without publishing</span>
+                      </div>
+                    </label>
+                    <label class="ap-radio-option">
+                      <input
+                        type="radio"
+                        name="publishStatus"
+                        value="published"
+                      />
+                      <span class="ap-radio-circle"></span>
+                      <div class="ap-radio-text">
+                        <strong>Published</strong>
+                        <span>Visible to shoppers</span>
+                      </div>
+                    </label>
+                    <label class="ap-radio-option">
+                      <input
+                        type="radio"
+                        name="publishStatus"
+                        value="scheduled"
+                      />
+                      <span class="ap-radio-circle"></span>
+                      <div class="ap-radio-text">
+                        <strong>Scheduled</strong>
+                        <span>Publish on a set date</span>
+                      </div>
+                    </label>
+                  </div>
+                  <div
+                    class="ap-field scheduled-date"
+                    id="scheduledDate"
+                    style="display: none"
+                  >
+                    <label for="scheduleDate">Publish Date & Time</label>
+                    <input type="datetime-local" id="scheduleDate" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sale & Discount -->
+              <div class="ap-card" id="saleCard">
+                <div class="ap-card-head">
+                  <h3>Sale & Discount</h3>
+                  <label class="ap-toggle-switch">
+                    <input type="checkbox" id="saleToggle" />
+                    <span class="ap-toggle-track">
+                      <span class="ap-toggle-thumb"></span>
+                    </span>
+                  </label>
+                </div>
+                <div class="sale-disabled-overlay" id="saleOverlay">
+                  <div class="sale-locked-msg">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span>Enable the toggle to set up a sale</span>
+                  </div>
+                </div>
+                <div class="sale-fields" id="saleFields" style="display: none">
+                  <div class="ap-field">
+                    <label for="salePriceField"
+                      >Sale Price <span class="req">*</span></label
+                    >
+                    <div class="ap-input-prefix">
+                      <span>$</span>
+                      <input
+                        type="number"
+                        id="salePriceField"
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                    <span class="ap-field-hint"
+                      >Must be lower than the regular price.</span
+                    >
+                  </div>
+
+                  <div
+                    class="sale-discount-preview"
+                    id="discountPreview"
+                    style="display: none"
+                  >
+                    <div class="discount-circle">
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="19" y1="5" x2="5" y2="19" />
+                        <circle cx="6.5" cy="6.5" r="2.5" />
+                        <circle cx="17.5" cy="17.5" r="2.5" />
+                      </svg>
+                      <span class="discount-pct" id="discountPct">0%</span>
+                      <span class="discount-label">OFF</span>
+                    </div>
+                    <div class="discount-details">
+                      <div class="discount-row">
+                        <span>Regular price</span>
+                        <span class="discount-regular" id="discRegular"
+                          >$0.00</span
+                        >
+                      </div>
+                      <div class="discount-row">
+                        <span>Sale price</span>
+                        <span class="discount-sale" id="discSale">$0.00</span>
+                      </div>
+                      <div class="discount-row total">
+                        <span>Save option</span>
+                        <span class="discount-save" id="discSave">$0.00</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="ap-field">
+                    <label for="saleStartDate">Sale Start Date</label>
+                    <input type="datetime-local" id="saleStartDate" />
+                  </div>
+                  <div class="ap-field">
+                    <label for="saleEndDate">Sale End Date</label>
+                    <input type="datetime-local" id="saleEndDate" />
+                    <span class="ap-field-hint"
+                      >Leave empty for no automatic end.</span
+                    >
+                  </div>
+
+                  <div class="ap-field">
+                    <label for="saleBadge">Sale Badge Text</label>
+                    <input
+                      type="text"
+                      id="saleBadge"
+                      placeholder="e.g. Summer Sale, Flash Deal"
+                      maxlength="20"
+                    />
+                    <div class="ap-field-bottom">
+                      <span class="ap-field-hint"
+                        >Shown on the product card.</span
+                      >
+                      <span class="ap-char-count"
+                        ><span id="badgeCount">0</span>/20</span
+                      >
+                    </div>
+                  </div>
+
+                  <div class="ap-field">
+                    <label>Sale Badge Color</label>
+                    <div class="sale-color-options" id="saleColorOptions">
+                      <button
+                        type="button"
+                        class="sale-color-btn active"
+                        data-color="#ef4444"
+                        style="--c: #ef4444"
+                        aria-label="Red"
+                      >
+                        <span></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="sale-color-btn"
+                        data-color="#f97316"
+                        style="--c: #f97316"
+                        aria-label="Orange"
+                      >
+                        <span></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="sale-color-btn"
+                        data-color="#eab308"
+                        style="--c: #eab308"
+                        aria-label="Yellow"
+                      >
+                        <span></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="sale-color-btn"
+                        data-color="#22c55e"
+                        style="--c: #22c55e"
+                        aria-label="Green"
+                      >
+                        <span></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="sale-color-btn"
+                        data-color="#2563eb"
+                        style="--c: #2563eb"
+                        aria-label="Blue"
+                      >
+                        <span></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="sale-color-btn"
+                        data-color="#7c3aed"
+                        style="--c: #7c3aed"
+                        aria-label="Purple"
+                      >
+                        <span></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="sale-color-btn"
+                        data-color="#ec4899"
+                        style="--c: #ec4899"
+                        aria-label="Pink"
+                      >
+                        <span></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="sale-color-btn"
+                        data-color="#0f1724"
+                        style="--c: #0f1724"
+                        aria-label="Black"
+                      >
+                        <span></span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    class="sale-badge-preview"
+                    id="saleBadgePreview"
+                    style="display: none"
+                  >
+                    <span class="preview-label">Badge Preview</span>
+                    <div class="sale-mock-card">
+                      <div class="sale-mock-img">
+                        <img
+                          src="https://picsum.photos/seed/salepreview/300/300.jpg"
+                          alt="Preview"
+                        />
+                        <span
+                          class="sale-mock-badge"
+                          id="mockBadge"
+                          style="background: #ef4444"
+                          >SALE</span
+                        >
+                      </div>
+                      <div class="sale-mock-info">
+                        <span class="sale-mock-name">Product Name</span>
+                        <div class="sale-mock-prices">
+                          <span class="sale-mock-regular" id="mockRegular"
+                            >$129.99</span
+                          >
+                          <span
+                            class="sale-mock-sale"
+                            id="mockSalePrice"
+                            style="display: none"
+                            >$99.99</span
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Inventory -->
+              <div class="ap-card">
+                <div class="ap-card-head"><h3>Inventory</h3></div>
+                <div class="ap-fields">
+                  <div class="ap-field">
+                    <label for="prodStock"
+                      >Stock Quantity <span class="req">*</span></label
+                    >
+                    <input
+                      type="number"
+                      id="prodStock"
+                      placeholder="0"
+                      min="0"
+                      value="0"
+                      required
+                    />
+                  </div>
+                  <div class="ap-field">
+                    <label for="prodLowStock">Low Stock Threshold</label>
+                    <input
+                      type="number"
+                      id="prodLowStock"
+                      placeholder="e.g. 10"
+                      min="0"
+                      value="10"
+                    />
+                    <span class="ap-field-hint"
+                      >Alert when stock falls below this number.</span
+                    >
+                  </div>
+                  <div class="ap-field">
+                    <label>Stock Status</label>
+                    <div class="ap-stock-status-group">
+                      <label class="ap-stock-chip active" data-stock="in">
+                        <input
+                          type="radio"
+                          name="stockStatus"
+                          value="in"
+                          checked
+                        />
+                        <span>In Stock</span>
+                      </label>
+                      <label class="ap-stock-chip" data-stock="low">
+                        <input type="radio" name="stockStatus" value="low" />
+                        <span>Low Stock</span>
+                      </label>
+                      <label class="ap-stock-chip" data-stock="out">
+                        <input type="radio" name="stockStatus" value="out" />
+                        <span>Out of Stock</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Tags -->
+              <div class="ap-card">
+                <div class="ap-card-head"><h3>Tags</h3></div>
+                <div class="ap-fields">
+                  <div class="ap-tags-input-wrap" id="tagsWrap">
+                    <div class="ap-tags-list" id="tagsList"></div>
+                    <input
+                      type="text"
+                      id="tagInput"
+                      placeholder="Type and press Enter"
+                    />
+                  </div>
+                  <span class="ap-field-hint"
+                    >Press Enter or comma to add a tag. Click the X to
+                    remove.</span
+                  >
+                  <div class="ap-suggested-tags">
+                    <span class="suggested-label">Suggested:</span>
+                    <button
+                      type="button"
+                      class="suggested-tag"
+                      data-tag="new arrival"
+                    >
+                      New Arrival
+                    </button>
+                    <button
+                      type="button"
+                      class="suggested-tag"
+                      data-tag="bestseller"
+                    >
+                      Bestseller
+                    </button>
+                    <button
+                      type="button"
+                      class="suggested-tag"
+                      data-tag="summer"
+                    >
+                      Summer
+                    </button>
+                    <button
+                      type="button"
+                      class="suggested-tag"
+                      data-tag="limited edition"
+                    >
+                      Limited Edition
+                    </button>
+                    <button type="button" class="suggested-tag" data-tag="sale">
+                      Sale
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Actions -->
+          <div class="ap-bottom-bar">
+            <div class="ap-bottom-left">
+              <a href="admin_product.html" class="ap-cancel-btn">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Back to Products
+              </a>
+            </div>
+            <div class="ap-bottom-right">
+              <button type="button" class="ap-btn-secondary" id="saveDraftBtn">
+                Save as Draft
+              </button>
+              <button type="submit" class="ap-btn-primary" id="publishBtn">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Publish Product
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Success Toast -->
+        <div class="ap-toast" id="apToast">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+          <span id="apToastMsg">Product saved successfully!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="admin-modal-overlay" id="addCategoryModal" hidden>
+      <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="addCategoryTitle">
+        <div class="admin-modal-head">
+          <h3 id="addCategoryTitle">Add Category</h3>
+          <button type="button" class="admin-modal-close" id="addCategoryClose" aria-label="Close">&times;</button>
+        </div>
+        <div class="admin-modal-body">
+          <div class="form-field">
+            <label for="newCategoryName">Category Name <span class="req">*</span></label>
+            <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
+            <span class="form-error" id="newCategoryError"></span>
+          </div>
+          <div class="form-field category-image-field">
+            <label for="newCategoryImage">Category Image <span class="req">*</span></label>
+            <div class="category-image-upload" id="categoryImageUpload">
+              <input
+                type="file"
+                id="newCategoryImage"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+              />
+              <button type="button" class="category-image-dropzone" id="categoryImageDropzone">
+                <span class="category-image-placeholder" id="categoryImagePlaceholder">
+                  <span class="category-image-plus">+</span>
+                  <span>Choose an image</span>
+                  <small>PNG, JPG or WebP</small>
+                </span>
+                <img id="newCategoryImagePreview" alt="Category preview" hidden />
+              </button>
+              <button type="button" class="category-image-remove" id="removeCategoryImageBtn" hidden>
+                Remove image
+              </button>
+            </div>
+            <span class="form-error" id="newCategoryImageError"></span>
+          </div>
+        </div>
+        <div class="admin-modal-foot">
+          <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancel</button>
+          <button type="button" class="btn-primary" id="saveCategoryBtn">Add Category</button>
+        </div>
+      </div>
+    </div>
+    <script src="order-bubble.js"></script>
+    <script src="/script.js"></script>
+    <script src="add.js"></script>
+    <script src="../variant.js"></script>
+    <!--script src="/page/product.js"></script-->
+  </body>
+</html>

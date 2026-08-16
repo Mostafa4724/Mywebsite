@@ -1,0 +1,268 @@
+{
+  "rootFolder": "c:\\Users\\kc\\My website",
+  "analyzedAt": "2026-08-07T21:07:50.786Z",
+  "rootStructure": [
+    {
+      "name": ".gitignore",
+      "type": "file",
+      "size": 23,
+      "lines": 2
+    },
+    {
+      "name": "admin",
+      "type": "dir"
+    },
+    {
+      "name": "backend",
+      "type": "dir"
+    },
+    {
+      "name": "database",
+      "type": "dir"
+    },
+    {
+      "name": "index.html",
+      "type": "file",
+      "size": 3078,
+      "lines": 96
+    },
+    {
+      "name": "package.js",
+      "type": "file",
+      "size": 0,
+      "lines": 1
+    },
+    {
+      "name": "page",
+      "type": "dir"
+    },
+    {
+      "name": "script.js",
+      "type": "file",
+      "size": 44810,
+      "lines": 1325
+    },
+    {
+      "name": "stylle.css",
+      "type": "file",
+      "size": 109592,
+      "lines": 6240
+    }
+  ],
+  "rootFileSnippets": {
+    "index.html": [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "<meta charset=\"UTF-8\" />",
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />",
+      "<title>Website</title>",
+      "<link rel=\"stylesheet\" href=\"stylle.css\" />",
+      "</head>",
+      "<body>",
+      "<nav class=\"site-nav\">"
+    ],
+    "package.js": [
+      ""
+    ],
+    "script.js": [
+      "// =====  Cart System =====",
+      "function getCart() {",
+      "try {",
+      "return JSON.parse(sessionStorage.getItem(\"shopping_cart\")) || [];",
+      "} catch {",
+      "return [];",
+      "}",
+      "}",
+      "",
+      "function saveCart(cart) {"
+    ],
+    "stylle.css": [
+      "/* ===== Reset ===== */",
+      "*,",
+      "*::before,",
+      "*::after {",
+      "margin: 0;",
+      "padding: 0;",
+      "box-sizing: border-box;",
+      "}",
+      "",
+      "img {"
+    ]
+  },
+  "importantFolders": [
+    {
+      "path": "backend",
+      "category": "backend",
+      "fileCount": 28,
+      "primaryLanguage": "Python"
+    },
+    {
+      "path": "backend\\rout",
+      "category": "build",
+      "fileCount": 0
+    }
+  ],
+  "readmeParagraphs": {},
+  "totals": {
+    "numFiles": 68,
+    "numDirs": 12,
+    "totalSizeBytes": 3844547,
+    "totalLinesOfCode": 4771
+  },
+  "fileCategories": {
+    "other": 47,
+    "source": 19,
+    "test": 2
+  },
+  "linesOfCodePerLanguage": {
+    "JavaScript": 3908,
+    "Python": 863
+  },
+  "filesPerLanguage": {
+    "JavaScript": 12,
+    "Python": 7
+  },
+  "projectTypes": [],
+  "frameworks": [
+    "Flask"
+  ],
+  "entryPoints": [],
+  "ciCdTools": [],
+  "packageManagers": [],
+  "topLevelDirectories": [
+    {
+      "name": "admin",
+      "numFiles": 16,
+      "totalLoc": 1697,
+      "dominantLanguage": "JavaScript"
+    },
+    {
+      "name": "page",
+      "numFiles": 18,
+      "totalLoc": 885,
+      "dominantLanguage": "JavaScript"
+    },
+    {
+      "name": "backend",
+      "numFiles": 28,
+      "totalLoc": 863,
+      "dominantLanguage": "Python"
+    },
+    {
+      "name": "database",
+      "numFiles": 1,
+      "totalLoc": 0
+    }
+  ],
+  "detailedDirectories": [
+    {
+      "path": "admin",
+      "name": "admin",
+      "level": 1,
+      "numFiles": 16,
+      "totalLoc": 1697,
+      "dominantLanguage": "JavaScript",
+      "category": "General",
+      "description": "General module with 16 files (JavaScript)",
+      "subdirectories": []
+    },
+    {
+      "path": "page",
+      "name": "page",
+      "level": 1,
+      "numFiles": 18,
+      "totalLoc": 885,
+      "dominantLanguage": "JavaScript",
+      "category": "General",
+      "description": "General module with 18 files (JavaScript)",
+      "subdirectories": []
+    },
+    {
+      "path": "backend",
+      "name": "backend",
+      "level": 1,
+      "numFiles": 28,
+      "totalLoc": 863,
+      "dominantLanguage": "Python",
+      "category": "General",
+      "description": "General module with 28 files (Python)",
+      "subdirectories": [
+        {
+          "path": "backend\\uploads",
+          "name": "uploads",
+          "level": 2,
+          "numFiles": 21,
+          "totalLoc": 0,
+          "category": "General",
+          "description": "General module with 21 files",
+          "subdirectories": [
+            {
+              "path": "backend\\uploads\\products",
+              "name": "products",
+              "level": 3,
+              "numFiles": 21,
+              "totalLoc": 0,
+              "category": "General",
+              "description": "General module with 21 files",
+              "subdirectories": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "database",
+      "name": "database",
+      "level": 1,
+      "numFiles": 1,
+      "totalLoc": 0,
+      "category": "Data",
+      "description": "Data module with 1 files",
+      "subdirectories": []
+    }
+  ],
+  "architecturalInsights": {
+    "coreApplications": [],
+    "entryPointDetails": [],
+    "serviceArchitecture": {
+      "microservices": [],
+      "monoliths": [],
+      "libraries": []
+    },
+    "layeredArchitecture": {
+      "presentation": [],
+      "business": [],
+      "data": [
+        "database"
+      ],
+      "infrastructure": []
+    }
+  },
+  "largeFiles": [
+    {
+      "path": "backend\\uploads\\products\\a2ee1b1e-e25c-44ce-8a0a-feb7df568e7d_pig_.png",
+      "sizeMb": 2.4
+    }
+  ],
+  "dependencies": {
+    "production": [],
+    "development": [],
+    "total": 0
+  },
+  "complexity": {
+    "averageFileSize": 70.16176470588235,
+    "maxFileSize": 25165.824,
+    "nestedDepth": 0,
+    "estimatedComplexity": "low"
+  },
+  "gitRepo": {
+    "firstCommitDate": "2026-08-07",
+    "totalCommits": 101,
+    "numContributors": 0,
+    "currentBranch": "main",
+    "remoteUrls": [
+      "https://github.com/Mostafa4724/Mywebsite.git"
+    ]
+  }
+}

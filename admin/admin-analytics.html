@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics - Admin Panel</title>
+    <link rel="stylesheet" href="admin-analytics.css" />
+    <link rel="stylesheet" href="../stylle.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  </head>
+  <body class="admin-body">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo-icon">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+        </div>
+        <span>Admin Panel</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-link" data-section="overview">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" /></svg
+          >Overview
+        </a>
+        <a href="orders.html" class="sidebar-link" data-section="orders">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" /></svg
+          >Orders<span class="sidebar-badge" id="orderBubble" hidden></span>
+        </a>
+        <a
+          href="admin_product.html"
+          class="sidebar-link"
+          data-section="products"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+            /></svg
+          >Products
+        </a>
+        <a
+          href="admin-analytics.html"
+          class="sidebar-link active"
+          data-section="analytics"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" /></svg
+          >Analytics
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="../page/login.html" class="sidebar-logout" id="adminLogout">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" /></svg
+          >Log Out
+        </a>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div class="topbar-title">
+          <h2>Analytics Overview</h2>
+        </div>
+        <div class="topbar-right">
+          <div class="aa-period-toggle" id="periodToggle">
+            <button class="aa-period-btn" data-period="7d">7D</button>
+            <button class="aa-period-btn active" data-period="30d">30D</button>
+            <button class="aa-period-btn" data-period="90d">90D</button>
+            <button class="aa-period-btn" data-period="12m">12M</button>
+          </div>
+          <div class="admin-user-chip">
+            <div class="admin-user-avatar">A</div>
+            <span>Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="admin-content">
+        <section class="aa-kpi-grid" id="kpiGrid"></section>
+
+        <section class="aa-charts-row">
+          <div class="aa-card">
+            <div class="aa-card-head">
+              <h3>Revenue Trend</h3>
+              <span class="aa-card-hint" id="revenueHint">Last 30 days</span>
+            </div>
+            <div class="aa-chart-wrap">
+              <canvas id="revenueChart" height="260"></canvas>
+            </div>
+          </div>
+          <div class="aa-card">
+            <div class="aa-card-head">
+              <h3>Order Status</h3>
+              <span class="aa-card-hint">1,284 total</span>
+            </div>
+            <div class="aa-status-bars" id="statusBars"></div>
+          </div>
+        </section>
+
+        <section class="aa-charts-row aa-charts-row-bottom">
+          <div class="aa-card">
+            <div class="aa-card-head">
+              <h3>Revenue by Category</h3>
+              <span class="aa-card-hint">This period</span>
+            </div>
+            <div class="aa-donut-wrap">
+              <canvas id="donutChart" width="200" height="200"></canvas>
+              <div class="aa-donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
+          <div class="aa-card">
+            <div class="aa-card-head">
+              <h3>Weekly Comparison</h3>
+              <span class="aa-card-hint">Current vs Previous</span>
+            </div>
+            <div class="aa-weekly-bars" id="weeklyBars"></div>
+          </div>
+        </section>
+
+        <section class="aa-card" style="margin-top: 24px">
+          <div class="aa-card-head">
+            <h3>Top Products</h3>
+            <span class="aa-card-hint">By revenue</span>
+          </div>
+          <div class="aa-table-wrap">
+            <table class="aa-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Revenue</th>
+                  <th>Units Sold</th>
+                  <th>Conversion</th>
+                </tr>
+              </thead>
+              <tbody id="productTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+   
+    <div class="toast-container" id="toastContainer"></div>
+    <script src="order-bubble.js"></script>
+    <script src="admin-analytics.js"></script>
+  </body>
+</html>

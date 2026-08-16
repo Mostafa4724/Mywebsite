@@ -1,0 +1,26 @@
+/* Product variants — additive styles only */
+.variant-new-help{margin:0 0 12px;color:#64748b;font-size:13px}
+.variant-add-color{border:1px solid #cbd5e1;background:#fff;padding:9px 14px;border-radius:8px;cursor:pointer}
+.variant-card{border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:12px 0;background:#fff}
+.variant-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.variant-delete-color{border:0;background:none;color:#dc2626;cursor:pointer}
+.variant-color-row{display:grid;grid-template-columns:1fr 1.4fr .8fr;gap:14px;align-items:start}
+.variant-field{display:flex;flex-direction:column;gap:6px}
+.variant-field label,.variant-size-head label{font-size:12px;font-weight:600;color:#475569}
+.variant-field input,.variant-size-head select{padding:9px 10px;border:1px solid #cbd5e1;border-radius:7px;box-sizing:border-box}
+.variant-image-preview{height:110px;border:1px dashed #cbd5e1;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-top:4px;color:#94a3b8;font-size:12px}
+.variant-image-preview img{width:100%;height:100%;object-fit:contain}
+.variant-size-head{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:16px 0 8px}
+.variant-sizes{display:grid;gap:8px}
+.variant-size-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px;background:#f8fafc;border-radius:8px}
+.product-variants{margin-top:22px;padding-top:18px;border-top:1px solid #e2e8f0}
+.product-variants h3{margin:0 0 14px}
+.variant-label{font-size:13px;font-weight:700;margin:10px 0 7px}
+.product-color-options,.product-size-options{display:flex;flex-wrap:wrap;gap:8px}
+.product-color-option,.product-size-option{padding:9px 13px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;cursor:pointer}
+.product-color-option.selected,.product-size-option.selected{border-color:#111827;box-shadow:0 0 0 1px #111827}
+.variant-selected-image{width:110px;height:110px;margin:12px 0;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0}
+.variant-selected-image img{width:100%;height:100%;object-fit:contain}
+.variant-stock-text{font-size:13px;margin-top:10px;color:#475569}
+.cart-variant-info{font-size:13px;color:#64748b;margin:4px 0}
+@media(max-width:700px){.variant-color-row,.variant-size-row{grid-template-columns:1fr}}
