@@ -1262,9 +1262,12 @@ if (typeof setupPromoCode === "function") {
   // =============================================
   async function checkAdminAuth() {
     const token = sessionStorage.getItem("token");
+    const isAddProductPage = /(?:^|\/)admin\/add\.html$/i.test(window.location.pathname);
 
     if (!token) {
-      window.location.href = "/page/login.html";
+      if (!isAddProductPage) {
+        window.location.href = "/page/login.html";
+      }
       return false;
     }
 
@@ -1278,14 +1281,18 @@ if (typeof setupPromoCode === "function") {
       if (!response.ok) {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("auth_user");
-        window.location.href = "/page/login.html";
+        if (!isAddProductPage) {
+          window.location.href = "/page/login.html";
+        }
         return false;
       }
 
       const data = await response.json();
 
-      if (data.user.role !== "admin") {
-        window.location.href = "../page/home.html";
+      if (!data.user || data.user.role !== "admin") {
+        if (!isAddProductPage) {
+          window.location.href = "../page/home.html";
+        }
         return false;
       }
 
