@@ -69,83 +69,113 @@ async function loadProduct() {
     }
 
     const product = data.product;
-    const variants = Array.isArray(product.variants) ? product.variants : [];
-    let selectedVariant = null;
-    let selectedSize = null;
 
-    const imageFor = name => name ? `http://127.0.0.1:5000/uploads/products/${name}` : (product.image ? `http://127.0.0.1:5000/uploads/products/${product.image}` : "https://picsum.photos/500/400?random=" + product.id);
-    const baseImage = imageFor(product.image);
+    const image =
+        product.image && product.image !== ""
+            ? "http://127.0.0.1:5000/uploads/products/" + product.image
+            : "https://picsum.photos/500/400?random=" + product.id;
+
+    document.getElementById("product-name").textContent =
+        product.title;
+
     const originalPrice = Number(product.price ?? 0);
     const saleActive = isSaleActive(product);
-    const basePrice = saleActive && product.sale_price ? Number(product.sale_price) : originalPrice;
+    const price = saleActive && product.sale_price
+        ? Number(product.sale_price)
+        : originalPrice;
 
-    document.getElementById("product-name").textContent = product.title;
-    document.getElementById("product-brand").textContent = product.brand || "Unbranded";
-    document.getElementById("product-category").textContent = product.category || "Uncategorized";
-    document.getElementById("product-description").textContent = product.description || "";
+    document.getElementById("product-price").textContent =
+        "$" + price.toFixed(2);
 
-    const section=document.getElementById("productVariantsSection"), colors=document.getElementById("productColorList"), sizes=document.getElementById("productSizeList");
-    function setPrice(price){
-      document.getElementById("product-price").textContent="$"+Number(price||0).toFixed(2);
-      const original=document.getElementById("product-original-price");
-      if(selectedVariant && selectedSize){ original.textContent=""; original.style.display="none"; }
-      else if(product.sale_enabled && product.sale_price && originalPrice>basePrice){ original.textContent="$"+originalPrice.toFixed(2); original.style.display="block"; }
-      else { original.textContent=""; original.style.display="none"; }
+    const originalPriceEl = document.getElementById("product-original-price");
+    if (product.sale_enabled && product.sale_price && originalPrice > price) {
+        originalPriceEl.textContent = "$" + originalPrice.toFixed(2);
+        originalPriceEl.style.display = "block";
+    } else {
+        originalPriceEl.textContent = "";
+        originalPriceEl.style.display = "none";
     }
-    function renderSizes(){
-      sizes.innerHTML="";
-      if(!selectedVariant){return;}
-      selectedVariant.sizes.forEach(sz=>{
-        const b=document.createElement("button"); b.type="button"; b.className="product-size-btn"; b.textContent=`${sz.size} — $${Number(sz.price).toFixed(2)}`;
-        b.addEventListener("click",()=>{document.querySelectorAll(".product-size-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");selectedSize=sz;setPrice(sz.price);});
-        sizes.appendChild(b);
-      });
-      if(selectedVariant.sizes.length===0){sizes.innerHTML='<span>No sizes available</span>';selectedSize=null;}
-    }
-    function selectVariant(v, button){
-      selectedVariant=v; selectedSize=null;
-      document.querySelectorAll(".product-color-btn").forEach(x=>x.classList.remove("active")); if(button) button.classList.add("active");
-      document.getElementById("product-image").src=imageFor(v.image);
-      renderSizes();
-      if(v.sizes.length) setPrice(v.sizes[0].price); else setPrice(basePrice);
-      const badge=document.getElementById("availability-badge"), text=document.getElementById("availability-text");
-      if(Number(v.stock)<=0){badge.className="availability-badge out-of-stock";text.textContent="Out of Stock";} else if(Number(v.stock)<=5){badge.className="availability-badge low-stock";text.textContent=`Low Stock (${v.stock})`;} else {badge.className="availability-badge in-stock";text.textContent=`In Stock (${v.stock})`;}
-    }
-    if(variants.length){
-      section.style.display=""; colors.innerHTML="";
-      variants.forEach((v,i)=>{const b=document.createElement("button");b.type="button";b.className="product-color-btn";b.textContent=v.color;b.addEventListener("click",()=>selectVariant(v,b));colors.appendChild(b);if(i===0)selectVariant(v,b);});
-    } else {section.style.display="none";document.getElementById("product-image").src=baseImage;setPrice(basePrice);}
 
-    document.getElementById("addToCartBtn").onclick=()=>{
-      if(variants.length && (!selectedVariant || !selectedSize)){alert("Please choose a color and size.");return;}
-      const price=selectedSize?Number(selectedSize.price):basePrice;
-      const image=selectedVariant?imageFor(selectedVariant.image):baseImage;
-      const variantKey=selectedVariant?`${product.id}-${selectedVariant.id}-${selectedSize?.size||""}`:String(product.id);
-      addToCart(product.title,price,image,product.id,{variantId:selectedVariant?.id||null,color:selectedVariant?.color||"",size:selectedSize?.size||"",variantImage:selectedVariant?.image||product.image,stock:selectedVariant?.stock??product.stock,variantKey});
-    };
-    document.getElementById("buyNowBtn").onclick=async(e)=>{
-      e.preventDefault();
-      if(variants.length && (!selectedVariant || !selectedSize)){alert("Please choose a color and size.");return;}
-      const price=selectedSize?Number(selectedSize.price):basePrice;
-      const image=selectedVariant?imageFor(selectedVariant.image):baseImage;
-      const variantKey=selectedVariant?`${product.id}-${selectedVariant.id}-${selectedSize?.size||""}`:String(product.id);
-      const key=getBuyNowStorageKey(); if(key) sessionStorage.setItem(key,JSON.stringify({productId:product.id,name:product.title,price,image,quantity:1,variantId:selectedVariant?.id||null,color:selectedVariant?.color||"",size:selectedSize?.size||"",variantImage:selectedVariant?.image||product.image,variantKey}));
-      window.location.href="checkout.html";
-    };
+    document.getElementById("product-brand").textContent =
+        product.brand || "Unbranded";
+
+    document.getElementById("product-category").textContent =
+        product.category || "Uncategorized";
+
+    document.getElementById("product-description").textContent =
+        product.description;
+
+    document.getElementById("product-image").src =
+        image;
+    
+    document
+    .getElementById("addToCartBtn")
+    .addEventListener("click", () => {
+
+        addToCart(
+
+            product.title,
+
+            price,
+
+            image,
+
+            product.id
+
+        );
+
+    });
 
     const badge = document.getElementById("availability-badge");
+
     const text = document.getElementById("availability-text");
-    if(!variants.length){
-      const stockStatus=product.stock_status||"in";
-      if(stockStatus==="low"){badge.className="availability-badge low-stock";text.textContent="Low Stock";} else if(stockStatus==="out"){badge.className="availability-badge out-of-stock";text.textContent="Out of Stock";} else {badge.className="availability-badge in-stock";text.textContent="In Stock";}
-    }
+
+    const stockStatus = product.stock_status || "in";
+
     const saleCard = document.getElementById("product-sale-card");
     const saleBadge = document.getElementById("sale-badge");
     const salePriceText = document.getElementById("sale-price-text");
     const saleDiscountText = document.getElementById("sale-discount-text");
-    if(saleActive && product.sale_price && !variants.length){
-      saleCard.style.display="inline-flex"; saleBadge.textContent=product.sale_badge||"Sale"; saleBadge.style.background=product.sale_badge_color||"#f97316"; const discount=originalPrice>0?Math.round(((originalPrice-basePrice)/originalPrice)*100):0; salePriceText.textContent=`Now $${basePrice.toFixed(2)}`; saleDiscountText.textContent=`${discount}% off`;
-    } else saleCard.style.display="none";
+
+    if (saleActive && product.sale_price) {
+
+        saleCard.style.display = "inline-flex";
+
+        saleBadge.textContent = product.sale_badge || "Sale";
+        saleBadge.style.background = product.sale_badge_color || "#f97316";
+
+        const discount = originalPrice > 0
+            ? Math.round(((originalPrice - price) / originalPrice) * 100)
+            : 0;
+
+        salePriceText.textContent = `Now $${price.toFixed(2)}`;
+        saleDiscountText.textContent = `${discount}% off`;
+
+    } else {
+
+        saleCard.style.display = "none";
+
+    }
+
+    if (stockStatus === "low") {
+
+        badge.className = "availability-badge low-stock";
+
+        text.textContent = "Low Stock";
+
+    } else if (stockStatus === "out") {
+
+        badge.className = "availability-badge out-of-stock";
+
+        text.textContent = "Out of Stock";
+
+    } else {
+
+        badge.className = "availability-badge in-stock";
+
+        text.textContent = "In Stock";
+
+    }
 
 }
 

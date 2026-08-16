@@ -23,7 +23,6 @@ from werkzeug.utils import secure_filename
 from flask import current_app
 
 from flask import Blueprint, request, jsonify
-from variant import split_tags_and_variants, pack_tags_and_variants, process_variant_request
 
 
 
@@ -220,16 +219,10 @@ def add_product():
         sale_badge=data.get("sale_badge"),
         sale_badge_color=data.get("sale_badge_color"),
 
-        # Tags + variants (stored together in existing TEXT column)
-        tags=data.get("tags", ""),
+        # Tags
+        tags=data.get("tags", "")
 
     )
-
-    try:
-        variants = process_variant_request(request, current_app.config["UPLOAD_FOLDER"])
-    except ValueError as exc:
-        return jsonify({"success": False, "message": str(exc)}), 400
-    product.tags = pack_tags_and_variants(data.get("tags", ""), variants)
 
     db.session.add(product)
 
@@ -375,13 +368,7 @@ def edit_product(id):
     product.sale_end = sale_end
     product.sale_badge = (value("sale_badge", product.sale_badge) or "").strip() or None
     product.sale_badge_color = (value("sale_badge_color", product.sale_badge_color) or "").strip() or None
-    visible_tags = (value("tags", split_tags_and_variants(product.tags)[0]) or "").strip()
-    try:
-        existing_variants = split_tags_and_variants(product.tags)[1]
-        variants = process_variant_request(request, current_app.config["UPLOAD_FOLDER"], existing_variants)
-    except ValueError as exc:
-        return jsonify({"success": False, "message": str(exc)}), 400
-    product.tags = pack_tags_and_variants(visible_tags, variants)
+    product.tags = (value("tags", product.tags) or "").strip()
 
 # ===== INSERT NEW DEBUG CODE HERE =====
     print("========== IMAGE DEBUG (BACKEND) ==========")
