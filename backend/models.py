@@ -1,3 +1,4 @@
+from variant import split_tags_and_variants
 from werkzeug.security import (
     check_password_hash,
     generate_password_hash
@@ -335,7 +336,9 @@ class Product(db.Model):
 
             "sale_badge_color": self.sale_badge_color,
 
-            "tags": self.tags,
+            "tags": split_tags_and_variants(self.tags)[0],
+
+            "variants": split_tags_and_variants(self.tags)[1],
 
             "created_at": self.created_at,
 

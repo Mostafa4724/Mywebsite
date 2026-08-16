@@ -6,6 +6,7 @@
     <title>Edit Product - Admin Panel</title>
     <link rel="stylesheet" href="edit-product.css" />
     <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="../variant.css" />
   </head>
   <body class="admin-body">
     <aside class="admin-sidebar" id="adminSidebar">
@@ -223,17 +224,12 @@
               </div>
 
               <!-- Variants -->
-              <div class="ap-card">
+              <div class="ap-card variant-admin-card">
                 <div class="ap-card-head">
                   <h3>Variants</h3>
-                  <button type="button" class="ap-add-variant-btn" id="addVariantBtn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Add Variant
-                  </button>
+                  <button type="button" class="ap-add-variant-btn" id="addVariantBtn">+ Add Color</button>
                 </div>
+                <p class="variant-help">Existing colors, images, stock, sizes and prices are loaded here so they can be edited.</p>
                 <div class="ap-variants-list" id="variantsList"></div>
               </div>
             </div>
@@ -580,6 +576,7 @@
     </div>
     <script src="order-bubble.js"></script>
     <script src="/script.js"></script>
+    <script src="../variant.js"></script>
     <script src="edit-product.js"></script>
   </body>
 </html>
