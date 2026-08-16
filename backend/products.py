@@ -151,6 +151,18 @@ def add_product():
     sale_price = float(sale_price_value) if sale_price_value else None
     sale_enabled = _parse_bool(data.get("sale_enabled"))
 
+    # Tax is entered by the admin as a percentage (for example 9 means 9%).
+    # Keep it in the existing tax_class column for database compatibility.
+    raw_tax = data.get("tax_class", "8")
+    try:
+        tax_rate = float(raw_tax)
+    except (TypeError, ValueError):
+        legacy_rates = {"standard": 8.0, "reduced": 4.0, "zero": 0.0, "none": 0.0}
+        tax_rate = legacy_rates.get(str(raw_tax).strip().lower(), 8.0)
+    if not 0 <= tax_rate <= 100:
+        return jsonify({"success": False, "message": "Tax must be between 0% and 100%."}), 400
+    tax_class_value = str(tax_rate)
+
     if sale_price is not None and sale_price < price_value:
         sale_enabled = True
 
@@ -192,7 +204,7 @@ def add_product():
         stock_status=stock_status,
 
         # Tax
-        tax_class=data.get("tax_class", "standard"),
+        tax_class=tax_class_value,
 
         # Image
         image=filename,
@@ -340,7 +352,15 @@ def edit_product(id):
     product.stock = stock
     product.low_stock = low_stock
     product.stock_status = stock_status
-    product.tax_class = value("tax_class", product.tax_class or "standard")
+    raw_tax = value("tax_class", product.tax_class or "8")
+    try:
+        tax_rate = float(raw_tax)
+    except (TypeError, ValueError):
+        legacy_rates = {"standard": 8.0, "reduced": 4.0, "zero": 0.0, "none": 0.0}
+        tax_rate = legacy_rates.get(str(raw_tax).strip().lower(), 8.0)
+    if not 0 <= tax_rate <= 100:
+        return jsonify({"success": False, "message": "Tax must be between 0% and 100%."}), 400
+    product.tax_class = str(tax_rate)
     product.status = status
     product.scheduled_date = scheduled_date
     product.sale_enabled = sale_enabled
