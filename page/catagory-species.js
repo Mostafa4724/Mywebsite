@@ -1,3 +1,17 @@
+function isStorefrontProductVisible(product) {
+  const status = String(product && product.status || "draft").toLowerCase();
+
+  if (status === "published") return true;
+
+  if (status === "scheduled") {
+    if (!product.scheduled_date) return false;
+    const scheduled = new Date(product.scheduled_date);
+    return !Number.isNaN(scheduled.getTime()) && new Date() >= scheduled;
+  }
+
+  return false;
+}
+
 // SHOP_API_BASE is provided globally by /script.js (loaded first).
 const params = new URLSearchParams(window.location.search);
 const categoryId = params.get("category");
@@ -62,14 +76,16 @@ async function loadCategoryProducts() {
 
     productGrid.innerHTML = "";
 
-    if (data.products.length === 0) {
+    const visibleProducts = data.products.filter(isStorefrontProductVisible);
+
+    if (visibleProducts.length === 0) {
       showEmptyMessage();
       return;
     }
 
-    if (heroCount) heroCount.textContent = data.products.length + " Products";
+    if (heroCount) heroCount.textContent = visibleProducts.length + " Products";
 
-    data.products.forEach(function (product, index) {
+    visibleProducts.forEach(function (product, index) {
       var card = renderProductCard(product, index);
       productGrid.appendChild(card);
     });

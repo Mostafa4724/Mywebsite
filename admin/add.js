@@ -888,12 +888,8 @@
     );
 
     // --- Tax ---------------------------------------------------------------
-    const taxPercentage = prodTax ? parseFloat(prodTax.value) : 0;
+    fd.append("tax_class", prodTax ? prodTax.value : "standard");
 
-    fd.append(
-      "tax_percentage",
-      String(Number.isFinite(taxPercentage) ? taxPercentage : 0)
-    );
     // --- Publish status ----------------------------------------------------
     const publishStatus = document.querySelector(
       'input[name="publishStatus"]:checked'

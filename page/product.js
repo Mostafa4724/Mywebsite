@@ -70,6 +70,19 @@ async function loadProduct() {
 
     const product = data.product;
 
+    const productStatus = String(product.status || "draft").toLowerCase();
+    if (productStatus === "draft") {
+        alert("Product not found");
+        return;
+    }
+
+    if (productStatus === "scheduled") {
+        if (!product.scheduled_date || new Date() < new Date(product.scheduled_date)) {
+            alert("Product not found");
+            return;
+        }
+    }
+
     const image =
         product.image && product.image !== ""
             ? "http://127.0.0.1:5000/uploads/products/" + product.image

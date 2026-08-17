@@ -205,19 +205,13 @@
                     </div>
                   </div>
                   <div class="ap-field">
-                    <label for="prodTax">Tax (%)</label>
-                    <div class="ap-input-prefix">
-                      <input
-                        type="number"
-                        id="prodTax"
-                        placeholder="8"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        value="8"
-                      />
-                      <span>%</span>
-                    </div>
+                    <label>Tax Class</label>
+                    <select id="prodTax">
+                      <option value="standard" selected>Standard (8%)</option>
+                      <option value="reduced">Reduced (4%)</option>
+                      <option value="zero">Zero (0%)</option>
+                      <option value="none">None</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -547,29 +541,6 @@
             <label for="newCategoryName">Category Name <span class="req">*</span></label>
             <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
             <span class="form-error" id="newCategoryError"></span>
-          </div>
-          <div class="form-field category-image-field">
-            <label for="newCategoryImage">Category Image <span class="req">*</span></label>
-            <div class="category-image-upload" id="categoryImageUpload">
-              <input
-                type="file"
-                id="newCategoryImage"
-                accept="image/png,image/jpeg,image/webp"
-                hidden
-              />
-              <button type="button" class="category-image-dropzone" id="categoryImageDropzone">
-                <span class="category-image-placeholder" id="categoryImagePlaceholder">
-                  <span class="category-image-plus">+</span>
-                  <span>Choose an image</span>
-                  <small>PNG, JPG or WebP</small>
-                </span>
-                <img id="newCategoryImagePreview" alt="Category preview" hidden />
-              </button>
-              <button type="button" class="category-image-remove" id="removeCategoryImageBtn" hidden>
-                Remove image
-              </button>
-            </div>
-            <span class="form-error" id="newCategoryImageError"></span>
           </div>
         </div>
         <div class="admin-modal-foot">

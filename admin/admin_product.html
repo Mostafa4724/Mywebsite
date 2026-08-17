@@ -186,11 +186,44 @@
           </button>
         </div>
 
-        <div class="products-grid" id="adminProductsGrid">
-          <div class="admin-products-message" id="adminProductsMessage">
-            Loading products...
+        <section class="admin-product-section" data-status-section="published">
+          <div class="admin-product-section-head">
+            <div>
+              <h3>Published Products</h3>
+              <p>Products currently visible to shoppers.</p>
+            </div>
+            <span class="admin-product-section-count" id="publishedProductsCount">0</span>
           </div>
-        </div>
+          <div class="products-grid" id="publishedProductsGrid">
+            <div class="admin-products-message">Loading products...</div>
+          </div>
+        </section>
+
+        <section class="admin-product-section" data-status-section="draft">
+          <div class="admin-product-section-head">
+            <div>
+              <h3>Draft Products</h3>
+              <p>Products saved as drafts and hidden from shoppers.</p>
+            </div>
+            <span class="admin-product-section-count draft" id="draftProductsCount">0</span>
+          </div>
+          <div class="products-grid" id="draftProductsGrid">
+            <div class="admin-products-message">No draft products.</div>
+          </div>
+        </section>
+
+        <section class="admin-product-section" data-status-section="scheduled">
+          <div class="admin-product-section-head">
+            <div>
+              <h3>Scheduled Products</h3>
+              <p>Products waiting for their publish date.</p>
+            </div>
+            <span class="admin-product-section-count scheduled" id="scheduledProductsCount">0</span>
+          </div>
+          <div class="products-grid" id="scheduledProductsGrid">
+            <div class="admin-products-message">No scheduled products.</div>
+          </div>
+        </section>
       </div>
     </div>
 

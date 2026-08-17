@@ -1,3 +1,17 @@
+function isStorefrontProductVisible(product) {
+  const status = String(product && product.status || "draft").toLowerCase();
+
+  if (status === "published") return true;
+
+  if (status === "scheduled") {
+    if (!product.scheduled_date) return false;
+    const scheduled = new Date(product.scheduled_date);
+    return !Number.isNaN(scheduled.getTime()) && new Date() >= scheduled;
+  }
+
+  return false;
+}
+
 const productsContainer = document.getElementById("product-container");
 
 // ==========================================================================
@@ -49,7 +63,9 @@ async function loadProducts() {
 
     productsContainer.innerHTML = "";
 
-    data.products.forEach((product, index) => {
+    const visibleProducts = data.products.filter(isStorefrontProductVisible);
+
+    visibleProducts.forEach((product, index) => {
       appendProductCard(product, index);
     });
   } catch (err) {
