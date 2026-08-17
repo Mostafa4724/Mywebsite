@@ -79,7 +79,7 @@
       <div class="admin-content">
         <!-- Breadcrumb -->
         <div class="ap-breadcrumb">
-          <a href="admin_product.html">Products</a>
+          <a href="admin_product.html">Products<span class="sidebar-badge" id="lowStockBubble" hidden></span></a>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6" />
           </svg>
@@ -106,38 +106,26 @@
               <!-- Images -->
               <div class="ap-card">
                 <div class="ap-card-head">
-                  <h3>Product Image</h3>
-                  <span class="ap-card-hint">PNG, JPG, WebP up to 5MB</span>
+                  <h3>Product Images</h3>
+                  <span class="ap-card-hint">Keep, remove or add up to 5 images</span>
                 </div>
                 <div class="ap-upload-area" id="uploadArea">
-                  <!-- SIMPLIFIED FILE INPUT USING LABEL -->
                   <label for="imageInput" class="upload-label">
-                    <span class="upload-label-icon">📁</span>
-                    Choose Image
+                    <span class="upload-label-icon">+</span>
+                    Add Images
                   </label>
-                  <input type="file" id="imageInput" name="image" accept="image/png,image/jpeg,image/webp" />
-
-                  <!-- Preview container -->
-                  <div id="imagePreviewContainer" style="margin-top:12px; display:flex; justify-content:center;">
-                    <img id="imagePreview" src="" alt="Preview" style="max-width:100%; max-height:200px; display:none; border-radius:8px; border:1px solid #e2e8f0;" />
-                  </div>
-
-                  <!-- Current image placeholder (hidden by default) -->
-                  <div id="currentImageInfo" style="margin-top:8px; font-size:0.85rem; color:#64748b; display:none;">
-                    Current image: <span id="currentImageName"></span>
-                  </div>
-
+                  <input type="file" id="imageInput" name="images" accept="image/png,image/jpeg,image/webp" multiple hidden />
+                  <div id="editImageGrid" class="ap-preview-grid"></div>
                   <div class="upload-placeholder" id="uploadPlaceholder">
                     <div class="upload-icon">
                       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
                         <circle cx="8.5" cy="8.5" r="1.5" />
                         <polyline points="21 15 16 10 5 21" />
                       </svg>
                     </div>
-                    <p class="upload-main-text">Select an image</p>
-                    <p class="upload-sub-text">Click the button above</p>
-                    <p class="upload-formats">PNG, JPG, WebP up to 5MB</p>
+                    <p class="upload-main-text">Add product images</p>
+                    <p class="upload-sub-text">PNG, JPG or WebP up to 5MB each</p>
                   </div>
                 </div>
               </div>
@@ -219,14 +207,11 @@
               <!-- Variants -->
               <div class="ap-card">
                 <div class="ap-card-head">
-                  <h3>Variants</h3>
-                  <button type="button" class="ap-add-variant-btn" id="addVariantBtn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Add Variant
-                  </button>
+                  <div>
+                    <h3>Variants</h3>
+                    <span class="ap-card-hint">Keep, edit or remove colors; each color owns its stock and sizes.</span>
+                  </div>
+                  <button type="button" class="ap-add-variant-btn" id="addVariantBtn">+ Add Color</button>
                 </div>
                 <div class="ap-variants-list" id="variantsList"></div>
               </div>

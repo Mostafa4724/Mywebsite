@@ -590,39 +590,164 @@
   });
 
   // ---------------------------------------------------------------------------
-  // Variants (UI only — the backend has no variants table yet)
+  // Variants: color groups with their own image, stock and 1–7 sizes.
   // ---------------------------------------------------------------------------
-  function bindVariantRemove() {
-    if (!variantsList) return;
-    variantsList.querySelectorAll(".variant-remove").forEach((btn) => {
-      if (btn.dataset.bound === "1") return;
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", () => {
-        if (variantsList.children.length > 0) {
-          const row = btn.closest(".ap-variant-row");
-          row.style.transition = "all 0.2s";
-          row.style.opacity = "0";
-          row.style.transform = "translateY(-8px)";
-          setTimeout(() => row.remove(), 200);
-        }
-      });
+  function newVariantId() {
+    return "new-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function variantRowTemplate(variantId) {
+    const row = document.createElement("div");
+    row.className = "ap-variant-group";
+    row.dataset.variantId = variantId;
+    row.innerHTML = `
+      <div class="ap-variant-group-head">
+        <strong>Color Variant</strong>
+        <button type="button" class="variant-remove" aria-label="Remove color">Remove</button>
+      </div>
+      <div class="ap-row-2">
+        <div class="variant-field">
+          <label>Color name</label>
+          <input type="text" class="variant-color-input" placeholder="e.g. Blue" />
+        </div>
+        <div class="variant-field">
+          <label>Stock quantity</label>
+          <input type="number" class="variant-stock-input" min="0" value="0" />
+        </div>
+      </div>
+      <div class="variant-field">
+        <label>Color image</label>
+        <input type="file" class="variant-image-input" accept="image/png,image/jpeg,image/webp" />
+        <div class="variant-image-preview"></div>
+      </div>
+      <div class="variant-sizes">
+        <div class="ap-variant-group-head">
+          <label>Sizes (1–7)</label>
+          <select class="variant-size-count">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+          </select>
+        </div>
+        <div class="variant-size-list"></div>
+      </div>
+    `;
+    const count = row.querySelector(".variant-size-count");
+    const sizeList = row.querySelector(".variant-size-list");
+    function renderSizes() {
+      const n = Number(count.value) || 1;
+      sizeList.innerHTML = "";
+      for (let i = 0; i < n; i++) {
+        const size = document.createElement("div");
+        size.className = "ap-row-2 variant-size-row";
+        size.innerHTML = `
+          <div class="variant-field">
+            <label>Size ${i + 1}</label>
+            <input type="text" class="variant-size-input" placeholder="e.g. M" />
+          </div>
+          <div class="variant-field">
+            <label>Price</label>
+            <div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-price-input" min="0" step="0.01" placeholder="0.00" /></div>
+          </div>`;
+        sizeList.appendChild(size);
+      }
+    }
+    count.addEventListener("change", renderSizes);
+    row.querySelector(".variant-image-input").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      const preview = row.querySelector(".variant-image-preview");
+      preview.innerHTML = "";
+      if (file) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.alt = "Color preview";
+        preview.appendChild(img);
+      }
     });
+    row.querySelector(".variant-remove").addEventListener("click", () => row.remove());
+    renderSizes();
+    return row;
+  }
+
+  function addVariantGroup() {
+    if (!variantsList) return;
+    variantsList.appendChild(variantRowTemplate(newVariantId()));
   }
 
   if (addVariantBtn && variantsList) {
-    addVariantBtn.addEventListener("click", () => {
-      const row = document.createElement("div");
-      row.className = "ap-variant-row";
-      row.innerHTML =
-        '<div class="variant-field"><label>Size</label><select class="variant-select"><option value="xs">XS</option><option value="s">S</option><option value="m" selected>M</option><option value="l">L</option><option value="xl">XL</option><option value="xxl">XXL</option></select></div>' +
-        '<div class="variant-field"><label>Color</label><input type="text" class="variant-input" placeholder="e.g. White" /></div>' +
-        '<div class="variant-field"><label>Stock</label><input type="number" class="variant-input" placeholder="0" min="0" value="0" /></div>' +
-        '<div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-input" placeholder="0.00" step="0.01" min="0" /></div></div>' +
-        '<button type="button" class="variant-remove" aria-label="Remove variant"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-      variantsList.appendChild(row);
-      bindVariantRemove();
+    addVariantBtn.addEventListener("click", addVariantGroup);
+  }
+
+  function validateVariants() {
+    const groups = Array.from(variantsList ? variantsList.querySelectorAll(".ap-variant-group") : []);
+    const seenColors = new Set();
+
+    for (let i = 0; i < groups.length; i++) {
+      const row = groups[i];
+      const color = row.querySelector(".variant-color-input")?.value.trim() || "";
+      if (!color) {
+        showToast(`Color variant ${i + 1} needs a color name.`);
+        row.querySelector(".variant-color-input")?.focus();
+        return false;
+      }
+
+      const key = color.toLowerCase();
+      if (seenColors.has(key)) {
+        showToast(`Duplicate color variant: ${color}.`);
+        row.querySelector(".variant-color-input")?.focus();
+        return false;
+      }
+      seenColors.add(key);
+
+      const sizeRows = Array.from(row.querySelectorAll(".variant-size-row"));
+      if (!sizeRows.length) {
+        showToast(`${color} must have at least one size.`);
+        return false;
+      }
+
+      const seenSizes = new Set();
+      for (let j = 0; j < sizeRows.length; j++) {
+        const size = sizeRows[j].querySelector(".variant-size-input")?.value.trim() || "";
+        const price = Number(sizeRows[j].querySelector(".variant-price-input")?.value || 0);
+        if (!size) {
+          showToast(`${color}: Size ${j + 1} needs a name.`);
+          sizeRows[j].querySelector(".variant-size-input")?.focus();
+          return false;
+        }
+        const sizeKey = size.toLowerCase();
+        if (seenSizes.has(sizeKey)) {
+          showToast(`Duplicate size ${size} for ${color}.`);
+          sizeRows[j].querySelector(".variant-size-input")?.focus();
+          return false;
+        }
+        seenSizes.add(sizeKey);
+        if (!Number.isFinite(price) || price < 0) {
+          showToast(`${color} / ${size}: price must be a valid non-negative number.`);
+          sizeRows[j].querySelector(".variant-price-input")?.focus();
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function collectVariants(fd) {
+    const groups = Array.from(variantsList ? variantsList.querySelectorAll(".ap-variant-group") : []);
+    const variants = groups.map((row) => {
+      const id = row.dataset.variantId;
+      const color = row.querySelector(".variant-color-input")?.value.trim() || "";
+      const stock = Number(row.querySelector(".variant-stock-input")?.value || 0);
+      const sizes = Array.from(row.querySelectorAll(".variant-size-row")).map((sizeRow) => ({
+        size: sizeRow.querySelector(".variant-size-input")?.value.trim() || "",
+        price: Number(sizeRow.querySelector(".variant-price-input")?.value || 0),
+      }));
+      const imageInput = row.querySelector(".variant-image-input");
+      if (imageInput?.files?.[0]) {
+        fd.append("variant_image_" + id, imageInput.files[0], imageInput.files[0].name);
+      }
+      return { id, color, stock, sizes };
     });
-    bindVariantRemove();
+    fd.append("variant_data", JSON.stringify(variants));
+    return variants;
   }
 
   // ---------------------------------------------------------------------------
@@ -914,10 +1039,16 @@
     // --- Tags --------------------------------------------------------------
     fd.append("tags", tags.join(","));
 
-    // --- Image -------------------------------------------------------------
-    const mainImage = getMainImageFile();
-    if (mainImage) fd.append("image", mainImage);
+    // --- Images ------------------------------------------------------------
+    const imageFiles =
+      window.ProductImages && typeof window.ProductImages.getFiles === "function"
+        ? window.ProductImages.getFiles()
+        : [];
+    imageFiles.forEach((file) => fd.append("images", file, file.name));
+    // Backward-compatible main image field for older backend builds.
+    if (imageFiles[0]) fd.append("image", imageFiles[0], imageFiles[0].name);
 
+    collectVariants(fd);
     return fd;
   }
 
@@ -949,6 +1080,7 @@
 
     if (!validateForm()) return;
     if (!validateSale()) return;
+    if (!validateVariants()) return;
 
     setBusy(true, "Saving...");
 

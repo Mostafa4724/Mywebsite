@@ -84,15 +84,21 @@ function money(value) {
 function compactMoney(value) {
     const number = Number(value) || 0;
 
+    if (number >= 1000000000) {
+        return "$" + trimCompact(number / 1000000000) + "B";
+    }
     if (number >= 1000000) {
-        return "$" + (number / 1000000).toFixed(1) + "M";
+        return "$" + trimCompact(number / 1000000) + "M";
     }
-
     if (number >= 1000) {
-        return "$" + (number / 1000).toFixed(1) + "k";
+        return "$" + trimCompact(number / 1000) + "K";
     }
-
     return "$" + Math.round(number);
+
+}
+
+function trimCompact(value) {
+    return Number(value.toFixed(1)).toString();
 }
 
 
@@ -357,11 +363,7 @@ function isValidOrder(order) {
             .toLowerCase()
             .trim();
 
-    return ![
-        "cancelled",
-        "canceled",
-        "refunded",
-    ].includes(status);
+    return status === "delivered" && Boolean(order?.revenue_recognized_at);
 }
 
 

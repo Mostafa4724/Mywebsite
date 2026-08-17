@@ -20,6 +20,30 @@ function appendProductCard(product, index) {
   const card = wrapper.firstChild;
   productsContainer.appendChild(card);
 
+  const images = (card.dataset.images || "").split("|").filter(Boolean);
+  if (images.length > 1) {
+    let current = 0;
+    const layers = Array.from(card.querySelectorAll(".product-card-img"));
+    const timer = setInterval(() => {
+      if (!document.body.contains(card)) {
+        clearInterval(timer);
+        return;
+      }
+      layers[current]?.classList.remove("active");
+      if (layers[current]) {
+        layers[current].style.opacity = "0";
+        layers[current].style.transform = "scale(1.02)";
+      }
+      current = (current + 1) % layers.length;
+      if (layers[current]) {
+        layers[current].classList.add("active");
+        layers[current].style.opacity = "1";
+        layers[current].style.transform = "scale(1)";
+      }
+    }, 3000);
+    card._imageRotationTimer = timer;
+  }
+
   // Bind Add to Cart while leaving the rest of the card clickable (navigates
   // to product.html?id=... via the wrapper link built in buildProductCard).
   const button = card.querySelector(".add-to-cart-btn");
@@ -51,6 +75,9 @@ async function loadProducts() {
       return;
     }
 
+    productsContainer.querySelectorAll(".product-card").forEach((card) => {
+      if (card._imageRotationTimer) clearInterval(card._imageRotationTimer);
+    });
     productsContainer.innerHTML = "";
 
     const visibleProducts = data.products.filter(isStorefrontProductVisible);

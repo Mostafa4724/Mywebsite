@@ -1,3 +1,5 @@
+import json
+
 from werkzeug.security import (
     check_password_hash,
     generate_password_hash
@@ -71,6 +73,20 @@ def _local_datetime_string(value):
     if value is None:
         return None
     return value.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def _product_images(product):
+    """Return the product's real image collection with legacy-image fallback."""
+    try:
+        values = json.loads(product.images or "[]")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        values = []
+    if not isinstance(values, list):
+        values = []
+    result = [str(v) for v in values if isinstance(v, str) and v.strip()]
+    if product.image and product.image not in result:
+        result.insert(0, product.image)
+    return result[:5]
 
 
 
@@ -202,6 +218,12 @@ class Product(db.Model):
         db.String(500)
     )
 
+    # JSON array of up to five product image filenames. ``image`` remains the
+    # legacy/main-image field for backward compatibility.
+    images = db.Column(
+        db.Text
+    )
+
     # ---------------------------------------------------------
     # Publish
     # ---------------------------------------------------------
@@ -265,6 +287,14 @@ class Product(db.Model):
         onupdate=datetime.utcnow
     )
 
+    variants = db.relationship(
+        "ProductVariant",
+        backref="product",
+        lazy=True,
+        cascade="all, delete-orphan",
+        order_by="ProductVariant.id",
+    )
+
     reviews = db.relationship(
         "Review",
         backref="product",
@@ -304,6 +334,13 @@ class Product(db.Model):
 
             "image": self.image,
 
+            "images": _product_images(self),
+
+            "variants": [
+                variant.to_dict()
+                for variant in self.variants
+            ],
+
             "status": self.status,
 
             "scheduled_date": _local_datetime_string(self.scheduled_date),
@@ -328,6 +365,53 @@ class Product(db.Model):
                 review.to_dict()
                 for review in self.reviews
             ],
+        }
+
+
+class ProductVariant(db.Model):
+
+    __tablename__ = "product_variants"
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False, index=True)
+    color = db.Column(db.String(100), nullable=False)
+    image = db.Column(db.String(500), nullable=True)
+    stock = db.Column(db.Integer, nullable=False, default=0)
+
+    sizes = db.relationship(
+        "VariantSize",
+        backref="variant",
+        lazy=True,
+        cascade="all, delete-orphan",
+        order_by="VariantSize.id",
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "product_id": self.product_id,
+            "color": self.color,
+            "image": self.image,
+            "stock": max(0, int(self.stock or 0)),
+            "sizes": [size.to_dict() for size in self.sizes],
+        }
+
+
+class VariantSize(db.Model):
+
+    __tablename__ = "variant_sizes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    variant_id = db.Column(db.Integer, db.ForeignKey("product_variants.id"), nullable=False, index=True)
+    size = db.Column(db.String(50), nullable=False)
+    price = db.Column(db.Float, nullable=False, default=0)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "variant_id": self.variant_id,
+            "size": self.size,
+            "price": self.price,
         }
 
 
@@ -475,6 +559,12 @@ class Order(db.Model):
         default="card"
     )
 
+    payment_status = db.Column(db.String(30), default="pending")
+    payment_verified_at = db.Column(db.DateTime, nullable=True)
+    payment_verified_by = db.Column(db.Integer, nullable=True)
+    revenue_recognized_at = db.Column(db.DateTime, nullable=True)
+    revenue_recognized_by = db.Column(db.Integer, nullable=True)
+
     # ---------------------------------------------------------
     # Pricing
     # ---------------------------------------------------------
@@ -558,6 +648,11 @@ class Order(db.Model):
             "customer_lng": self.customer_lng,
 
             "payment_method": self.payment_method,
+            "payment_status": self.payment_status,
+            "payment_verified_at": _local_datetime_string(self.payment_verified_at),
+            "payment_verified_by": self.payment_verified_by,
+            "revenue_recognized_at": _local_datetime_string(self.revenue_recognized_at),
+            "revenue_recognized_by": self.revenue_recognized_by,
 
             "subtotal": self.subtotal,
 
@@ -609,9 +704,20 @@ class OrderItem(db.Model):
         db.String(200)
     )
 
+    variant_id = db.Column(db.Integer, nullable=True)
+    color = db.Column(db.String(100), nullable=True)
+    size = db.Column(db.String(50), nullable=True)
+    variant_image = db.Column(db.String(500), nullable=True)
+
     # ADD THIS
     image = db.Column(
         db.String(500)
+    )
+
+    # JSON array of up to five product image filenames. ``image`` remains the
+    # legacy/main-image field for backward compatibility.
+    images = db.Column(
+        db.Text
     )
 
     quantity = db.Column(
@@ -655,6 +761,10 @@ class OrderItem(db.Model):
             "product_id": self.product_id,
 
             "product_name": self.product_name,
+            "variant_id": self.variant_id,
+            "color": self.color,
+            "size": self.size,
+            "variant_image": self.variant_image,
 
             # ADD THIS
             "image": self.image,

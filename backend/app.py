@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import json
 
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
@@ -19,7 +20,7 @@ from auth import auth_bp
 from categories import categories_bp
 
 from database import db
-from models import User
+from models import User, Product, ProductVariant, VariantSize
 from config import Config
 from security import admin_required
 from datetime import datetime, timedelta
@@ -136,10 +137,12 @@ def admin_dashboard():
     products = Product.query.all()
     users = User.query.all()
 
-    # Revenue is based on non-cancelled orders.
+    # Revenue is recognized only once an order has been delivered and the
+    # server has stamped revenue_recognized_at.
     valid_orders = [
         o for o in orders
-        if (o.status or "").lower() not in {"cancelled", "refunded"}
+        if (o.status or "").lower() == "delivered"
+        and getattr(o, "revenue_recognized_at", None) is not None
     ]
 
     revenue = sum(float(o.total or 0) for o in valid_orders)
@@ -221,7 +224,8 @@ def admin_dashboard():
 
     low_stock = sum(
         1 for p in products
-        if (p.stock or 0) <= (p.low_stock if p.low_stock is not None else 10)
+        if (p.stock or 0) > 0
+        and (p.stock or 0) <= (p.low_stock if p.low_stock is not None else 10)
     )
 
     return jsonify({
@@ -237,6 +241,25 @@ def admin_dashboard():
         "best_sellers": best_sellers,
         "monthly_sales": monthly,
     })
+
+# ============================================================
+# Bank-transfer instructions
+# ============================================================
+
+@app.route("/payment-settings", methods=["GET"])
+def payment_settings():
+    """Public checkout instructions; never exposes secret credentials."""
+    return jsonify({
+        "success": True,
+        "bank_transfer": {
+            "bank_name": os.environ.get("BANK_NAME", "Store bank account"),
+            "account_name": os.environ.get("BANK_ACCOUNT_NAME", "Configured store account"),
+            "account_number": os.environ.get("BANK_ACCOUNT_NUMBER", ""),
+            "routing_number": os.environ.get("BANK_ROUTING_NUMBER", ""),
+            "reference_note": "Use your order number as the transfer reference.",
+        },
+    })
+
 
 # ============================================================
 # Product Uploads
@@ -443,6 +466,13 @@ def migrate():
             "DATETIME",
         )
 
+        _ensure_column(
+            conn,
+            "products",
+            "images",
+            "TEXT",
+        )
+
         # ----------------------------------------------------
         # Order Items
         # ----------------------------------------------------
@@ -488,6 +518,165 @@ def migrate():
             "total",
             "FLOAT",
         )
+
+        _ensure_column(
+            conn,
+            "order_items",
+            "variant_id",
+            "INTEGER",
+        )
+        _ensure_column(
+            conn,
+            "order_items",
+            "color",
+            "VARCHAR(100)",
+        )
+        _ensure_column(
+            conn,
+            "order_items",
+            "size",
+            "VARCHAR(50)",
+        )
+        _ensure_column(
+            conn,
+            "order_items",
+            "variant_image",
+            "VARCHAR(500)",
+        )
+
+        # JSON array of up to five product images captured on the order item.
+        # Required by the OrderItem ORM model and safe for existing databases.
+        _ensure_column(
+            conn,
+            "order_items",
+            "images",
+            "TEXT",
+        )
+
+        # ----------------------------------------------------
+        # Payment / revenue state
+        # ----------------------------------------------------
+        _ensure_column(conn, "orders", "payment_status", "VARCHAR(30)")
+        _ensure_column(conn, "orders", "payment_verified_at", "DATETIME")
+        _ensure_column(conn, "orders", "payment_verified_by", "INTEGER")
+        _ensure_column(conn, "orders", "revenue_recognized_at", "DATETIME")
+        _ensure_column(conn, "orders", "revenue_recognized_by", "INTEGER")
+
+        # Backfill the new image JSON from the legacy single image column.
+        rows = conn.execute("SELECT id, image, images FROM products").fetchall()
+        for product_id, image, images in rows:
+            try:
+                parsed = json.loads(images or "[]")
+                if not isinstance(parsed, list):
+                    parsed = []
+            except Exception:
+                parsed = []
+            parsed = [str(x) for x in parsed if isinstance(x, str) and x.strip()]
+            if image and image not in parsed:
+                parsed.insert(0, image)
+            parsed = parsed[:5]
+            conn.execute(
+                "UPDATE products SET images = ? WHERE id = ?",
+                (json.dumps(parsed), product_id),
+            )
+
+        # Preserve historical delivered orders as already recognized revenue.
+        conn.execute(
+            """
+            UPDATE orders
+            SET revenue_recognized_at = COALESCE(revenue_recognized_at, created_at)
+            WHERE LOWER(COALESCE(status, '')) = 'delivered'
+              AND revenue_recognized_at IS NULL
+            """
+        )
+        conn.execute(
+            """
+            UPDATE orders
+            SET payment_status =
+                CASE LOWER(COALESCE(payment_method, ''))
+                    WHEN 'transfer' THEN COALESCE(payment_status, 'pending')
+                    WHEN 'cod' THEN COALESCE(payment_status, 'unpaid')
+                    ELSE COALESCE(payment_status, 'pending')
+                END
+            WHERE payment_status IS NULL OR payment_status = ''
+            """
+        )
+
+    # --------------------------------------------------------
+    # Product variant tables
+    # --------------------------------------------------------
+    # Keep an explicit SQLite migration for databases created before
+    # ProductVariant/VariantSize were introduced.
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS product_variants (
+                id INTEGER PRIMARY KEY,
+                product_id INTEGER NOT NULL,
+                color VARCHAR(100) NOT NULL,
+                image VARCHAR(500),
+                stock INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY(product_id) REFERENCES products(id)
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS variant_sizes (
+                id INTEGER PRIMARY KEY,
+                variant_id INTEGER NOT NULL,
+                size VARCHAR(50) NOT NULL,
+                price FLOAT NOT NULL DEFAULT 0,
+                FOREIGN KEY(variant_id) REFERENCES product_variants(id)
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_product_variants_product_id ON product_variants(product_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_variant_sizes_variant_id ON variant_sizes(variant_id)")
+
+    # --------------------------------------------------------
+    # Legacy variant migration
+    # --------------------------------------------------------
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        products = conn.execute(
+            "SELECT id, tags FROM products WHERE tags LIKE '%__PRODUCT_VARIANTS__=%'"
+        ).fetchall()
+        for product_id, tags in products:
+            if conn.execute(
+                "SELECT 1 FROM product_variants WHERE product_id = ? LIMIT 1",
+                (product_id,),
+            ).fetchone():
+                continue
+            try:
+                payload = tags.split("\n__PRODUCT_VARIANTS__=", 1)[1]
+                variants = json.loads(payload)
+            except Exception:
+                variants = []
+            if not isinstance(variants, list):
+                continue
+            for variant in variants:
+                if not isinstance(variant, dict) or not str(variant.get("color") or "").strip():
+                    continue
+                cur = conn.execute(
+                    "INSERT INTO product_variants(product_id,color,image,stock) VALUES(?,?,?,?)",
+                    (
+                        product_id,
+                        str(variant.get("color")).strip(),
+                        str(variant.get("image") or ""),
+                        max(0, int(variant.get("stock") or 0)),
+                    ),
+                )
+                variant_id = cur.lastrowid
+                for size in (variant.get("sizes") or [])[:7]:
+                    if not isinstance(size, dict) or not str(size.get("size") or "").strip():
+                        continue
+                    try:
+                        price = max(0.0, float(size.get("price") or 0))
+                    except (TypeError, ValueError):
+                        price = 0.0
+                    conn.execute(
+                        "INSERT INTO variant_sizes(variant_id,size,price) VALUES(?,?,?)",
+                        (variant_id, str(size.get("size")).strip(), price),
+                    )
+            # Keep human-readable tags but remove the private JSON payload.
+            visible_tags = tags.split("\n__PRODUCT_VARIANTS__=", 1)[0].strip()
+            conn.execute("UPDATE products SET tags = ? WHERE id = ?", (visible_tags, product_id))
 
     # --------------------------------------------------------
     # Indexes

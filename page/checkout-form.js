@@ -68,6 +68,27 @@
     });
   }
 
+  async function loadBankTransferInstructions() {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/payment-settings");
+      const data = await response.json();
+      if (!data.success) return;
+      const bank = data.bank_transfer || {};
+      const box = document.getElementById("transferInfo");
+      if (!box) return;
+      const rows = box.querySelectorAll(".bank-detail-row strong");
+      if (rows[0]) rows[0].textContent = bank.bank_name || "Store bank account";
+      if (rows[1]) rows[1].textContent = bank.account_name || "Configured store account";
+      if (rows[2]) rows[2].textContent = bank.account_number || "Contact the store for account details";
+      if (rows[3]) rows[3].textContent = bank.routing_number || "—";
+      const note = box.querySelector(".bank-note");
+      if (note) note.textContent = (bank.reference_note || "Use your order number as the transfer reference.") +
+        " Your order stays pending until an admin verifies the transfer.";
+    } catch (error) {
+      console.warn("Bank transfer instructions unavailable:", error);
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────
   //  Payment Method Switching
   // ─────────────────────────────────────────────────────────────
@@ -108,6 +129,7 @@
   if (selectedPayment) {
     showPaymentDetails(selectedPayment.value);
   }
+  loadBankTransferInstructions();
 
   // ─────────────────────────────────────────────────────────────
   //  Required text fields: blur validation

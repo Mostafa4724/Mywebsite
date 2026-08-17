@@ -122,94 +122,60 @@ function getDisplayPrice(product) {
 // category cards look and behave identically to the home cards.
 // Returns: { html, image, displayPrice, onSale, outOfStock }
 function buildProductCard(product, index) {
-  const image =
-    product.image && product.image !== ""
-      ? SHOP_API_BASE + "/uploads/products/" + product.image
-      : "https://picsum.photos/300/250?random=" + product.id;
+  const imageNames = Array.isArray(product.images) && product.images.length
+    ? product.images.slice(0, 5)
+    : (product.image ? [product.image] : []);
+  const imageUrls = imageNames.map(name =>
+    /^https?:\/\//i.test(String(name))
+      ? String(name)
+      : `${SHOP_API_BASE}/uploads/products/${encodeURIComponent(name)}`
+  );
+  if (!imageUrls.length) imageUrls.push("https://picsum.photos/300/250?random=" + product.id);
 
   const originalPrice = Number(product.price || 0);
+  const saleActive = product.sale_active === true || isSaleActive(product);
   const salePrice = Number(product.sale_price || 0);
-  const saleActive = isSaleActive(product);
   const displayPrice = saleActive && salePrice > 0 ? salePrice : originalPrice;
-  const discountPercent =
-    saleActive && originalPrice > 0
-      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
-      : 0;
-
+  const discountPercent = saleActive && originalPrice > 0
+    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
   const stockStatus = (product.stock_status || "in").toLowerCase();
   const outOfStock = stockStatus === "out";
 
-  // Price row: sale price + crossed-out original when sale active.
   const priceHTML =
-    '<div class="price-row">' +
-    '<p class="price">$' +
-    displayPrice.toFixed(2) +
-    "</p>" +
-    (saleActive && product.sale_price
-      ? '<p class="original-price">$' + originalPrice.toFixed(2) + "</p>"
-      : "") +
+    '<div class="price-row"><p class="price">$' + displayPrice.toFixed(2) + "</p>" +
+    (saleActive && salePrice > 0 ? '<p class="original-price">$' + originalPrice.toFixed(2) + "</p>" : "") +
     "</div>";
+  const saleHTML = saleActive && salePrice > 0
+    ? '<div class="sale-info"><span class="sale-chip" style="background:' +
+      (product.sale_badge_color || "#dc2626") + ';">' +
+      (product.sale_badge || "Sale") + '</span><span class="sale-discount">Save ' +
+      discountPercent + "%</span></div>"
+    : "";
 
-  // Sale info banner: sale chip (uses saved badge color/text) + discount.
-  const saleHTML =
-    saleActive && product.sale_price
-      ? '<div class="sale-info">' +
-        '<span class="sale-chip" style="background:' +
-        (product.sale_badge_color || "#dc2626") +
-        ';">' +
-        (product.sale_badge || "Sale") +
-        "</span>" +
-        '<span class="sale-discount">Save ' +
-        discountPercent +
-        "%</span>" +
-        "</div>"
-      : "";
+  const imageHTML = imageUrls.map((url, i) =>
+    `<img class="product-card-img${i === 0 ? " active" : ""}" src="${url}" alt="${product.title}" loading="lazy" style="position:absolute;inset:0;opacity:${i === 0 ? "1" : "0"};transition:opacity .65s ease,transform .65s ease;">`
+  ).join("");
 
   return {
-    image: image,
-    displayPrice: displayPrice,
-    onSale: saleActive && product.sale_price,
-    outOfStock: outOfStock,
+    image: imageUrls[0],
+    displayPrice,
+    onSale: saleActive && salePrice > 0,
+    outOfStock,
     html:
-      '<div class="product-card" data-name="' +
-      product.title +
-      '" data-price="' +
-      displayPrice +
-      '" data-image="' +
-      image +
-      '">' +
-      '<a href="product.html?id=' +
-      product.id +
-      '" class="product-card-link" style="text-decoration:none;color:inherit;">' +
-      '<img src="' +
-      image +
-      '" alt="' +
-      product.title +
-      '" loading="lazy" />' +
-      "<h3>" +
-      product.title +
-      "</h3>" +
-      priceHTML +
-      saleHTML +
-      "</a>" +
-      '<button class="add-to-cart-btn" data-id="' +
-      product.id +
-      '" data-name="' +
-      product.title +
-      '" data-price="' +
-      displayPrice +
-      '" data-image="' +
-      image +
-      '"' +
-      (outOfStock ? " disabled" : "") +
-      ">" +
-      (outOfStock
-        ? " Sold Out"
-        : " Add To Cart") +
-      "</button>" +
+      '<div class="product-card" data-name="' + product.title + '" data-price="' + displayPrice +
+      '" data-images="' + imageUrls.join("|") + '">' +
+      '<a href="product.html?id=' + product.id + '" class="product-card-link">' +
+      '<div class="product-card-image-wrap" style="position:relative;height:200px;overflow:hidden">' +
+      imageHTML + "</div>" +
+      "<h3>" + product.title + "</h3>" +
+      priceHTML + saleHTML + "</a>" +
+      '<button class="add-to-cart-btn" data-id="' + product.id + '" data-name="' +
+      product.title + '" data-price="' + displayPrice + '" data-image="' + imageUrls[0] + '"' +
+      (outOfStock ? " disabled" : "") + ">" + (outOfStock ? " Sold Out" : " Add To Cart") + "</button>" +
       "</div>",
   };
 }
+
 
 // Shared "add to cart" visual feedback used by product-card buttons on any page.
 function refreshCartAfterAdd(btn, name) {
@@ -224,29 +190,30 @@ function refreshCartAfterAdd(btn, name) {
   updateCartBubble();
 }
 
-function addToCart(name, price, image, productId) {
-  console.log("addToCart called");
-  console.log(name, price, image, productId);
+function addToCart(name, price, image, productId, variant) {
+  const variantId = variant && variant.variant_id ? String(variant.variant_id) : "";
+  const size = variant && variant.size ? String(variant.size) : "";
+  const idBase = productId ? String(productId) : generateId(name);
+  const id = variantId || size ? `${idBase}:v:${variantId || "0"}:s:${size}` : idBase;
   const cart = getCart();
-  const id = productId ? String(productId) : generateId(name);
   const existing = cart.find((item) => item.id === id);
 
   if (existing) {
     existing.quantity += 1;
   } else {
-    const newItem = {
-      id: id,
-      name: name,
-      price: parseFloat(price) || 0,
+    cart.push({
+      id,
+      productId: productId != null ? Number(productId) : undefined,
+      name,
+      price: Number(price) || 0,
       image: image || "",
       quantity: 1,
-    };
-    if (productId !== undefined && productId !== null) {
-      newItem.productId = Number(productId);
-    }
-    cart.push(newItem);
+      variant_id: variantId ? Number(variantId) : null,
+      color: variant?.color || null,
+      size: size || null,
+      variant_image: variant?.image || image || "",
+    });
   }
-
   saveCart(cart);
   return cart;
 }
@@ -647,25 +614,23 @@ async function normalizeCartItems(cart) {
     }
 
     if (currentProduct) {
-      const currentPrice = Number(currentProduct.sale_price) > 0 && Number(currentProduct.sale_price) < Number(currentProduct.price)
-        ? Number(currentProduct.sale_price)
-        : Number(currentProduct.price || 0);
-
-      if (item.price !== currentPrice) {
-        item.price = currentPrice;
-        updated = true;
+      let currentPrice = Number(currentProduct.sale_active ? currentProduct.sale_price : currentProduct.price) || 0;
+      let currentImage = currentProduct.image ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}` : item.image;
+      if (item.variant_id && Array.isArray(currentProduct.variants)) {
+        const variant = currentProduct.variants.find(v => Number(v.id) === Number(item.variant_id));
+        const size = variant && Array.isArray(variant.sizes)
+          ? variant.sizes.find(s => String(s.size).toLowerCase() === String(item.size || "").toLowerCase())
+          : null;
+        if (variant && size) {
+          currentPrice = Number(size.price) || 0;
+          currentImage = variant.image ? `${SHOP_API_BASE}/uploads/products/${variant.image}` : currentImage;
+          item.color = variant.color;
+          item.variant_image = currentImage;
+        }
       }
-      if (item.name !== currentProduct.title) {
-        item.name = currentProduct.title;
-        updated = true;
-      }
-      const currentImage = currentProduct.image && currentProduct.image !== ""
-        ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}`
-        : item.image;
-      if (item.image !== currentImage) {
-        item.image = currentImage;
-        updated = true;
-      }
+      if (item.price !== currentPrice) { item.price = currentPrice; updated = true; }
+      if (item.name !== currentProduct.title) { item.name = currentProduct.title; updated = true; }
+      if (item.image !== currentImage) { item.image = currentImage; updated = true; }
     }
   }
 
@@ -679,25 +644,37 @@ async function normalizeCartItems(cart) {
 function buildCartItemState(item, currentProduct) {
   const isAvailable = isProductAvailable(currentProduct);
   const productName = currentProduct ? currentProduct.title : item.name;
-  const productPrice = currentProduct
-    ? Number(currentProduct.sale_price) > 0 && Number(currentProduct.sale_price) < Number(currentProduct.price)
-      ? Number(currentProduct.sale_price)
-      : Number(currentProduct.price || 0)
+  let productPrice = currentProduct
+    ? (currentProduct.sale_active ? Number(currentProduct.sale_price) : Number(currentProduct.price || 0))
     : Number(item.price || 0);
-  const productImage = currentProduct && currentProduct.image
+  let productImage = currentProduct && currentProduct.image
     ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}`
     : item.image;
-const statusText = currentProduct
-    ? (currentProduct.stock_status || "in").toLowerCase()
-    : "missing";
+  let color = item.color || null;
+  let size = item.size || null;
 
+  if (currentProduct && item.variant_id && Array.isArray(currentProduct.variants)) {
+    const variant = currentProduct.variants.find(v => Number(v.id) === Number(item.variant_id));
+    const sizeObj = variant?.sizes?.find(s => String(s.size).toLowerCase() === String(item.size || "").toLowerCase());
+    if (!variant || !sizeObj || Number(variant.stock || 0) < Number(item.quantity || 1)) {
+      return { available:false, name:productName, price:productPrice, image:productImage, status:"out", currentProduct };
+    }
+    productPrice = Number(sizeObj.price) || 0;
+    productImage = variant.image ? `${SHOP_API_BASE}/uploads/products/${variant.image}` : productImage;
+    color = variant.color;
+    size = sizeObj.size;
+  }
+
+  const statusText = currentProduct ? (currentProduct.stock_status || "in").toLowerCase() : "missing";
   return {
-    available: isAvailable,
+    available: isAvailable && (!item.variant_id || statusText !== "out"),
     name: productName,
     price: productPrice,
     image: productImage,
     status: statusText,
-    currentProduct: currentProduct,
+    color,
+    size,
+    currentProduct,
   };
 }
 
@@ -1235,6 +1212,8 @@ if (confirmBtn) {
         </div>
         <div class="order-item-info">
           <h4>${state.name}</h4>
+          ${state.color ? `<span>Color: ${state.color}</span>` : ""}
+          ${state.size ? `<span>Size: ${state.size}</span>` : ""}
           <span>$${state.price.toFixed(2)} each</span>
         </div>
         <span class="order-item-price">$${itemTotal.toFixed(2)}</span>
@@ -1309,6 +1288,9 @@ async function placeOrder(extraData) {
       availableItems.push({
         product_id: Number(state.currentProduct.id),
         quantity: Math.max(1, Number(item.quantity) || 1),
+        variant_id: item.variant_id || null,
+        color: item.color || null,
+        size: item.size || null,
       });
     }
   }
@@ -1368,8 +1350,14 @@ function clearConsumedCheckout(placedItems) {
   const buyNowKey = getBuyNowStorageKey();
   if (buyNowKey) sessionStorage.removeItem(buyNowKey);
   if (placedItems && placedItems.length > 0) {
-    const placedIds = new Set(placedItems.map((i) => String(i.product_id)));
-    const cart = getCart().filter((item) => !placedIds.has(String(item.id)));
+    const placedKeys = new Set(placedItems.map((i) =>
+      `${i.product_id}:v:${i.variant_id || "0"}:s:${i.size || ""}`
+    ));
+    const placedProducts = new Set(placedItems.map(i => String(i.product_id)));
+    const cart = getCart().filter((item) => {
+      if (item.variant_id) return !placedKeys.has(`${item.productId}:v:${item.variant_id}:s:${item.size || ""}`);
+      return !placedProducts.has(String(item.productId || item.id));
+    });
     saveCart(cart);
   }
 }

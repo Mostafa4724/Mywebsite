@@ -171,6 +171,48 @@
   }
 
 
+
+  function getLowStockBubble() {
+    return document.getElementById("lowStockBubble");
+  }
+
+  function showLowStockBubble(count) {
+    const bubble = getLowStockBubble();
+    if (!bubble) return;
+    if (count <= 0) {
+      bubble.textContent = "";
+      bubble.hidden = true;
+      bubble.style.display = "none";
+      return;
+    }
+    bubble.textContent = String(count);
+    bubble.hidden = false;
+    bubble.style.display = "";
+  }
+
+  async function updateLowStockBubble() {
+    const bubble = getLowStockBubble();
+    if (!bubble) return;
+    try {
+      const token = sessionStorage.getItem("token");
+      const response = await fetch(API_BASE + "/products", {
+        cache: "no-store",
+        headers: token ? { Authorization: "Bearer " + token } : {}
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success || !Array.isArray(data.products)) throw new Error("Invalid products response");
+      const count = data.products.filter(p => {
+        const stock = Number(p.stock || 0);
+        const threshold = Number(p.low_stock ?? 10);
+        return stock > 0 && stock <= threshold;
+      }).length;
+      showLowStockBubble(count);
+    } catch (error) {
+      console.error("Low-stock bubble error:", error);
+      showLowStockBubble(0);
+    }
+  }
+
   // ================================================================
   // Start
   // ================================================================
@@ -184,11 +226,16 @@
 
     // First check
     updateOrderBubble();
+    updateLowStockBubble();
 
 
     // Check every 3 seconds
     setInterval(
       updateOrderBubble,
+      REFRESH_INTERVAL
+    );
+    setInterval(
+      updateLowStockBubble,
       REFRESH_INTERVAL
     );
 

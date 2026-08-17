@@ -1,218 +1,276 @@
 const params = new URLSearchParams(window.location.search);
+const productId = params.get("id");
+const API = "http://127.0.0.1:5000";
 
-const id = params.get("id");
+let loadedProduct = null;
+let selectedVariant = null;
+let selectedSize = null;
+let galleryImages = [];
+let galleryIndex = 0;
 
-const productId =
-    new URLSearchParams(window.location.search).get("id");
+function imageUrl(name) {
+  if (!name) return "https://picsum.photos/500/400?random=" + productId;
+  if (/^https?:\/\//i.test(String(name))) return String(name);
+  return `${API}/uploads/products/${encodeURIComponent(name)}`;
+}
 
-// Buy Now quantity state (defaults to 1)
-let buyNowQuantity = 1;
+function renderGallery() {
+  const image = document.getElementById("product-image");
+  const dots = document.getElementById("product-image-dots");
+  const prev = document.getElementById("product-image-prev");
+  const next = document.getElementById("product-image-next");
+  if (!image || !galleryImages.length) return;
 
-function isSaleActive(product) {
+  galleryIndex = (galleryIndex + galleryImages.length) % galleryImages.length;
+  image.src = imageUrl(galleryImages[galleryIndex]);
+  image.alt = loadedProduct?.title || "Product";
 
-    const salePrice = Number(product.sale_price ?? 0);
-    const regularPrice = Number(product.price ?? 0);
-    const hasValidSalePrice = salePrice > 0 && regularPrice > salePrice;
+  if (dots) {
+    dots.innerHTML = "";
+    galleryImages.forEach((_, index) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "product-gallery-dot" + (index === galleryIndex ? " active" : "");
+      dot.setAttribute("aria-label", "Show image " + (index + 1));
+      dot.addEventListener("click", () => {
+        galleryIndex = index;
+        renderGallery();
+      });
+      dots.appendChild(dot);
+    });
+  }
+  const multi = galleryImages.length > 1;
+  if (prev) prev.hidden = !multi;
+  if (next) next.hidden = !multi;
+  if (dots) dots.hidden = !multi;
+}
 
-    if (!hasValidSalePrice) {
+function selectedPrice() {
+  if (selectedVariant && selectedSize) {
+    const size = selectedVariant.sizes?.find(
+      s => String(s.id) === String(selectedSize) ||
+           String(s.size).toLowerCase() === String(selectedSize).toLowerCase()
+    );
+    if (size) return Number(size.price) || 0;
+  }
+  return loadedProduct?.sale_active
+    ? Number(loadedProduct.sale_price || loadedProduct.price || 0)
+    : Number(loadedProduct?.price || 0);
+}
 
-        return false;
+function renderPrice() {
+  const price = selectedPrice();
+  const priceEl = document.getElementById("product-price");
+  const originalEl = document.getElementById("product-original-price");
+  if (priceEl) priceEl.textContent = "$" + price.toFixed(2);
 
+  const regular = selectedVariant && selectedSize
+    ? Number(selectedPrice())
+    : Number(loadedProduct?.price || 0);
+  const saleActive = !selectedVariant && loadedProduct?.sale_active;
+  if (originalEl) {
+    if (saleActive && Number(loadedProduct.sale_price) < regular) {
+      originalEl.textContent = "$" + regular.toFixed(2);
+      originalEl.style.display = "block";
+    } else {
+      originalEl.textContent = "";
+      originalEl.style.display = "none";
     }
+  }
 
-    const now = new Date();
-
-    if (product.sale_start) {
-
-        const start = new Date(product.sale_start);
-
-        if (!Number.isNaN(start.getTime()) && now < start) {
-
-            return false;
-
-        }
-
+  const saleCard = document.getElementById("product-sale-card");
+  if (saleCard) {
+    if (saleActive) {
+      saleCard.style.display = "inline-flex";
+      document.getElementById("sale-badge").textContent = loadedProduct.sale_badge || "Sale";
+      document.getElementById("sale-badge").style.background = loadedProduct.sale_badge_color || "#f97316";
+      document.getElementById("sale-price-text").textContent = "Now $" + price.toFixed(2);
+      document.getElementById("sale-discount-text").textContent =
+        Math.round(((regular - price) / regular) * 100) + "% off";
+    } else {
+      saleCard.style.display = "none";
     }
+  }
+}
 
-    if (product.sale_end) {
+function renderVariants() {
+  const container = document.getElementById("product-variants");
+  const colors = document.getElementById("product-color-options");
+  const sizes = document.getElementById("product-size-options");
+  const variants = Array.isArray(loadedProduct?.variants) ? loadedProduct.variants : [];
+  if (!container || !colors || !sizes) return;
 
-        const end = new Date(product.sale_end);
+  if (!variants.length) {
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
 
-        if (!Number.isNaN(end.getTime()) && now > end) {
+  if (!selectedVariant || !variants.some(v => String(v.id) === String(selectedVariant.id))) {
+    selectedVariant = variants[0];
+  }
 
-            return false;
+  colors.innerHTML = "";
+  variants.forEach((variant) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "product-color-option" + (String(variant.id) === String(selectedVariant.id) ? " active" : "");
+    button.title = variant.color;
+    const img = document.createElement("img");
+    img.src = imageUrl(variant.image || loadedProduct.image);
+    img.alt = variant.color;
+    button.appendChild(img);
+    button.addEventListener("click", () => {
+      selectedVariant = variant;
+      selectedSize = null;
+      galleryImages = variant.image
+        ? [variant.image].concat((loadedProduct.images || []).filter(x => x !== variant.image))
+        : galleryImages;
+      galleryIndex = 0;
+      renderGallery();
+      renderVariants();
+      renderPrice();
+      updateAvailability();
+    });
+    colors.appendChild(button);
+  });
 
-        }
+  sizes.innerHTML = "";
+  (selectedVariant.sizes || []).forEach((sizeObj) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "product-size-option" + (
+      selectedSize && String(selectedSize) === String(sizeObj.id) ? " active" : ""
+    );
+    button.textContent = sizeObj.size;
+    button.disabled = Number(selectedVariant.stock || 0) < 1;
+    button.addEventListener("click", () => {
+      selectedSize = sizeObj.id;
+      renderVariants();
+      renderPrice();
+      updateAvailability();
+    });
+    sizes.appendChild(button);
+  });
+}
 
+function updateAvailability() {
+  const badge = document.getElementById("availability-badge");
+  const text = document.getElementById("availability-text");
+  const add = document.getElementById("addToCartBtn");
+  const variantMode = Array.isArray(loadedProduct?.variants) && loadedProduct.variants.length;
+  let out = String(loadedProduct?.stock_status || "in").toLowerCase() === "out";
+  if (variantMode) {
+    out = !selectedVariant || Number(selectedVariant.stock || 0) < 1 || !selectedSize;
+    if (selectedVariant && Number(selectedVariant.stock || 0) > 0 && !selectedSize) {
+      text.textContent = "Select a size";
     }
+  }
+  if (out) {
+    badge.className = "availability-badge out-of-stock";
+    if (text && (!variantMode || selectedSize)) text.textContent = "Out of Stock";
+  } else {
+    badge.className = "availability-badge in-stock";
+    text.textContent = "In Stock";
+  }
+  if (add) add.disabled = out;
+}
 
-    return true;
+function addSelectedToCart(quantity = 1) {
+  if (!loadedProduct) return;
+  const variantMode = loadedProduct.variants?.length;
+  if (variantMode && (!selectedVariant || !selectedSize)) {
+    alert("Please select a color and size.");
+    return;
+  }
+  const price = selectedPrice();
+  const image = selectedVariant?.image
+    ? imageUrl(selectedVariant.image)
+    : imageUrl((loadedProduct.images || [loadedProduct.image])[0]);
+  const variant = selectedVariant ? {
+    variant_id: selectedVariant.id,
+    color: selectedVariant.color,
+    size: selectedVariant.sizes.find(s => String(s.id) === String(selectedSize))?.size || selectedSize,
+    image
+  } : null;
 
+  for (let i = 0; i < quantity; i++) {
+    addToCart(loadedProduct.title, price, image, loadedProduct.id, variant);
+  }
 }
 
 async function loadProduct() {
-
-    const response = await fetch(
-
-        "http://127.0.0.1:5000/products/" + productId
-
-    );
-
+  try {
+    const response = await fetch(`${API}/products/${productId}`);
     const data = await response.json();
+    if (!data.success || !data.product) {
+      alert("Product not found");
+      return;
+    }
+    loadedProduct = data.product;
+    if (String(loadedProduct.status || "draft").toLowerCase() === "draft") {
+      alert("Product not found");
+      return;
+    }
 
-    if (!data.success) {
+    galleryImages = Array.isArray(loadedProduct.images) && loadedProduct.images.length
+      ? loadedProduct.images.slice(0, 5)
+      : (loadedProduct.image ? [loadedProduct.image] : []);
 
-        alert("Product not found");
+    document.getElementById("product-name").textContent = loadedProduct.title;
+    document.getElementById("product-brand").textContent = loadedProduct.brand || "Unbranded";
+    document.getElementById("product-category").textContent = loadedProduct.category || "Uncategorized";
+    document.getElementById("product-description").textContent = loadedProduct.description || "";
+    renderGallery();
+    renderVariants();
+    renderPrice();
+    updateAvailability();
 
+    document.getElementById("addToCartBtn")?.addEventListener("click", () => addSelectedToCart(1));
+    document.getElementById("buyNowBtn")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (loadedProduct.variants?.length && (!selectedVariant || !selectedSize)) {
+        alert("Please select a color and size.");
         return;
-
-    }
-
-    const product = data.product;
-
-    const productStatus = String(product.status || "draft").toLowerCase();
-    if (productStatus === "draft") {
-        alert("Product not found");
-        return;
-    }
-
-
-    const image =
-        product.image && product.image !== ""
-            ? "http://127.0.0.1:5000/uploads/products/" + product.image
-            : "https://picsum.photos/500/400?random=" + product.id;
-
-    document.getElementById("product-name").textContent =
-        product.title;
-
-    const originalPrice = Number(product.price ?? 0);
-    const saleActive = isSaleActive(product);
-    const price = saleActive && product.sale_price
-        ? Number(product.sale_price)
-        : originalPrice;
-
-    document.getElementById("product-price").textContent =
-        "$" + price.toFixed(2);
-
-    const originalPriceEl = document.getElementById("product-original-price");
-    if (product.sale_enabled && product.sale_price && originalPrice > price) {
-        originalPriceEl.textContent = "$" + originalPrice.toFixed(2);
-        originalPriceEl.style.display = "block";
-    } else {
-        originalPriceEl.textContent = "";
-        originalPriceEl.style.display = "none";
-    }
-
-    document.getElementById("product-brand").textContent =
-        product.brand || "Unbranded";
-
-    document.getElementById("product-category").textContent =
-        product.category || "Uncategorized";
-
-    document.getElementById("product-description").textContent =
-        product.description;
-
-    document.getElementById("product-image").src =
-        image;
-    
-    document
-    .getElementById("addToCartBtn")
-    .addEventListener("click", () => {
-
-        addToCart(
-
-            product.title,
-
-            price,
-
-            image,
-
-            product.id
-
-        );
-
+      }
+      const variant = selectedVariant ? {
+        variant_id: selectedVariant.id,
+        color: selectedVariant.color,
+        size: selectedVariant.sizes.find(s => String(s.id) === String(selectedSize))?.size || selectedSize,
+        image: imageUrl(selectedVariant.image || loadedProduct.image)
+      } : null;
+      const buyNowKey = typeof getBuyNowStorageKey === "function" ? getBuyNowStorageKey() : null;
+      if (buyNowKey) {
+        sessionStorage.setItem(buyNowKey, JSON.stringify({
+          id: `${loadedProduct.id}:v:${variant?.variant_id || "0"}:s:${variant?.size || ""}`,
+          productId: Number(loadedProduct.id),
+          name: loadedProduct.title,
+          price: selectedPrice(),
+          image: variant?.image || imageUrl(loadedProduct.image),
+          quantity: 1,
+          variant_id: variant?.variant_id || null,
+          color: variant?.color || null,
+          size: variant?.size || null,
+          variant_image: variant?.image || null,
+          source: "buy-now"
+        }));
+      }
+      window.location.href = "checkout.html";
     });
-
-    const badge = document.getElementById("availability-badge");
-
-    const text = document.getElementById("availability-text");
-
-    const stockStatus = product.stock_status || "in";
-
-    const saleCard = document.getElementById("product-sale-card");
-    const saleBadge = document.getElementById("sale-badge");
-    const salePriceText = document.getElementById("sale-price-text");
-    const saleDiscountText = document.getElementById("sale-discount-text");
-
-    if (saleActive && product.sale_price) {
-
-        saleCard.style.display = "inline-flex";
-
-        saleBadge.textContent = product.sale_badge || "Sale";
-        saleBadge.style.background = product.sale_badge_color || "#f97316";
-
-        const discount = originalPrice > 0
-            ? Math.round(((originalPrice - price) / originalPrice) * 100)
-            : 0;
-
-        salePriceText.textContent = `Now $${price.toFixed(2)}`;
-        saleDiscountText.textContent = `${discount}% off`;
-
-    } else {
-
-        saleCard.style.display = "none";
-
-    }
-
-    if (stockStatus === "low") {
-
-        badge.className = "availability-badge low-stock";
-
-        text.textContent = "Low Stock";
-
-    } else if (stockStatus === "out") {
-
-        badge.className = "availability-badge out-of-stock";
-
-        text.textContent = "Out of Stock";
-
-    } else {
-
-        badge.className = "availability-badge in-stock";
-
-        text.textContent = "In Stock";
-
-    }
-
+  } catch (error) {
+    console.error(error);
+    alert("Unable to load product.");
+  }
 }
 
-
-
-// ==========================
-// Buy Now Quantity Selector
-// ==========================
-(function setupBuyNowQty() {
-  const valueEl = document.getElementById("buyNowQtyValue");
-  const minusBtn = document.getElementById("buyNowQtyMinus");
-  const plusBtn = document.getElementById("buyNowQtyPlus");
-  if (!valueEl || !minusBtn || !plusBtn) return;
-
-  function render() {
-    valueEl.textContent = buyNowQuantity;
-  }
-
-  minusBtn.addEventListener("click", () => {
-    buyNowQuantity = Math.max(1, buyNowQuantity - 1);
-    render();
-  });
-
-  plusBtn.addEventListener("click", () => {
-    buyNowQuantity = buyNowQuantity + 1;
-    render();
-  });
-
-  render();
-})();
+document.getElementById("product-image-prev")?.addEventListener("click", () => {
+  galleryIndex--;
+  renderGallery();
+});
+document.getElementById("product-image-next")?.addEventListener("click", () => {
+  galleryIndex++;
+  renderGallery();
+});
 
 let selectedRating = 0;
 

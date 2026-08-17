@@ -1561,3 +1561,19 @@
     flex-direction: column;
   }
 }
+
+/* Product image/variant management */
+.ap-preview-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px}
+.ap-preview-grid .preview-item{position:relative;aspect-ratio:1;overflow:hidden;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+.ap-preview-grid .preview-item img{width:100%;height:100%;object-fit:cover;display:block}
+.ap-preview-grid .preview-remove{position:absolute;right:5px;top:5px;width:25px;height:25px;border:0;border-radius:50%;background:rgba(15,23,42,.78);color:#fff;cursor:pointer}
+.ap-preview-grid .preview-badge{position:absolute;left:5px;bottom:5px;padding:3px 7px;border-radius:999px;background:#0f172a;color:#fff;font-size:11px}
+.ap-variant-group{border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-top:12px;background:#fff}
+.ap-variant-group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ap-variant-group-head label{font-weight:600}
+.ap-variant-group-head .variant-size-count{width:70px}
+.ap-variant-image-preview img{max-width:90px;max-height:90px;object-fit:cover;border-radius:8px}
+.variant-image-preview img{width:76px;height:76px;object-fit:cover;border-radius:8px;margin-top:8px}
+.ap-variant-group .variant-remove{border:0;background:transparent;color:#dc2626;cursor:pointer}
+.ap-variant-group .variant-size-list{display:grid;gap:8px}
+@media(max-width:700px){.ap-preview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}

@@ -603,7 +603,7 @@
 
     var product = productsById[String(item.product_id)];
     var databaseImage =
-      product && product.image ? product.image : item.image;
+      item.variant_image || item.image || (product && product.image);
     var image = getProductImage(databaseImage, item.product_id || item.id);
 
     var unitPrice = Number(item.unit_price) || 0;
@@ -624,6 +624,8 @@
       "Qty: " +
       qty +
       "</p>" +
+      (item.color ? '<p class="vo-item-variant">Color: ' + escapeHtml(item.color) + "</p>" : "") +
+      (item.size ? '<p class="vo-item-variant">Size: ' + escapeHtml(item.size) + "</p>" : "") +
       (item.original_price && item.original_price > unitPrice
         ? '<p class="vo-item-variant">Was ' +
           money(item.original_price) +
@@ -1426,6 +1428,57 @@
   }
 
 
+  function renderPaymentActions() {
+    const box = document.getElementById("transferPaymentActions");
+    const verify = document.getElementById("verifyTransferBtn");
+    const reject = document.getElementById("rejectTransferBtn");
+    if (!box) return;
+    const isTransfer = String(orderData?.payment_method || "").toLowerCase() === "transfer";
+    const pending = String(orderData?.payment_status || "pending").toLowerCase() === "pending";
+    box.hidden = !(isTransfer && pending);
+
+    if (verify && !verify.dataset.bound) {
+      verify.dataset.bound = "1";
+      verify.addEventListener("click", () => updatePaymentStatus("verified"));
+    }
+    if (reject && !reject.dataset.bound) {
+      reject.dataset.bound = "1";
+      reject.addEventListener("click", () => updatePaymentStatus("rejected"));
+    }
+  }
+
+  async function updatePaymentStatus(status) {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      if (!token) {
+        showToast("Your admin session has expired. Please log in again.", "warn");
+        return;
+      }
+
+      const response = await fetch(
+        API_BASE + "/orders/" + orderData.id + "/payment",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify({ status })
+        }
+      );
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || "Payment update failed.");
+      orderData = data.order;
+      renderPaymentActions();
+      renderStatusBadge();
+      showToast("Payment marked " + status + ".", "success");
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || "Unable to update payment.", "warn");
+    }
+  }
+
   function renderCustomer() {
 
     var fullNameStr =
@@ -1639,10 +1692,13 @@
           ).toLowerCase();
 
 
+        const paymentStatus = String(orderData.payment_status || "").toLowerCase();
         statusSpan.textContent =
-          pm === "cod"
-            ? "Cash on Delivery"
-            : "Paid";
+          pm === "transfer"
+            ? (paymentStatus === "verified" ? "Verified" : paymentStatus === "rejected" ? "Rejected" : "Pending")
+            : pm === "cod"
+              ? "Unpaid (COD)"
+              : (paymentStatus === "paid" ? "Paid" : "Pending");
       }
     }
   }
@@ -1790,6 +1846,7 @@
       renderTimeline();
 
       renderStatusControl();
+      renderPaymentActions();
 
 
     } catch (err) {

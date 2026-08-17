@@ -10,7 +10,6 @@ window.selectedFile = null;
   const form = document.getElementById("editProductForm");
   const categorySelect = document.getElementById("prodCategory");
   const imageInput = document.getElementById("imageInput");
-  const imagePreview = document.getElementById("imagePreview");
   const uploadPlaceholder = document.getElementById("uploadPlaceholder");
   const saleToggle = document.getElementById("saleToggle");
   const saleOverlay = document.getElementById("saleOverlay");
@@ -40,7 +39,8 @@ window.selectedFile = null;
 
   let productId = null;
   let product = null;
-  let currentImage = "";
+  let currentImages = [];
+  let selectedImageFiles = [];
   let currentTags = [];
   let selectedSaleColor = "#ef4444";
   let dirty = false;
@@ -79,6 +79,12 @@ window.selectedFile = null;
     return String(value).trim().slice(0, 16);
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[ch]));
+  }
+
   function imageUrl(value) {
     if (!value) return "";
     if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
@@ -89,6 +95,116 @@ window.selectedFile = null;
       url = API_BASE + "/uploads/products/" + encodeURIComponent(value);
     }
     return url + "?v=" + Date.now();
+  }
+
+  function renderEditImages() {
+    const grid = document.getElementById("editImageGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    const entries = currentImages.map((name) => ({ type: "existing", value: name }))
+      .concat(selectedImageFiles.map((file) => ({ type: "new", value: file })));
+
+    const placeholder = document.getElementById("uploadPlaceholder");
+    if (placeholder) placeholder.style.display = entries.length ? "none" : "";
+    entries.forEach((entry, index) => {
+      const item = document.createElement("div");
+      item.className = "preview-item";
+      const img = document.createElement("img");
+      img.src = entry.type === "existing" ? imageUrl(entry.value) : URL.createObjectURL(entry.value);
+      img.alt = "Product image " + (index + 1);
+      item.appendChild(img);
+      if (index === 0) {
+        const badge = document.createElement("span");
+        badge.className = "preview-badge";
+        badge.textContent = "Main";
+        item.appendChild(badge);
+      }
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "preview-remove";
+      remove.innerHTML = "&times;";
+      remove.setAttribute("aria-label", "Remove image");
+      remove.addEventListener("click", () => {
+        if (entry.type === "existing") currentImages = currentImages.filter((x) => x !== entry.value);
+        else selectedImageFiles = selectedImageFiles.filter((x) => x !== entry.value);
+        renderEditImages();
+        markDirty();
+      });
+      item.appendChild(remove);
+      grid.appendChild(item);
+    });
+  }
+
+  function collectEditVariants() {
+    return Array.from(variantsList ? variantsList.querySelectorAll(".ap-variant-group") : []).map((row) => {
+      const id = row.dataset.variantId;
+      const imageInput = row.querySelector(".variant-image-input");
+      if (imageInput?.files?.[0]) {
+        // File is appended by saveProduct where FormData is available.
+      }
+      return {
+        id,
+        color: row.querySelector(".variant-color-input")?.value.trim() || "",
+        stock: Number(row.querySelector(".variant-stock-input")?.value || 0),
+        image: row.dataset.existingImage || "",
+        sizes: Array.from(row.querySelectorAll(".variant-size-row")).map((sizeRow) => ({
+          id: sizeRow.dataset.sizeId || undefined,
+          size: sizeRow.querySelector(".variant-size-input")?.value.trim() || "",
+          price: Number(sizeRow.querySelector(".variant-price-input")?.value || 0),
+        })),
+      };
+    });
+  }
+
+  function renderVariantGroups(variants) {
+    if (!variantsList) return;
+    variantsList.innerHTML = "";
+    (variants || []).forEach((variant) => {
+      const row = document.createElement("div");
+      row.className = "ap-variant-group";
+      row.dataset.variantId = String(variant.id);
+      row.dataset.existingImage = variant.image || "";
+      row.innerHTML = `
+        <div class="ap-variant-group-head"><strong>Color Variant</strong><button type="button" class="variant-remove">Remove</button></div>
+        <div class="ap-row-2">
+          <div class="variant-field"><label>Color name</label><input type="text" class="variant-color-input" value="${escapeHtml(variant.color || "")}" /></div>
+          <div class="variant-field"><label>Stock quantity</label><input type="number" class="variant-stock-input" min="0" value="${Number(variant.stock || 0)}" /></div>
+        </div>
+        <div class="variant-field">
+          <label>Color image</label>
+          <input type="file" class="variant-image-input" accept="image/png,image/jpeg,image/webp" />
+          <div class="variant-image-preview">${variant.image ? `<img src="${imageUrl(variant.image)}" alt="${escapeHtml(variant.color || "Color")} image" />` : ""}</div>
+        </div>
+        <div class="variant-sizes">
+          <div class="ap-variant-group-head"><label>Sizes (1–7)</label><select class="variant-size-count">${[1,2,3,4,5,6,7].map(n => `<option value="${n}" ${n === (variant.sizes?.length || 1) ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+          <div class="variant-size-list"></div>
+        </div>`;
+      const list = row.querySelector(".variant-size-list");
+      const count = row.querySelector(".variant-size-count");
+      function renderSizes() {
+        const old = Array.from(list.querySelectorAll(".variant-size-row")).map((x) => ({
+          id: x.dataset.sizeId,
+          size: x.querySelector(".variant-size-input")?.value || "",
+          price: x.querySelector(".variant-price-input")?.value || "",
+        }));
+        const source = variant.sizes || [];
+        const n = Number(count.value) || 1;
+        list.innerHTML = "";
+        for (let i = 0; i < n; i++) {
+          const data = source[i] || old[i] || {};
+          const size = document.createElement("div");
+          size.className = "ap-row-2 variant-size-row";
+          if (data.id) size.dataset.sizeId = data.id;
+          size.innerHTML = `<div class="variant-field"><label>Size ${i+1}</label><input type="text" class="variant-size-input" value="${escapeHtml(data.size || "")}" /></div><div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-price-input" min="0" step="0.01" value="${Number(data.price || 0)}" /></div></div>`;
+          list.appendChild(size);
+        }
+      }
+      count.addEventListener("change", renderSizes);
+      row.querySelector(".variant-remove").addEventListener("click", () => { row.remove(); markDirty(); });
+      row.querySelector(".variant-image-input").addEventListener("change", () => markDirty());
+      renderSizes();
+      variantsList.appendChild(row);
+    });
   }
 
   async function responseJson(response) {
@@ -237,20 +353,14 @@ window.selectedFile = null;
     
     currentTags = parseTags(p.tags);
     renderTags();
-    currentImage = p.image || "";
 
-    // Update image preview
-    if (currentImage) {
-      imagePreview.src = imageUrl(currentImage);
-      imagePreview.style.display = "block";
-      uploadPlaceholder.style.display = "none";
-    } else {
-      imagePreview.style.display = "none";
-      uploadPlaceholder.style.display = "flex";
-    }
-    // Clear any selected file from previous session
-    window.selectedFile = null;
-    imageInput.value = "";
+    currentImages = Array.isArray(p.images) && p.images.length
+      ? p.images.slice(0, 5)
+      : (p.image ? [p.image] : []);
+    selectedImageFiles = [];
+    if (imageInput) imageInput.value = "";
+    renderEditImages();
+    renderVariantGroups(p.variants || []);
 
     salePriceField.value = p.sale_price ?? "";
     saleStartDate.value = toDateTimeLocal(p.sale_start);
@@ -340,16 +450,16 @@ window.selectedFile = null;
     body.append("sale_badge_color", selectedSaleColor);
     body.append("tags", currentTags.join(","));
 
-    let file = window.selectedFile;
-    if (!file) {
-      if (imageInput && imageInput.files && imageInput.files[0]) {
-        file = imageInput.files[0];
-      }
-    }
+    body.append("existing_images", JSON.stringify(currentImages));
+    selectedImageFiles.forEach((file) => body.append("images", file, file.name));
+    if (selectedImageFiles[0]) body.append("image", selectedImageFiles[0], selectedImageFiles[0].name);
 
-    if (file) {
-      body.append("image", file, file.name);
-    }
+    const variants = collectEditVariants();
+    body.append("variant_data", JSON.stringify(variants));
+    Array.from(variantsList ? variantsList.querySelectorAll(".ap-variant-group") : []).forEach((row) => {
+      const file = row.querySelector(".variant-image-input")?.files?.[0];
+      if (file) body.append("variant_image_" + row.dataset.variantId, file, file.name);
+    });
 
     body.append("_method", "PUT");
     const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
@@ -380,44 +490,47 @@ window.selectedFile = null;
     }, 700);
   }
 
-  // ─── VARIANTS (with $ prefix on price) ────────────────
-
-  function bindVariantRemove() {
+  function appendBlankVariantGroup() {
     if (!variantsList) return;
-    variantsList.querySelectorAll(".variant-remove").forEach((btn) => {
-      if (btn.dataset.bound === "1") return;
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", () => {
-        if (variantsList.children.length > 0) {
-          const row = btn.closest(".ap-variant-row");
-          row.style.transition = "all 0.2s";
-          row.style.opacity = "0";
-          row.style.transform = "translateY(-8px)";
-          setTimeout(() => row.remove(), 200);
-          markDirty();
-        }
-      });
-    });
+    const id = "new-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+    const row = document.createElement("div");
+    row.className = "ap-variant-group";
+    row.dataset.variantId = id;
+    row.innerHTML = `
+      <div class="ap-variant-group-head"><strong>Color Variant</strong><button type="button" class="variant-remove">Remove</button></div>
+      <div class="ap-row-2">
+        <div class="variant-field"><label>Color name</label><input type="text" class="variant-color-input" placeholder="e.g. Blue" /></div>
+        <div class="variant-field"><label>Stock quantity</label><input type="number" class="variant-stock-input" min="0" value="0" /></div>
+      </div>
+      <div class="variant-field"><label>Color image</label><input type="file" class="variant-image-input" accept="image/png,image/jpeg,image/webp" /></div>
+      <div class="variant-sizes">
+        <div class="ap-variant-group-head"><label>Sizes (1–7)</label><select class="variant-size-count">${[1,2,3,4,5,6,7].map(n => `<option value="${n}" ${n === 1 ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        <div class="variant-size-list"></div>
+      </div>`;
+    const list = row.querySelector(".variant-size-list");
+    const count = row.querySelector(".variant-size-count");
+    function sizes() {
+      const n = Number(count.value) || 1;
+      list.innerHTML = "";
+      for (let i = 0; i < n; i++) {
+        const line = document.createElement("div");
+        line.className = "ap-row-2 variant-size-row";
+        line.innerHTML = `<div class="variant-field"><label>Size ${i+1}</label><input type="text" class="variant-size-input" placeholder="e.g. M" /></div><div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-price-input" min="0" step="0.01" value="0" /></div></div>`;
+        list.appendChild(line);
+      }
+    }
+    count.addEventListener("change", sizes);
+    row.querySelector(".variant-remove").addEventListener("click", () => { row.remove(); markDirty(); });
+    row.querySelectorAll("input").forEach(input => input.addEventListener("input", markDirty));
+    sizes();
+    variantsList.appendChild(row);
   }
 
-  function setupVariants() {
-    if (!variantsList || !addVariantBtn) return;
-
+  if (addVariantBtn) {
     addVariantBtn.addEventListener("click", () => {
-      const row = document.createElement("div");
-      row.className = "ap-variant-row";
-      row.innerHTML =
-        '<div class="variant-field"><label>Size</label><select class="variant-select"><option value="xs">XS</option><option value="s">S</option><option value="m" selected>M</option><option value="l">L</option><option value="xl">XL</option><option value="xxl">XXL</option></select></div>' +
-        '<div class="variant-field"><label>Color</label><input type="text" class="variant-input" placeholder="e.g. White" /></div>' +
-        '<div class="variant-field"><label>Stock</label><input type="number" class="variant-input" placeholder="0" min="0" value="0" /></div>' +
-        '<div class="variant-field"><label>Price</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-input" placeholder="0.00" step="0.01" min="0" /></div></div>' +
-        '<button type="button" class="variant-remove" aria-label="Remove variant"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-      variantsList.appendChild(row);
-      bindVariantRemove();
+      appendBlankVariantGroup();
       markDirty();
     });
-
-    bindVariantRemove();
   }
 
   // ─── EVENT SETUP ──────────────────────────────────────
@@ -470,35 +583,26 @@ window.selectedFile = null;
 
     if (imageInput) {
       imageInput.addEventListener("change", function (e) {
-        const file = e.target.files[0];
-        window.selectedFile = file || null;
-
-        if (!file) {
-          imagePreview.style.display = "none";
-          uploadPlaceholder.style.display = "flex";
+        const incoming = Array.from(e.target.files || []);
+        const valid = incoming.filter((file) => {
+          if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+            showToast("Only PNG, JPG or WebP images are allowed.", "warn");
+            return false;
+          }
+          if (file.size > 5 * 1024 * 1024) {
+            showToast("Each image must be 5MB or smaller.", "warn");
+            return false;
+          }
+          return true;
+        });
+        if (currentImages.length + selectedImageFiles.length + valid.length > 5) {
+          showToast("A product can have a maximum of 5 images.", "warn");
           return;
         }
-
-        const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
-        if (!allowedTypes.includes(file.type)) {
-          showToast("Please select PNG, JPG, or WEBP image.", "warn");
-          imageInput.value = "";
-          window.selectedFile = null;
-          imagePreview.style.display = "none";
-          uploadPlaceholder.style.display = "flex";
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-          imagePreview.src = ev.target.result;
-          imagePreview.style.display = "block";
-          uploadPlaceholder.style.display = "none";
-        };
-        reader.readAsDataURL(file);
-
+        selectedImageFiles.push(...valid);
+        imageInput.value = "";
+        renderEditImages();
         markDirty();
-        showToast("New image selected successfully!", "success");
       });
     }
 
@@ -592,8 +696,7 @@ window.selectedFile = null;
       }
     });
 
-    // Variants
-    setupVariants();
+    // Variants are managed by the dynamic variant group controls above.
   }
 
   // ─── INIT ─────────────────────────────────────────────

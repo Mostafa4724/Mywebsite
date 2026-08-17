@@ -77,12 +77,11 @@
       <!-- Product Detail -->
 
       <section class="product-detail">
-        <div class="product-image-container">
-          <img
-            src="https://picsum.photos/500/400?product"
-            alt="Wireless Headphone"
-            id="product-image"
-          />
+        <div class="product-image-container product-gallery">
+          <button type="button" class="product-gallery-arrow" id="product-image-prev" aria-label="Previous image">‹</button>
+          <img src="https://picsum.photos/500/400?product" alt="Product" id="product-image" />
+          <button type="button" class="product-gallery-arrow" id="product-image-next" aria-label="Next image">›</button>
+          <div class="product-gallery-dots" id="product-image-dots" aria-label="Product images"></div>
         </div>
 
         <div class="product-info">
@@ -136,9 +135,13 @@
 
       <section class="about-section">
         <h2>About This Product</h2>
-        <p id="product-description">
-          Loading...
-        </p>
+        <p id="product-description">Loading...</p>
+        <div id="product-variants" class="product-variants" hidden>
+          <div class="product-variant-label">Color</div>
+          <div id="product-color-options" class="product-color-options"></div>
+          <div class="product-variant-label">Size</div>
+          <div id="product-size-options" class="product-size-options"></div>
+        </div>
       </section>
 
       <!-- Reviews Section -->

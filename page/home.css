@@ -599,3 +599,6 @@ footer p {
     font-size: 1.35rem;
   }
 }
+.product-card-image-wrap{height:200px}
+@media(max-width:900px){.product-card-image-wrap{height:170px}}
+@media(max-width:600px){.product-card-image-wrap{height:220px}}
