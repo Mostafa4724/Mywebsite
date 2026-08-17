@@ -4527,10 +4527,6 @@ footer {
   color: #b45309;
 }
 
-.admin-product-section-count.scheduled {
-  background: #ede9fe;
-  color: #6d28d9;
-}
 
 .product-publish-status {
   position: absolute;
@@ -4555,18 +4551,7 @@ footer {
   color: #b45309;
 }
 
-.product-publish-status.scheduled {
-  background: #ede9fe;
-  color: #6d28d9;
-}
 
-.product-admin-scheduled {
-  display: block;
-  margin-top: 4px;
-  color: #6d28d9;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
 
 .products-grid {
   display: grid;

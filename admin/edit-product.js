@@ -37,8 +37,6 @@ window.selectedFile = null;
   const unsavedModal = document.getElementById("unsavedModal");
   const stayOnPage = document.getElementById("stayOnPage");
   const leaveAnyway = document.getElementById("leaveAnyway");
-  const scheduledDate = document.getElementById("scheduledDate");
-  const scheduleDate = document.getElementById("scheduleDate");
 
   let productId = null;
   let product = null;
@@ -77,10 +75,8 @@ window.selectedFile = null;
 
   function toDateTimeLocal(value) {
     if (!value) return "";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value).slice(0, 16);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+    return String(value).trim().slice(0, 16);
   }
 
   function imageUrl(value) {
@@ -230,8 +226,6 @@ window.selectedFile = null;
 
     const status = document.querySelector(`input[name="publishStatus"][value="${CSS.escape(p.status || "draft")}"]`);
     if (status) status.checked = true;
-    if (p.status === "scheduled") scheduledDate.style.display = "block";
-    if (scheduleDate) scheduleDate.value = toDateTimeLocal(p.scheduled_date);
 
     const stockStatus = p.stock_status ||
       (Number(p.stock) <= 0 ? "out" : Number(p.stock) <= Number(p.low_stock || 0) ? "low" : "in");
@@ -338,7 +332,6 @@ window.selectedFile = null;
     body.append("low_stock", String(lowStock));
     body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
     body.append("status", selectedStatus ? selectedStatus.value : "draft");
-    body.append("scheduled_date", selectedStatus && selectedStatus.value === "scheduled" ? scheduleDate.value || "" : "");
     body.append("sale_enabled", saleToggle.checked ? "true" : "false");
     body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
     body.append("sale_start", saleToggle.checked ? saleStartDate.value : "");
@@ -455,12 +448,6 @@ window.selectedFile = null;
       })
     );
 
-    document.querySelectorAll('input[name="publishStatus"]').forEach(r =>
-      r.addEventListener("change", () => {
-        scheduledDate.style.display = r.value === "scheduled" && r.checked ? "block" : "none";
-      })
-    );
-
     document.querySelectorAll('input[name="stockStatus"]').forEach(r =>
       r.addEventListener("change", () => {
         document.querySelectorAll(".ap-stock-chip").forEach(c =>
@@ -528,7 +515,7 @@ window.selectedFile = null;
     document.getElementById("saveDraftBtn")?.addEventListener("click", () => {
       const draft = document.querySelector('input[name="publishStatus"][value="draft"]');
       if (draft) draft.checked = true;
-      scheduledDate.style.display = "none";
+
       form.requestSubmit();
     });
 
