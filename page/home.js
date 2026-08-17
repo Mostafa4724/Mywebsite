@@ -1,15 +1,5 @@
 function isStorefrontProductVisible(product) {
-  const status = String(product && product.status || "draft").toLowerCase();
-
-  if (status === "published") return true;
-
-  if (status === "scheduled") {
-    if (!product.scheduled_date) return false;
-    const scheduled = new Date(product.scheduled_date);
-    return !Number.isNaN(scheduled.getTime()) && new Date() >= scheduled;
-  }
-
-  return false;
+  return String(product && product.status || "draft").toLowerCase() === "published";
 }
 
 const productsContainer = document.getElementById("product-container");

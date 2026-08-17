@@ -1,0 +1,38 @@
+.orders-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  color: currentColor;
+  text-decoration: none;
+}
+
+.orders-nav-icon img {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.orders-nav-icon:hover {
+  opacity: 0.78;
+}
+
+.orders-nav-icon:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.orders-nav-icon[aria-current="page"] {
+  opacity: 1;
+}
+
+.oc-topbar .oc-orders-icon {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
