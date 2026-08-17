@@ -76,12 +76,6 @@ async function loadProduct() {
         return;
     }
 
-    if (productStatus === "scheduled") {
-        if (!product.scheduled_date || new Date() < new Date(product.scheduled_date)) {
-            alert("Product not found");
-            return;
-        }
-    }
 
     const image =
         product.image && product.image !== ""
@@ -468,16 +462,6 @@ function drawAverageStars(avg) {
 
   if (prodPrice) prodPrice.addEventListener('input', () => { calcProfit(); updateDiscountPreview(); });
   if (prodCost) prodCost.addEventListener('input', calcProfit);
-
-  // ===== Publish Status =====
-  const scheduledDate = document.getElementById('scheduledDate');
-  document.querySelectorAll('input[name="publishStatus"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (scheduledDate) {
-        scheduledDate.style.display = radio.value === 'scheduled' ? '' : 'none';
-      }
-    });
-  });
 
   // ===== Stock Status Chips =====
   document.querySelectorAll('.ap-stock-chip').forEach(chip => {

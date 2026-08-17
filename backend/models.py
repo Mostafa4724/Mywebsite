@@ -66,6 +66,14 @@ class User(db.Model):
 from datetime import datetime
 
 
+def _local_datetime_string(value):
+    """Serialize a stored naive datetime as local wall-clock ISO text."""
+    if value is None:
+        return None
+    return value.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+
 class Category(db.Model):
 
     __tablename__ = "categories"
@@ -183,31 +191,8 @@ class Product(db.Model):
 
     tax_class = db.Column(
         db.String(20),
-        default="8"
+        default="standard"
     )
-
-    @property
-    def tax_rate(self):
-        """Return this product's tax percentage.
-
-        New products store the admin-entered percentage in tax_class for
-        backward compatibility with the existing database. Older products
-        using the previous named tax classes are mapped to their old rates.
-        """
-        value = self.tax_class
-        legacy_rates = {
-            "standard": 8.0,
-            "reduced": 4.0,
-            "zero": 0.0,
-            "none": 0.0,
-        }
-        if value in legacy_rates:
-            return legacy_rates[value]
-        try:
-            rate = float(value)
-        except (TypeError, ValueError):
-            return 8.0
-        return max(0.0, min(100.0, rate))
 
     # ---------------------------------------------------------
     # Main Image
@@ -317,19 +302,17 @@ class Product(db.Model):
 
             "tax_class": self.tax_class,
 
-            "tax_rate": self.tax_rate,
-
             "image": self.image,
 
             "status": self.status,
 
-            "scheduled_date": self.scheduled_date,
+            "scheduled_date": _local_datetime_string(self.scheduled_date),
 
             "sale_enabled": self.sale_enabled,
 
-            "sale_start": self.sale_start,
+            "sale_start": _local_datetime_string(self.sale_start),
 
-            "sale_end": self.sale_end,
+            "sale_end": _local_datetime_string(self.sale_end),
 
             "sale_badge": self.sale_badge,
 

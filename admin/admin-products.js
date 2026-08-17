@@ -5,11 +5,9 @@
 
   const publishedGrid = document.getElementById("publishedProductsGrid");
   const draftGrid = document.getElementById("draftProductsGrid");
-  const scheduledGrid = document.getElementById("scheduledProductsGrid");
 
   const publishedCount = document.getElementById("publishedProductsCount");
   const draftCount = document.getElementById("draftProductsCount");
-  const scheduledCount = document.getElementById("scheduledProductsCount");
 
   const searchInput = document.getElementById("productSearch");
   const addProductBtn = document.getElementById("addProductBtn");
@@ -101,20 +99,9 @@
     const status = String(product.status || "draft").toLowerCase();
 
     if (status === "published") return "published";
-    if (status === "scheduled") return "scheduled";
     return "draft";
   }
 
-  function formatScheduledDate(product) {
-    if (!product.scheduled_date) return "Publish date not set";
-
-    const date = new Date(product.scheduled_date);
-    if (Number.isNaN(date.getTime())) {
-      return "Scheduled";
-    }
-
-    return "Publishes " + date.toLocaleString();
-  }
 
   function createProductCard(product) {
     const stock = getStockState(product);
@@ -133,16 +120,8 @@
     const statusBadge =
       status === "draft"
         ? '<span class="product-publish-status draft">Draft</span>'
-        : status === "scheduled"
-          ? '<span class="product-publish-status scheduled">Scheduled</span>'
-          : '<span class="product-publish-status published">Published</span>';
+        : '<span class="product-publish-status published">Published</span>';
 
-    const scheduledText =
-      status === "scheduled"
-        ? '<span class="product-admin-scheduled">' +
-          escapeHtml(formatScheduledDate(product)) +
-          "</span>"
-        : "";
 
     card.innerHTML =
       '<div class="product-admin-thumb">' +
@@ -184,7 +163,6 @@
         '<p class="product-admin-stock-text">Stock: ' +
         escapeHtml(product.stock) +
         " units</p>" +
-        scheduledText +
       "</div>" +
       '<div class="product-admin-actions">' +
         '<a class="btn-text" href="edit.html?id=' +
@@ -251,10 +229,6 @@
       return normalizeStatus(product) === "draft";
     });
 
-    const scheduled = filtered.filter(function (product) {
-      return normalizeStatus(product) === "scheduled";
-    });
-
     renderSection(
       publishedGrid,
       publishedCount,
@@ -269,12 +243,6 @@
       "No draft products."
     );
 
-    renderSection(
-      scheduledGrid,
-      scheduledCount,
-      scheduled,
-      "No scheduled products."
-    );
   }
 
   async function loadCategories() {
@@ -331,7 +299,6 @@
 
       if (publishedGrid) publishedGrid.innerHTML = errorHtml;
       if (draftGrid) draftGrid.innerHTML = errorHtml;
-      if (scheduledGrid) scheduledGrid.innerHTML = errorHtml;
     }
   }
 

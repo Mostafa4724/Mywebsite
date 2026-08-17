@@ -78,8 +78,6 @@
 
   const addVariantBtn = el("addVariantBtn");
   const variantsList = el("variantsList");
-  const scheduledDate = el("scheduledDate");
-  const scheduleDate = el("scheduleDate");
 
   let selectedSaleColor = "#ef4444";
   let stockStatusManual = false; // true once the user clicks a stock chip
@@ -535,13 +533,6 @@
   // ---------------------------------------------------------------------------
   // Publish status
   // ---------------------------------------------------------------------------
-  document.querySelectorAll('input[name="publishStatus"]').forEach((radio) => {
-    radio.addEventListener("change", () => {
-      if (scheduledDate) {
-        scheduledDate.style.display = radio.value === "scheduled" ? "" : "none";
-      }
-    });
-  });
 
   // ---------------------------------------------------------------------------
   // Tags  (the `tags` array is the single source of truth)
@@ -895,10 +886,7 @@
       'input[name="publishStatus"]:checked'
     );
     const status = statusOverride || (publishStatus ? publishStatus.value : "draft");
-    fd.append("status", status);
-    if (status === "scheduled" && scheduleDate && scheduleDate.value) {
-      fd.append("scheduled_at", scheduleDate.value);
-    }
+    fd.append("status", status === "published" ? "published" : "draft");
 
     // --- Sale --------------------------------------------------------------
     const saleOn = !!(saleToggle && saleToggle.checked);

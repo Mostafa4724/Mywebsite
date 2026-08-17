@@ -139,7 +139,6 @@ def add_product():
 
     sale_start = None
     sale_end = None
-    scheduled_date = None
 
     if data.get("sale_start"):
         sale_start = datetime.fromisoformat(data.get("sale_start").replace("Z", "+00:00")).replace(tzinfo=None)
@@ -148,17 +147,8 @@ def add_product():
         sale_end = datetime.fromisoformat(data.get("sale_end").replace("Z", "+00:00")).replace(tzinfo=None)
 
     status = str(data.get("status", "draft") or "draft").strip().lower()
-    if status not in {"draft", "published", "scheduled"}:
-        return jsonify(success=False, message="Invalid publish status."), 400
-
-    if status == "scheduled":
-        raw_scheduled = data.get("scheduled_at") or data.get("scheduled_date")
-        if not raw_scheduled:
-            return jsonify(success=False, message="A publish date is required for scheduled products."), 400
-        try:
-            scheduled_date = datetime.fromisoformat(raw_scheduled.replace("Z", "+00:00")).replace(tzinfo=None)
-        except ValueError:
-            return jsonify(success=False, message="Publish date is invalid."), 400
+    if status not in {"draft", "published"}:
+        return jsonify(success=False, message="Invalid publish status. Use Draft or Published."), 400
 
     price_value = float(data.get("price", 0))
     sale_price_value = data.get("sale_price")
@@ -213,7 +203,6 @@ def add_product():
 
         # Publish
         status=status,
-        scheduled_date=scheduled_date,
 
         # Sale
         sale_enabled=sale_enabled,
@@ -314,25 +303,17 @@ def edit_product(id):
 
     def parse_datetime_field(name):
         raw = value(name)
-        if raw in (None, ""):
-            return None
-        try:
-            return datetime.fromisoformat(str(raw).replace("Z", "+00:00")).replace(tzinfo=None)
-        except ValueError:
-            raise ValueError(f"{name} is invalid.")
+        return _parse_local_datetime(raw, name)
 
     try:
         sale_start = parse_datetime_field("sale_start") if sale_enabled else None
         sale_end = parse_datetime_field("sale_end") if sale_enabled else None
-        scheduled_date = parse_datetime_field("scheduled_date") if value("status", product.status) == "scheduled" else None
     except ValueError as exc:
         return jsonify(success=False, message=str(exc)), 400
 
     status = str(value("status", product.status or "draft")).strip().lower()
-    if status not in {"draft", "published", "scheduled"}:
-        return jsonify(success=False, message="Invalid publish status."), 400
-    if status == "scheduled" and scheduled_date is None:
-        return jsonify(success=False, message="A publish date is required for scheduled products."), 400
+    if status not in {"draft", "published"}:
+        return jsonify(success=False, message="Invalid publish status. Use Draft or Published."), 400
 
     stock_status = value("stock_status")
     if stock_status not in {"in", "low", "out"}:
@@ -357,7 +338,7 @@ def edit_product(id):
     product.stock_status = stock_status
     product.tax_class = value("tax_class", product.tax_class or "standard")
     product.status = status
-    product.scheduled_date = scheduled_date
+    product.scheduled_date = None
     product.sale_enabled = sale_enabled
     product.sale_start = sale_start
     product.sale_end = sale_end
