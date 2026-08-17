@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="7" y="4" width="12" height="15" rx="1.5"/>
-  <path d="M7 7H5.5A1.5 1.5 0 0 0 4 8.5v11A1.5 1.5 0 0 0 5.5 21H16a1.5 1.5 0 0 0 1.5-1.5V19"/>
-  <path d="M10 8h6M10 11h6M10 14h4"/>
-</svg>
+<svg width="256px" height="256px" viewBox="-2 -2 24.00 24.00" xmlns="http://www.w3.org/2000/svg" fill="rgba(15, 23, 36, 0.95" stroke="rgba(15, 23, 36, 0.95" stroke-width="1.1"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.68"></g><g id="SVGRepo_iconCarrier"><path d="M11 1a1 1 0 10-2 0v7.586L7.707 7.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 8.586V1z" fill="#cfd1d3"></path><path d="M3 14V3h4V1H2.5A1.5 1.5 0 001 2.5v15A1.5 1.5 0 002.5 19h15a1.5 1.5 0 001.5-1.5v-15A1.5 1.5 0 0017.5 1H13v2h4v11h-3.5c-.775 0-1.388.662-1.926 1.244l-.11.12A1.994 1.994 0 0110 16a1.994 1.994 0 01-1.463-.637l-.111-.12C7.888 14.664 7.275 14 6.5 14H3z" fill="#cfd1d3"></path></g></svg>
