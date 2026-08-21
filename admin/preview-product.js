@@ -1,13 +1,12 @@
 /**
  * preview-product.js
  * Adds a "Preview" button to every admin product card.
- * Opens the product page in a scrollable, read-only fullscreen iframe.
- * X button on the left closes the preview.
+ * Opens the product page in a scrollable iframe where only
+ * the image-gallery prev/next buttons and scrolling are active.
  */
 (function () {
   "use strict";
 
-  /* ── DOM references ─────────────────────────────────────── */
   var overlay  = document.getElementById("previewOverlay");
   var iframe   = document.getElementById("previewIframe");
   var closeBtn = document.getElementById("previewCloseBtn");
@@ -17,38 +16,22 @@
 
   var isOpen = false;
 
-  /* ── Inject host-page CSS ───────────────────────────────── */
-  (function injectHostCSS() {
+  /* ── Host-page CSS: kill blocker so iframe scrolls natively ─ */
+  (function () {
     var s = document.createElement("style");
     s.id = "preview-host-css";
-    s.textContent = [
-      /* kill the blocker so the iframe gets all events natively */
-      "#previewBlocker {",
-      "  pointer-events: none !important;",
-      "}",
-      /* ensure iframe fills the overlay */
-      "#previewIframe {",
-      "  width: 100% !important;",
-      "  height: 100% !important;",
-      "  border: none !important;",
-      "  display: block !important;",
-      "}",
-      /* keep close button above everything */
-      "#previewCloseBtn {",
-      "  z-index: 10 !important;",
-      "  position: relative !important;",
-      "}"
-    ].join("\n");
+    s.textContent =
+      "#previewBlocker{pointer-events:none!important}" +
+      "#previewIframe{width:100%!important;height:100%!important;border:none!important;display:block!important}" +
+      "#previewCloseBtn{z-index:10!important;position:relative!important}";
     document.head.appendChild(s);
   })();
 
-  /* ── Open / Close helpers ───────────────────────────────── */
+  /* ── Open / Close ──────────────────────────────────────── */
   function openPreview(productId) {
     if (isOpen) return;
     isOpen = true;
-
     iframe.src = "../page/product.html?id=" + encodeURIComponent(productId);
-
     overlay.classList.remove("closing");
     overlay.classList.add("active");
     document.body.style.overflow = "hidden";
@@ -57,9 +40,7 @@
   function closePreview() {
     if (!isOpen) return;
     isOpen = false;
-
     overlay.classList.add("closing");
-
     setTimeout(function () {
       overlay.classList.remove("active", "closing");
       iframe.src = "about:blank";
@@ -67,7 +48,6 @@
     }, 250);
   }
 
-  /* ── Close button & Escape ──────────────────────────────── */
   closeBtn.addEventListener("click", function (e) {
     e.preventDefault();
     e.stopPropagation();
@@ -78,125 +58,77 @@
     if (e.key === "Escape" && isOpen) closePreview();
   });
 
-  /* ── On iframe load: inject read-only styles + script ───── */
+  /* ── Iframe load: style + script injection ──────────────── */
   iframe.addEventListener("load", function () {
     try {
       var doc = iframe.contentDocument || iframe.contentWindow.document;
-      var win = iframe.contentWindow;
       if (!doc || !doc.head) return;
 
-      /* ── remove previous injections ── */
-      var oldStyle = doc.getElementById("preview-readonly-styles");
-      if (oldStyle) oldStyle.remove();
-      var oldScript = doc.getElementById("preview-readonly-script");
-      if (oldScript) oldScript.remove();
+      /* cleanup previous */
+      var os = doc.getElementById("preview-ro-s");
+      if (os) os.remove();
+      var oj = doc.getElementById("preview-ro-j");
+      if (oj) oj.remove();
 
-      /* ── styles: visually disable interactive elements ── */
+      /*
+       * Selector for image-gallery prev / next buttons.
+       * Covers the most common class-name patterns — extend if needed.
+       */
+      var GALLERY_BTN =
+        '.gallery-prev, .gallery-next, ' +
+        '.carousel-prev, .carousel-next, ' +
+        '.slider-prev, .slider-next, ' +
+        '.image-prev, .image-next, ' +
+        '.img-prev, .img-next, ' +
+        '.thumb-prev, .thumb-next, ' +
+        '.product-prev, .product-next, ' +
+        '.nav-prev, .nav-next, ' +
+        '[class*="gallery-prev"], [class*="gallery-next"], ' +
+        '[class*="carousel-prev"], [class*="carousel-next"], ' +
+        '[class*="slider-prev"], [class*="slider-next"], ' +
+        '[class*="image-prev"], [class*="image-next"], ' +
+        '.product-images button, ' +
+        '.product-gallery button, ' +
+        '.image-gallery button, ' +
+        '.main-image-container button, ' +
+        '.product-image-nav button';
+
+      /* ── styles ── */
       var style = doc.createElement("style");
-      style.id = "preview-readonly-styles";
-      style.textContent = [
-        "html, body {",
-        "  overflow: auto !important;",
-        "  overflow-x: hidden !important;",
-        "  height: auto !important;",
-        "  min-height: 100% !important;",
-        "}",
-        "button,",
-        "input,",
-        "textarea,",
-        "select,",
-        'a[class*="cart"],',
-        'a[href*="cart"],',
-        'a[href*="checkout"],',
-        'a[href*="wishlist"],',
-        ".add-to-cart-btn,",
-        ".checkout-btn,",
-        ".submit-review-btn,",
-        ".qty-btn,",
-        ".product-actions .btn-primary,",
-        ".product-actions .btn-secondary,",
-        ".wishlist-heart,",
-        ".promo-input-group button,",
-        ".newsletter-box button {",
-        "  pointer-events: none !important;",
-        "  opacity: 0.45 !important;",
-        "  cursor: not-allowed !important;",
-        "  filter: grayscale(0.3);",
-        "}",
-        "form {",
-        "  pointer-events: none !important;",
-        "}",
-        "body::after {",
-        '  content: "READ-ONLY PREVIEW";',
-        "  position: fixed;",
-        "  bottom: 16px;",
-        "  right: 16px;",
-        "  padding: 6px 14px;",
-        "  background: rgba(15,23,36,0.85);",
-        "  color: rgba(255,255,255,0.6);",
-        "  font-size: 11px;",
-        "  font-weight: 700;",
-        "  letter-spacing: 1px;",
-        "  border-radius: 8px;",
-        "  z-index: 9999;",
-        "  pointer-events: none;",
-        "  backdrop-filter: blur(6px);",
-        "}"
-      ].join("\n");
+      style.id = "preview-ro-s";
+      style.textContent =
+        /* ensure scrollable */
+        "html,body{overflow:auto!important;overflow-x:hidden!important;height:auto!important;min-height:100%!important}" +
+        /* disable everything interactive … */
+        "button,input,textarea,select,a,form," +
+        "[role='button'],[onclick],[data-action]{pointer-events:none!important;opacity:.45!important;cursor:not-allowed!important;filter:grayscale(.3)}" +
+        /* … but re-enable gallery nav buttons */
+        GALLERY_BTN + "{pointer-events:auto!important;opacity:1!important;cursor:pointer!important;filter:none!important}" +
+        /* watermark */
+        "body::after{content:'READ-ONLY PREVIEW';position:fixed;bottom:16px;right:16px;padding:6px 14px;" +
+        "background:rgba(15,23,36,.85);color:rgba(255,255,255,.6);font-size:11px;font-weight:700;" +
+        "letter-spacing:1px;border-radius:8px;z-index:9999;pointer-events:none;backdrop-filter:blur(6px)}";
       doc.head.appendChild(style);
 
-      /* ── script: block all interactions inside the iframe ── */
+      /* ── script: block clicks except on gallery buttons ── */
       var script = doc.createElement("script");
-      script.id = "preview-readonly-script";
-      script.textContent = [
-        '(function(){',
-        '  var BLOCKED = "button, input, textarea, select, a, form, ',
-        '    [role=\\"button\\"], [onclick], [data-action], ',
-        '    .add-to-cart-btn, .checkout-btn, .qty-btn, ',
-        '    .wishlist-heart, .submit-review-btn";',
-
-        /* capture-phase click blocker */
-        '  document.addEventListener("click", function(e){',
-        '    if(e.target.closest(BLOCKED)){',
-        '      e.preventDefault();',
-        '      e.stopPropagation();',
-        '      e.stopImmediatePropagation();',
-        '    }',
-        '  }, true);',
-
-        /* prevent form submission */
-        '  document.addEventListener("submit", function(e){',
-        '    e.preventDefault();',
-        '    e.stopPropagation();',
-        '  }, true);',
-
-        /* prevent link navigation (catches any <a> that slipped through) */
-        '  document.addEventListener("click", function(e){',
-        '    var a = e.target.closest("a");',
-        '    if(a && a.href){',
-        '      e.preventDefault();',
-        '      e.stopPropagation();',
-        '    }',
-        '  }, true);',
-
-        /* prevent focus on inputs */
-        '  document.addEventListener("focusin", function(e){',
-        '    if(e.target.closest("input, textarea, select")){',
-        '      e.target.blur();',
-        '    }',
-        '  }, true);',
-
-        /* prevent drag on images */
-        '  document.addEventListener("dragstart", function(e){',
-        '    e.preventDefault();',
-        '  }, true);',
-        '})();'
-      ].join("\n");
+      script.id = "preview-ro-j";
+      script.textContent =
+        '(function(){' +
+        'var G="' + GALLERY_BTN + '";' +
+        'document.addEventListener("click",function(e){' +
+        '  if(e.target.closest(G))return;' +          /* allow gallery nav  */
+        '  if(e.target.closest("button,input,textarea,select,a,form,[role=button],[onclick],[data-action]")){' +
+        '    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()' +
+        '  }' +
+        '},true);' +
+        'document.addEventListener("submit",function(e){e.preventDefault();e.stopPropagation()},true);' +
+        'document.addEventListener("focusin",function(e){' +
+        '  if(e.target.closest("input,textarea,select"))e.target.blur()' +
+        '},true);' +
+        '})();';
       doc.head.appendChild(script);
-
-    } catch (err) {
-      /* cross-origin — can't inject, blocker is already disabled so at least scroll works */
-    }
+    } catch (err) {}
   });
 
   /* ── Find product ID from a card element ────────────────── */
@@ -303,16 +235,11 @@
     }
   }
 
-  /* ── MutationObserver — catch dynamically added cards ───── */
+  /* ── MutationObserver ───────────────────────────────────── */
   var observer = new MutationObserver(function (mutations) {
-    var shouldScan = false;
     for (var i = 0; i < mutations.length; i++) {
-      if (mutations[i].addedNodes.length > 0) {
-        shouldScan = true;
-        break;
-      }
+      if (mutations[i].addedNodes.length > 0) { addPreviewButtons(); return; }
     }
-    if (shouldScan) addPreviewButtons();
   });
 
   function startObserving() {
@@ -322,7 +249,7 @@
     }
   }
 
-  /* ── Initialization ─────────────────────────────────────── */
+  /* ── Init ───────────────────────────────────────────────── */
   function init() {
     startObserving();
     addPreviewButtons();
