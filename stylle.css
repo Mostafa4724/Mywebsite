@@ -112,6 +112,18 @@ body {
   cursor: pointer;
 }
 
+.icon-btn.cart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;          /* ← add this */
+  color: #ffffff;
+  text-decoration: none;
+  position: relative;
+}
+
 .icon-btn svg {
   display: block;
 }

@@ -1,3 +1,30 @@
+.icon-btn.cart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #ffffff;
+  text-decoration: none;
+  position: relative;
+}
+
+.icon-btn.cart svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.icon-btn.cart:hover {
+  opacity: 0.78;
+}
+
+.icon-btn.cart:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
 .orders-nav-icon {
   display: inline-flex;
   align-items: center;
