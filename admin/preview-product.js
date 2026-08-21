@@ -55,13 +55,10 @@
             behavior: "auto"
           });
         } catch (err) {
-          /* Cross-origin fallback: try contentDocument */
           try {
             var doc = iframe.contentDocument;
             doc.documentElement.scrollTop += e.deltaY;
-          } catch (err2) {
-            /* Nothing we can do on file:// */
-          }
+          } catch (err2) {}
         }
       },
       { passive: false }
@@ -118,7 +115,6 @@
       e.preventDefault();
     });
 
-    /* Block context menu inside the preview */
     blocker.addEventListener("contextmenu", function (e) {
       e.preventDefault();
     });
@@ -193,42 +189,8 @@
       ].join("\n");
 
       doc.head.appendChild(style);
-    } catch (err) {
-      /* Cross-origin — blocker already prevents interaction */
-    }
+    } catch (err) {}
   });
-
-  /* ── Find product ID from a card element ────────────────── */
-  function getProductId(card) {
-    if (card.dataset.id)        return card.dataset.id;
-    if (card.dataset.productId) return card.dataset.productId;
-    if (card.dataset.pid)       return card.dataset.pid;
-
-    var idEls = card.querySelectorAll("[data-id],[data-product-id],[data-pid]");
-    for (var i = 0; i < idEls.length; i++) {
-      if (idEls[i].dataset.id)        return idEls[i].dataset.id;
-      if (idEls[i].dataset.productId) return idEls[i].dataset.productId;
-      if (idEls[i].dataset.pid)       return idEls[i].dataset.pid;
-    }
-
-    var links = card.querySelectorAll("a[href*='product']");
-    for (var j = 0; j < links.length; j++) {
-      var match = links[j].href.match(/[?&]id=([^&]+)/);
-      if (match) return decodeURIComponent(match[1]);
-      var hashMatch = links[j].href.match(/product\.html#(.+)$/);
-      if (hashMatch) return decodeURIComponent(hashMatch[1]);
-    }
-
-    var clickables = card.querySelectorAll("[onclick],[data-action]");
-    for (var k = 0; k < clickables.length; k++) {
-      var attr = clickables[k].getAttribute("onclick") ||
-                 clickables[k].getAttribute("data-action") || "";
-      var m = attr.match(/id['":\s]+(['"]?)([\w\-]+)\1/i);
-      if (m) return m[2];
-    }
-
-    return null;
-  }
 
   /* ── Create the Preview button ──────────────────────────── */
   function createPreviewButton(productId) {
@@ -252,66 +214,48 @@
     return btn;
   }
 
-  /* ── Insert Preview button into a card ──────────────────── */
-  function injectPreviewButton(card) {
-    if (card.querySelector(".preview-product-btn")) return;
-
-    var productId = getProductId(card);
-    if (!productId) return;
-
-    var btn = createPreviewButton(productId);
-
-    var actions =
-      card.querySelector(".admin-card-actions") ||
-      card.querySelector(".product-card-actions") ||
-      card.querySelector("[class*='actions']") ||
-      card.querySelector("[class*='buttons']");
-
-    if (actions) {
-      actions.appendChild(btn);
-      return;
-    }
-
-    var lastBtn = card.querySelector("button:last-of-type");
-    if (lastBtn && lastBtn.parentNode === card) {
-      lastBtn.parentNode.insertBefore(btn, lastBtn.nextSibling);
-      return;
-    }
-
-    card.appendChild(btn);
-  }
-
-  /* ── Scan grids and inject buttons ──────────────────────── */
+  /* ── Scan for cards and inject buttons ──────────────────── */
   function addPreviewButtons() {
-    var grids = document.querySelectorAll(".products-grid");
-    for (var g = 0; g < grids.length; g++) {
-      var children = grids[g].children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
+    /* Target the EXACT class used by admin-products.js */
+    var cards = document.querySelectorAll(".product-admin-card");
 
-        if (
-          child.classList.contains("admin-products-message") ||
-          child.tagName === "SCRIPT" ||
-          child.tagName === "STYLE"
-        ) {
-          continue;
-        }
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
 
-        injectPreviewButton(child);
-      }
+      /* Already has a preview button — skip */
+      if (card.querySelector(".preview-product-btn")) continue;
+
+      /* Product ID lives in data-product-id (set by createProductCard) */
+      var productId = card.dataset.productId;
+      if (!productId) continue;
+
+      /* Actions container is .product-admin-actions */
+      var actions = card.querySelector(".product-admin-actions");
+      if (!actions) continue;
+
+      var btn = createPreviewButton(productId);
+      actions.appendChild(btn);
     }
   }
 
-  /* ── MutationObserver — catch dynamically added cards ───── */
-  var observer = new MutationObserver(function (mutations) {
-    var shouldScan = false;
-    for (var i = 0; i < mutations.length; i++) {
-      if (mutations[i].addedNodes.length > 0) {
-        shouldScan = true;
-        break;
-      }
+  /* ── Polling approach — guaranteed to catch async renders ─ */
+  var pollCount = 0;
+  var MAX_POLLS = 40; /* 40 × 300ms = 12 seconds of coverage */
+  var pollTimer = null;
+
+  function poll() {
+    addPreviewButtons();
+    pollCount++;
+
+    if (pollCount >= MAX_POLLS) {
+      clearInterval(pollTimer);
+      pollTimer = null;
     }
-    if (shouldScan) addPreviewButtons();
+  }
+
+  /* Also watch for future mutations (search filtering, etc.) */
+  var observer = new MutationObserver(function () {
+    addPreviewButtons();
   });
 
   function startObserving() {
@@ -324,11 +268,12 @@
   /* ── Initialization ─────────────────────────────────────── */
   function init() {
     startObserving();
+
+    /* Immediate first attempt */
     addPreviewButtons();
-    setTimeout(addPreviewButtons, 200);
-    setTimeout(addPreviewButtons, 600);
-    setTimeout(addPreviewButtons, 1200);
-    setTimeout(addPreviewButtons, 2500);
+
+    /* Then poll every 300ms to catch async API-loaded cards */
+    pollTimer = setInterval(poll, 300);
   }
 
   if (document.readyState === "loading") {
