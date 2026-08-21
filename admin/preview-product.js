@@ -17,6 +17,99 @@
 
   var isOpen = false;
 
+  /* ── Ensure overlay / iframe / blocker CSS allows scroll ── */
+  (function ensureScrollableCSS() {
+    var style = document.createElement("style");
+    style.id = "preview-scroll-fix";
+    style.textContent = [
+      "#previewOverlay.active {",
+      "  overflow: hidden !important;",
+      "}",
+      "#previewIframe {",
+      "  width: 100% !important;",
+      "  height: 100% !important;",
+      "  border: none !important;",
+      "  display: block !important;",
+      "}",
+      "#previewBlocker {",
+      "  position: absolute !important;",
+      "  top: 0 !important;",
+      "  left: 0 !important;",
+      "  width: 100% !important;",
+      "  height: 100% !important;",
+      "  z-index: 2 !important;",
+      "  cursor: default !important;",
+      "}",
+      "#previewCloseBtn {",
+      "  z-index: 10 !important;",
+      "}"
+    ].join("\n");
+    document.head.appendChild(style);
+  })();
+
+  /* ── Detect the actual scrollable element inside iframe ─── */
+  function getIframeScroller() {
+    try {
+      var doc = iframe.contentDocument || iframe.contentWindow.document;
+      var win = iframe.contentWindow;
+
+      /* check for a custom scroll container first */
+      var candidates = doc.querySelectorAll(
+        '[style*="overflow"], .scroll-container, .scrollable, [data-scrollable], main'
+      );
+      for (var i = 0; i < candidates.length; i++) {
+        var el = candidates[i];
+        var cs = win.getComputedStyle(el);
+        if (
+          (cs.overflowY === "auto" || cs.overflowY === "scroll") &&
+          el.scrollHeight > el.clientHeight + 2
+        ) {
+          return { el: el, win: win, doc: doc, isWindow: false };
+        }
+      }
+
+      return { el: doc.documentElement, win: win, doc: doc, isWindow: true };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /* ── Unified scroll helper ──────────────────────────────── */
+  function scrollIframe(deltaX, deltaY) {
+    var s = getIframeScroller();
+    if (!s) return;
+
+    try {
+      if (s.isWindow) {
+        s.win.scrollBy({ top: deltaY, left: deltaX, behavior: "auto" });
+      } else {
+        s.el.scrollTop  += deltaY;
+        s.el.scrollLeft += deltaX;
+      }
+    } catch (e) {
+      try {
+        var doc = iframe.contentDocument;
+        doc.documentElement.scrollTop  += deltaY;
+        doc.documentElement.scrollLeft += deltaX;
+      } catch (e2) { /* cross-origin fallback – nothing we can do */ }
+    }
+  }
+
+  /* ── Read current scroll position & bounds ──────────────── */
+  function getIframeScrollInfo() {
+    try {
+      var win = iframe.contentWindow;
+      var doc = iframe.contentDocument;
+      return {
+        scrollTop:   win.pageYOffset || doc.documentElement.scrollTop || 0,
+        scrollHeight: Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight),
+        clientHeight: win.innerHeight || doc.documentElement.clientHeight
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   /* ── Open / Close helpers ───────────────────────────────── */
   function openPreview(productId) {
     if (isOpen) return;
@@ -42,37 +135,53 @@
     }, 250);
   }
 
-  /* ── Scroll forwarding (wheel) ──────────────────────────── */
+  /* ── Scroll forwarding: mouse wheel ─────────────────────── */
   if (blocker) {
     blocker.addEventListener(
       "wheel",
       function (e) {
         e.preventDefault();
-        try {
-          iframe.contentWindow.scrollBy({
-            top: e.deltaY,
-            left: e.deltaX,
-            behavior: "auto"
-          });
-        } catch (err) {
-          try {
-            var doc = iframe.contentDocument;
-            doc.documentElement.scrollTop += e.deltaY;
-          } catch (err2) {}
+        e.stopPropagation();
+
+        var deltaY = e.deltaY;
+        var deltaX = e.deltaX;
+
+        /* normalise delta-mode (0 = px, 1 = lines, 2 = pages) */
+        if (e.deltaMode === 1) {
+          deltaY *= 40;
+          deltaX *= 40;
+        } else if (e.deltaMode === 2) {
+          deltaY *= (window.innerHeight || 800);
+          deltaX *= (window.innerWidth  || 1200);
         }
+
+        scrollIframe(deltaX, deltaY);
       },
       { passive: false }
     );
 
-    /* ── Scroll forwarding (touch / mobile) ───────────────── */
+    /* ── Scroll forwarding: touch with momentum ───────────── */
     var lastTouchY = 0;
     var lastTouchX = 0;
+    var touchStartTime = 0;
+    var touchStartY = 0;
+    var momentumRAF = 0;
+
+    function cancelMomentum() {
+      if (momentumRAF) {
+        cancelAnimationFrame(momentumRAF);
+        momentumRAF = 0;
+      }
+    }
 
     blocker.addEventListener(
       "touchstart",
       function (e) {
+        cancelMomentum();
         lastTouchY = e.touches[0].clientY;
         lastTouchX = e.touches[0].clientX;
+        touchStartTime = Date.now();
+        touchStartY = lastTouchY;
       },
       { passive: true }
     );
@@ -81,59 +190,145 @@
       "touchmove",
       function (e) {
         e.preventDefault();
-        var touchY = e.touches[0].clientY;
-        var touchX = e.touches[0].clientX;
-        var deltaY = lastTouchY - touchY;
-        var deltaX = lastTouchX - touchX;
-        lastTouchY = touchY;
-        lastTouchX = touchX;
+        e.stopPropagation();
 
-        try {
-          iframe.contentWindow.scrollBy(deltaX, deltaY);
-        } catch (err) {
-          try {
-            var doc = iframe.contentDocument;
-            doc.documentElement.scrollTop += deltaY;
-            doc.documentElement.scrollLeft += deltaX;
-          } catch (err2) {}
-        }
+        var ty = e.touches[0].clientY;
+        var tx = e.touches[0].clientX;
+        var dy = lastTouchY - ty;
+        var dx = lastTouchX - tx;
+        lastTouchY = ty;
+        lastTouchX = tx;
+
+        scrollIframe(dx, dy);
       },
       { passive: false }
     );
 
-    /* ── Block all click interactions ─────────────────────── */
+    blocker.addEventListener(
+      "touchend",
+      function (e) {
+        var elapsed = Date.now() - touchStartTime;
+        var endY = e.changedTouches[0] ? e.changedTouches[0].clientY : touchStartY;
+        var dist  = touchStartY - endY;
+
+        /* fast flick → animate momentum */
+        if (elapsed < 300 && Math.abs(dist) > 20) {
+          var totalMomentum = dist * 2.5;
+          var info = getIframeScrollInfo();
+          if (!info) return;
+
+          var startScroll = info.scrollTop;
+          var maxScroll   = Math.max(0, info.scrollHeight - info.clientHeight);
+          var startTime   = Date.now();
+          var duration    = 500;
+
+          function animate() {
+            var now      = Date.now();
+            var progress = Math.min((now - startTime) / duration, 1);
+            /* ease-out cubic */
+            var eased    = 1 - Math.pow(1 - progress, 3);
+            var offset   = totalMomentum * eased;
+            var target   = Math.max(0, Math.min(startScroll + offset, maxScroll));
+
+            try {
+              iframe.contentWindow.scrollTo(0, target);
+            } catch (e) {}
+
+            if (progress < 1) {
+              momentumRAF = requestAnimationFrame(animate);
+            } else {
+              momentumRAF = 0;
+            }
+          }
+
+          momentumRAF = requestAnimationFrame(animate);
+        }
+      },
+      { passive: true }
+    );
+
+    /* ── Block all click / pointer interactions ───────────── */
     blocker.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
     });
-
     blocker.addEventListener("mousedown", function (e) {
       e.preventDefault();
     });
-
     blocker.addEventListener("dblclick", function (e) {
       e.preventDefault();
     });
-
     blocker.addEventListener("contextmenu", function (e) {
       e.preventDefault();
     });
   }
 
-  /* ── Close button & keyboard ────────────────────────────── */
+  /* ── Keyboard: close + scroll ───────────────────────────── */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && isOpen) {
+      closePreview();
+      return;
+    }
+    if (!isOpen) return;
+
+    var dy = 0;
+    var dx = 0;
+
+    switch (e.key) {
+      case "ArrowDown":
+      case "j":
+        dy = 100;
+        break;
+      case "ArrowUp":
+      case "k":
+        dy = -100;
+        break;
+      case "ArrowRight":
+        dx = 100;
+        break;
+      case "ArrowLeft":
+        dx = -100;
+        break;
+      case "PageDown":
+        dy = -(window.innerHeight * 0.85);
+        break;
+      case "PageUp":
+        dy = window.innerHeight * 0.85;
+        break;
+      case "Home":
+        try { iframe.contentWindow.scrollTo(0, 0); } catch (e) {}
+        e.preventDefault();
+        return;
+      case "End":
+        var info = getIframeScrollInfo();
+        if (info) {
+          try {
+            iframe.contentWindow.scrollTo(0, info.scrollHeight - info.clientHeight);
+          } catch (e) {}
+        }
+        e.preventDefault();
+        return;
+      case " ":
+        dy = e.shiftKey
+          ? window.innerHeight * 0.85
+          : -(window.innerHeight * 0.85);
+        break;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    scrollIframe(dx, dy);
+  });
+
+  /* ── Close button ───────────────────────────────────────── */
   closeBtn.addEventListener("click", function (e) {
     e.preventDefault();
     e.stopPropagation();
     closePreview();
   });
 
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && isOpen) {
-      closePreview();
-    }
-  });
-
-  /* ── Inject read-only styles into iframe (same-origin) ─── */
+  /* ── Inject read-only + scroll-safe styles into iframe ──── */
   iframe.addEventListener("load", function () {
     try {
       var doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -145,6 +340,15 @@
       var style = doc.createElement("style");
       style.id = "preview-readonly-styles";
       style.textContent = [
+        "/* ── force scrollability ── */",
+        "html, body {",
+        "  overflow: auto !important;",
+        "  overflow-x: hidden !important;",
+        "  height: auto !important;",
+        "  min-height: 100% !important;",
+        "}",
+        "",
+        "/* ── disable interactive elements ── */",
         "button,",
         "input,",
         "textarea,",
