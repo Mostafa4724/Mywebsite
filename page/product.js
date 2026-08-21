@@ -45,11 +45,16 @@ function renderGallery() {
   if (dots) dots.hidden = !multi;
 }
 
-function variantSaleIsActive(variant) {
+function variantSaleIsActive(variant, regularOverride = null) {
   if (!variant?.sale_enabled) return false;
-  const regular = Number(variant.price || variant.sizes?.[0]?.price || 0);
+
+  const regular = regularOverride != null
+    ? Number(regularOverride || 0)
+    : Number(variant.price || variant.sizes?.[0]?.price || 0);
   const sale = Number(variant.sale_price || 0);
+
   if (!(sale > 0 && regular > sale)) return false;
+
   const now = new Date();
   if (variant.sale_start) {
     const start = new Date(variant.sale_start);
@@ -62,6 +67,10 @@ function variantSaleIsActive(variant) {
   return true;
 }
 
+function productSaleIsActive() {
+  return !!loadedProduct?.sale_active;
+}
+
 function variantRegularPrice(variant) {
   const size = selectedVariant && selectedSize
     ? variant?.sizes?.find(s => String(s.id) === String(selectedSize) || String(s.size).toLowerCase() === String(selectedSize).toLowerCase())
@@ -72,11 +81,22 @@ function variantRegularPrice(variant) {
 function selectedPrice() {
   if (selectedVariant) {
     const regular = variantRegularPrice(selectedVariant);
-    return variantSaleIsActive(selectedVariant)
-      ? Number(selectedVariant.sale_price || regular)
-      : regular;
+
+    // A variant-specific sale has priority. If it is not active, fall back
+    // to the product-wide sale so the product page matches the other
+    // storefront pages.
+    if (variantSaleIsActive(selectedVariant, regular)) {
+      return Number(selectedVariant.sale_price || regular);
+    }
+
+    if (productSaleIsActive()) {
+      return Number(loadedProduct.sale_price || regular);
+    }
+
+    return regular;
   }
-  return loadedProduct?.sale_active
+
+  return productSaleIsActive()
     ? Number(loadedProduct.sale_price || loadedProduct.price || 0)
     : Number(loadedProduct?.price || 0);
 }
@@ -90,9 +110,12 @@ function renderPrice() {
   const regular = selectedVariant
     ? variantRegularPrice(selectedVariant)
     : Number(loadedProduct?.price || 0);
-  const saleActive = selectedVariant
-    ? variantSaleIsActive(selectedVariant)
-    : !!loadedProduct?.sale_active;
+
+  const variantSaleActive = selectedVariant
+    ? variantSaleIsActive(selectedVariant, regular)
+    : false;
+  const productSaleActive = productSaleIsActive();
+  const saleActive = variantSaleActive || productSaleActive;
 
   if (originalEl) {
     if (saleActive && price < regular) {
@@ -108,9 +131,20 @@ function renderPrice() {
   if (saleCard) {
     if (saleActive && price < regular) {
       saleCard.style.display = "inline-flex";
-      document.getElementById("sale-badge").textContent = loadedProduct?.sale_badge || "Sale";
-      document.getElementById("sale-badge").style.background = loadedProduct?.sale_badge_color || "#f97316";
-      document.getElementById("sale-price-text").textContent = "Now $" + price.toFixed(2);
+
+      const badge = document.getElementById("sale-badge");
+      const badgeText = variantSaleActive
+        ? (loadedProduct?.sale_badge || "Sale")
+        : (loadedProduct?.sale_badge || "Sale");
+
+      if (badge) {
+        badge.textContent = badgeText;
+        badge.style.background =
+          loadedProduct?.sale_badge_color || "#f97316";
+      }
+
+      document.getElementById("sale-price-text").textContent =
+        "Now $" + price.toFixed(2);
       document.getElementById("sale-discount-text").textContent =
         Math.round(((regular - price) / regular) * 100) + "% off";
     } else {
@@ -191,21 +225,41 @@ function updateAvailability() {
   const badge = document.getElementById("availability-badge");
   const text = document.getElementById("availability-text");
   const add = document.getElementById("addToCartBtn");
-  const variantMode = Array.isArray(loadedProduct?.variants) && loadedProduct.variants.length;
-  let out = String(loadedProduct?.stock_status || "in").toLowerCase() === "out";
+  if (!badge || !text) return;
+
+  const variantMode =
+    Array.isArray(loadedProduct?.variants) && loadedProduct.variants.length;
+
+  let status = String(loadedProduct?.stock_status || "in").toLowerCase();
+  let out = status === "out";
+  let low = status === "low";
+
   if (variantMode) {
-    out = !selectedVariant || Number(selectedVariant.stock || 0) < 1 || !selectedSize;
-    if (selectedVariant && Number(selectedVariant.stock || 0) > 0 && !selectedSize) {
+    const stock = Number(selectedVariant?.stock || 0);
+    const threshold = Number(loadedProduct?.low_stock || 0);
+
+    out = !selectedVariant || stock < 1 || !selectedSize;
+    low = !out && threshold > 0 && stock <= threshold;
+
+    if (selectedVariant && stock > 0 && !selectedSize) {
+      badge.className = "availability-badge low-stock";
       text.textContent = "Select a size";
+      if (add) add.disabled = true;
+      return;
     }
   }
+
   if (out) {
     badge.className = "availability-badge out-of-stock";
-    if (text && (!variantMode || selectedSize)) text.textContent = "Out of Stock";
+    text.textContent = "Out of Stock";
+  } else if (low) {
+    badge.className = "availability-badge low-stock";
+    text.textContent = "Low Stock";
   } else {
     badge.className = "availability-badge in-stock";
     text.textContent = "In Stock";
   }
+
   if (add) add.disabled = out;
 }
 
