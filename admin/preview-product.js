@@ -1,8 +1,8 @@
 /**
  * preview-product.js
- * Adds a "Preview" button to every admin product card.
- * Opens the product page in a scrollable iframe where only
- * the image-gallery prev/next buttons and scrolling are active.
+ * Preview button on admin product cards.
+ * Inside the iframe: scrolling works natively,
+ * only the image-gallery < > buttons stay clickable — everything else is locked.
  */
 (function () {
   "use strict";
@@ -13,10 +13,9 @@
   var blocker  = document.getElementById("previewBlocker");
 
   if (!overlay || !iframe || !closeBtn) return;
-
   var isOpen = false;
 
-  /* ── Host-page CSS: kill blocker so iframe scrolls natively ─ */
+  /* ── Host CSS: let the iframe receive all input natively ── */
   (function () {
     var s = document.createElement("style");
     s.id = "preview-host-css";
@@ -53,117 +52,112 @@
     e.stopPropagation();
     closePreview();
   });
-
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && isOpen) closePreview();
   });
 
-  /* ── Iframe load: style + script injection ──────────────── */
+  /* ── Iframe load: inject read-only shield ───────────────── */
   iframe.addEventListener("load", function () {
     try {
       var doc = iframe.contentDocument || iframe.contentWindow.document;
       if (!doc || !doc.head) return;
 
-      /* cleanup previous */
       var os = doc.getElementById("preview-ro-s");
       if (os) os.remove();
       var oj = doc.getElementById("preview-ro-j");
       if (oj) oj.remove();
 
       /*
-       * Selector for image-gallery prev / next buttons.
-       * Covers the most common class-name patterns — extend if needed.
+       * Buttons that MUST stay clickable (image gallery nav).
+       * Matches your CSS: .product-image-container is the gallery wrapper,
+       * so any button inside it is treated as a prev/next arrow.
        */
-      var GALLERY_BTN =
-        '.gallery-prev, .gallery-next, ' +
-        '.carousel-prev, .carousel-next, ' +
-        '.slider-prev, .slider-next, ' +
-        '.image-prev, .image-next, ' +
-        '.img-prev, .img-next, ' +
-        '.thumb-prev, .thumb-next, ' +
-        '.product-prev, .product-next, ' +
-        '.nav-prev, .nav-next, ' +
-        '[class*="gallery-prev"], [class*="gallery-next"], ' +
-        '[class*="carousel-prev"], [class*="carousel-next"], ' +
-        '[class*="slider-prev"], [class*="slider-next"], ' +
-        '[class*="image-prev"], [class*="image-next"], ' +
-        '.product-images button, ' +
-        '.product-gallery button, ' +
-        '.image-gallery button, ' +
-        '.main-image-container button, ' +
-        '.product-image-nav button';
+      var ALLOW =
+        ".product-image-container button, " +
+        "[class*='gallery-prev'], [class*='gallery-next'], " +
+        "[class*='carousel-prev'], [class*='carousel-next'], " +
+        "[class*='slider-prev'], [class*='slider-next'], " +
+        "[class*='img-prev'], [class*='img-next'], " +
+        "[class*='image-prev'], [class*='image-next']";
 
-      /* ── styles ── */
+      /* ── CSS ── */
       var style = doc.createElement("style");
       style.id = "preview-ro-s";
       style.textContent =
-        /* ensure scrollable */
+        /* force scroll */
         "html,body{overflow:auto!important;overflow-x:hidden!important;height:auto!important;min-height:100%!important}" +
-        /* disable everything interactive … */
+        /* blanket-disable every interactive element */
         "button,input,textarea,select,a,form," +
-        "[role='button'],[onclick],[data-action]{pointer-events:none!important;opacity:.45!important;cursor:not-allowed!important;filter:grayscale(.3)}" +
-        /* … but re-enable gallery nav buttons */
-        GALLERY_BTN + "{pointer-events:auto!important;opacity:1!important;cursor:pointer!important;filter:none!important}" +
+        "[role='button'],[onclick],[data-action]," +
+        ".star-btn,.back-btn," +
+        ".product-actions .btn-primary," +
+        ".product-actions .btn-secondary," +
+        ".product-qty .qty-btn," +
+        ".submit-review-btn," +
+        ".wishlist-heart," +
+        ".promo-input-group button," +
+        ".newsletter-box button" +
+        "{pointer-events:none!important;opacity:.45!important;cursor:not-allowed!important;filter:grayscale(.3)}" +
+        /* re-enable only gallery arrows */
+        ALLOW + "{pointer-events:auto!important;opacity:1!important;cursor:pointer!important;filter:none!important}" +
         /* watermark */
         "body::after{content:'READ-ONLY PREVIEW';position:fixed;bottom:16px;right:16px;padding:6px 14px;" +
         "background:rgba(15,23,36,.85);color:rgba(255,255,255,.6);font-size:11px;font-weight:700;" +
         "letter-spacing:1px;border-radius:8px;z-index:9999;pointer-events:none;backdrop-filter:blur(6px)}";
       doc.head.appendChild(style);
 
-      /* ── script: block clicks except on gallery buttons ── */
+      /* ── JS: capture-phase click blocker ── */
       var script = doc.createElement("script");
       script.id = "preview-ro-j";
       script.textContent =
         '(function(){' +
-        'var G="' + GALLERY_BTN + '";' +
+        'var A="' + ALLOW + '";' +
         'document.addEventListener("click",function(e){' +
-        '  if(e.target.closest(G))return;' +          /* allow gallery nav  */
-        '  if(e.target.closest("button,input,textarea,select,a,form,[role=button],[onclick],[data-action]")){' +
-        '    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()' +
-        '  }' +
+        '  if(e.target.closest(A))return;' +
+        '  e.preventDefault();' +
+        '  e.stopPropagation();' +
+        '  e.stopImmediatePropagation();' +
         '},true);' +
-        'document.addEventListener("submit",function(e){e.preventDefault();e.stopPropagation()},true);' +
+        'document.addEventListener("submit",function(e){' +
+        '  e.preventDefault();' +
+        '  e.stopPropagation();' +
+        '},true);' +
         'document.addEventListener("focusin",function(e){' +
-        '  if(e.target.closest("input,textarea,select"))e.target.blur()' +
+        '  if(e.target.closest("input,textarea,select"))e.target.blur();' +
         '},true);' +
         '})();';
       doc.head.appendChild(script);
     } catch (err) {}
   });
 
-  /* ── Find product ID from a card element ────────────────── */
+  /* ── Product ID helpers ─────────────────────────────────── */
   function getProductId(card) {
     if (card.dataset.id)        return card.dataset.id;
     if (card.dataset.productId) return card.dataset.productId;
     if (card.dataset.pid)       return card.dataset.pid;
-
     var idEls = card.querySelectorAll("[data-id],[data-product-id],[data-pid]");
     for (var i = 0; i < idEls.length; i++) {
       if (idEls[i].dataset.id)        return idEls[i].dataset.id;
       if (idEls[i].dataset.productId) return idEls[i].dataset.productId;
       if (idEls[i].dataset.pid)       return idEls[i].dataset.pid;
     }
-
     var links = card.querySelectorAll("a[href*='product']");
     for (var j = 0; j < links.length; j++) {
-      var match = links[j].href.match(/[?&]id=([^&]+)/);
-      if (match) return decodeURIComponent(match[1]);
-      var hashMatch = links[j].href.match(/product\.html#(.+)$/);
-      if (hashMatch) return decodeURIComponent(hashMatch[1]);
+      var m = links[j].href.match(/[?&]id=([^&]+)/);
+      if (m) return decodeURIComponent(m[1]);
+      var hm = links[j].href.match(/product\.html#(.+)$/);
+      if (hm) return decodeURIComponent(hm[1]);
     }
-
     var clickables = card.querySelectorAll("[onclick],[data-action]");
     for (var k = 0; k < clickables.length; k++) {
-      var attr = clickables[k].getAttribute("onclick") ||
-                 clickables[k].getAttribute("data-action") || "";
-      var m = attr.match(/id['":\s]+(['"]?)([\w\-]+)\1/i);
-      if (m) return m[2];
+      var attr = clickables[k].getAttribute("onclick") || clickables[k].getAttribute("data-action") || "";
+      var rm = attr.match(/id['":\s]+(['"]?)([\w\-]+)\1/i);
+      if (rm) return rm[2];
     }
-
     return null;
   }
 
-  /* ── Create the Preview button ──────────────────────────── */
+  /* ── Preview button creation ────────────────────────────── */
   function createPreviewButton(productId) {
     var btn = document.createElement("button");
     btn.type = "button";
@@ -173,63 +167,46 @@
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>' +
         '<circle cx="12" cy="12" r="3"/>' +
-      "</svg>" +
-      " Preview";
-
+      "</svg> Preview";
     btn.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
       openPreview(productId);
     });
-
     return btn;
   }
 
-  /* ── Insert Preview button into a card ──────────────────── */
   function injectPreviewButton(card) {
     if (card.querySelector(".preview-product-btn")) return;
-
     var productId = getProductId(card);
     if (!productId) return;
-
     var btn = createPreviewButton(productId);
-
     var actions =
       card.querySelector(".admin-card-actions") ||
       card.querySelector(".product-card-actions") ||
       card.querySelector("[class*='actions']") ||
       card.querySelector("[class*='buttons']");
-
-    if (actions) {
-      actions.appendChild(btn);
-      return;
-    }
-
+    if (actions) { actions.appendChild(btn); return; }
     var lastBtn = card.querySelector("button:last-of-type");
     if (lastBtn && lastBtn.parentNode === card) {
       lastBtn.parentNode.insertBefore(btn, lastBtn.nextSibling);
       return;
     }
-
     card.appendChild(btn);
   }
 
-  /* ── Scan grids and inject buttons ──────────────────────── */
+  /* ── Grid scanning ──────────────────────────────────────── */
   function addPreviewButtons() {
     var grids = document.querySelectorAll(".products-grid");
     for (var g = 0; g < grids.length; g++) {
       var children = grids[g].children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-
         if (
           child.classList.contains("admin-products-message") ||
           child.tagName === "SCRIPT" ||
           child.tagName === "STYLE"
-        ) {
-          continue;
-        }
-
+        ) continue;
         injectPreviewButton(child);
       }
     }
