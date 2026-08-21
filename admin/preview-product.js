@@ -1,8 +1,8 @@
 /**
  * preview-product.js
  * Adds a "Preview" button to every admin product card.
- * Opens the product page in a read-only fullscreen iframe overlay.
- * An X button on the left closes the preview.
+ * Opens the product page in a scrollable, read-only fullscreen iframe.
+ * X button on the left closes the preview.
  */
 (function () {
   "use strict";
@@ -11,6 +11,7 @@
   var overlay  = document.getElementById("previewOverlay");
   var iframe   = document.getElementById("previewIframe");
   var closeBtn = document.getElementById("previewCloseBtn");
+  var blocker  = document.getElementById("previewBlocker");
 
   if (!overlay || !iframe || !closeBtn) return;
 
@@ -21,7 +22,6 @@
     if (isOpen) return;
     isOpen = true;
 
-    /* Build the URL: admin/  →  ../page/product.html?id=... */
     iframe.src = "../page/product.html?id=" + encodeURIComponent(productId);
 
     overlay.classList.remove("closing");
@@ -35,7 +35,6 @@
 
     overlay.classList.add("closing");
 
-    /* Wait for fade-out animation, then hide & clear */
     setTimeout(function () {
       overlay.classList.remove("active", "closing");
       iframe.src = "about:blank";
@@ -43,7 +42,89 @@
     }, 250);
   }
 
-  /* ── Event listeners ────────────────────────────────────── */
+  /* ── Scroll forwarding (wheel) ──────────────────────────── */
+  if (blocker) {
+    blocker.addEventListener(
+      "wheel",
+      function (e) {
+        e.preventDefault();
+        try {
+          iframe.contentWindow.scrollBy({
+            top: e.deltaY,
+            left: e.deltaX,
+            behavior: "auto"
+          });
+        } catch (err) {
+          /* Cross-origin fallback: try contentDocument */
+          try {
+            var doc = iframe.contentDocument;
+            doc.documentElement.scrollTop += e.deltaY;
+          } catch (err2) {
+            /* Nothing we can do on file:// */
+          }
+        }
+      },
+      { passive: false }
+    );
+
+    /* ── Scroll forwarding (touch / mobile) ───────────────── */
+    var lastTouchY = 0;
+    var lastTouchX = 0;
+
+    blocker.addEventListener(
+      "touchstart",
+      function (e) {
+        lastTouchY = e.touches[0].clientY;
+        lastTouchX = e.touches[0].clientX;
+      },
+      { passive: true }
+    );
+
+    blocker.addEventListener(
+      "touchmove",
+      function (e) {
+        e.preventDefault();
+        var touchY = e.touches[0].clientY;
+        var touchX = e.touches[0].clientX;
+        var deltaY = lastTouchY - touchY;
+        var deltaX = lastTouchX - touchX;
+        lastTouchY = touchY;
+        lastTouchX = touchX;
+
+        try {
+          iframe.contentWindow.scrollBy(deltaX, deltaY);
+        } catch (err) {
+          try {
+            var doc = iframe.contentDocument;
+            doc.documentElement.scrollTop += deltaY;
+            doc.documentElement.scrollLeft += deltaX;
+          } catch (err2) {}
+        }
+      },
+      { passive: false }
+    );
+
+    /* ── Block all click interactions ─────────────────────── */
+    blocker.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    blocker.addEventListener("mousedown", function (e) {
+      e.preventDefault();
+    });
+
+    blocker.addEventListener("dblclick", function (e) {
+      e.preventDefault();
+    });
+
+    /* Block context menu inside the preview */
+    blocker.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+    });
+  }
+
+  /* ── Close button & keyboard ────────────────────────────── */
   closeBtn.addEventListener("click", function (e) {
     e.preventDefault();
     e.stopPropagation();
@@ -56,26 +137,18 @@
     }
   });
 
-  /* Prevent accidental interaction with the blocker itself */
-  overlay.querySelector(".preview-blocker").addEventListener(
-    "click",
-    function (e) {
-      e.preventDefault();
-    }
-  );
-
-  /* ── (Optional) Inject read-only styles into the iframe ─── */
-  /* Works when served from the same origin (localhost / server).
-     Falls back silently on file:// due to cross-origin restrictions. */
+  /* ── Inject read-only styles into iframe (same-origin) ─── */
   iframe.addEventListener("load", function () {
     try {
       var doc = iframe.contentDocument || iframe.contentWindow.document;
       if (!doc || !doc.head) return;
 
+      var existing = doc.getElementById("preview-readonly-styles");
+      if (existing) existing.remove();
+
       var style = doc.createElement("style");
       style.id = "preview-readonly-styles";
       style.textContent = [
-        /* Disable all interactive elements */
         "button,",
         "input,",
         "textarea,",
@@ -98,11 +171,9 @@
         "  cursor: not-allowed !important;",
         "  filter: grayscale(0.3);",
         "}",
-        /* Prevent form submissions */
         "form {",
         "  pointer-events: none !important;",
         "}",
-        /* Subtle overlay hint */
         "body::after {",
         "  content: 'READ-ONLY PREVIEW';",
         "  position: fixed;",
@@ -121,24 +192,18 @@
         "}"
       ].join("\n");
 
-      /* Avoid duplicate injections */
-      if (doc.getElementById("preview-readonly-styles")) {
-        doc.getElementById("preview-readonly-styles").remove();
-      }
       doc.head.appendChild(style);
     } catch (err) {
-      /* Cross-origin — the blocker div already prevents interaction */
+      /* Cross-origin — blocker already prevents interaction */
     }
   });
 
   /* ── Find product ID from a card element ────────────────── */
   function getProductId(card) {
-    /* 1. Direct data attributes on the card */
     if (card.dataset.id)        return card.dataset.id;
     if (card.dataset.productId) return card.dataset.productId;
     if (card.dataset.pid)       return card.dataset.pid;
 
-    /* 2. Any child element with a product ID */
     var idEls = card.querySelectorAll("[data-id],[data-product-id],[data-pid]");
     for (var i = 0; i < idEls.length; i++) {
       if (idEls[i].dataset.id)        return idEls[i].dataset.id;
@@ -146,17 +211,14 @@
       if (idEls[i].dataset.pid)       return idEls[i].dataset.pid;
     }
 
-    /* 3. Extract from a link that points to product.html */
     var links = card.querySelectorAll("a[href*='product']");
     for (var j = 0; j < links.length; j++) {
       var match = links[j].href.match(/[?&]id=([^&]+)/);
       if (match) return decodeURIComponent(match[1]);
-      /* Also try hash-based: product.html#id */
       var hashMatch = links[j].href.match(/product\.html#(.+)$/);
       if (hashMatch) return decodeURIComponent(hashMatch[1]);
     }
 
-    /* 4. Extract from onclick / action attributes */
     var clickables = card.querySelectorAll("[onclick],[data-action]");
     for (var k = 0; k < clickables.length; k++) {
       var attr = clickables[k].getAttribute("onclick") ||
@@ -192,7 +254,6 @@
 
   /* ── Insert Preview button into a card ──────────────────── */
   function injectPreviewButton(card) {
-    /* Skip if already injected */
     if (card.querySelector(".preview-product-btn")) return;
 
     var productId = getProductId(card);
@@ -200,9 +261,6 @@
 
     var btn = createPreviewButton(productId);
 
-    /* Strategy: find the best place to insert the button */
-
-    /* A. Existing actions container */
     var actions =
       card.querySelector(".admin-card-actions") ||
       card.querySelector(".product-card-actions") ||
@@ -214,14 +272,12 @@
       return;
     }
 
-    /* B. After the last button in the card */
     var lastBtn = card.querySelector("button:last-of-type");
     if (lastBtn && lastBtn.parentNode === card) {
       lastBtn.parentNode.insertBefore(btn, lastBtn.nextSibling);
       return;
     }
 
-    /* C. At the very end of the card */
     card.appendChild(btn);
   }
 
@@ -233,7 +289,6 @@
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
 
-        /* Skip message placeholders */
         if (
           child.classList.contains("admin-products-message") ||
           child.tagName === "SCRIPT" ||
@@ -259,7 +314,6 @@
     if (shouldScan) addPreviewButtons();
   });
 
-  /* Start observing each product grid */
   function startObserving() {
     var grids = document.querySelectorAll(".products-grid");
     for (var i = 0; i < grids.length; i++) {
@@ -270,8 +324,6 @@
   /* ── Initialization ─────────────────────────────────────── */
   function init() {
     startObserving();
-
-    /* Run immediately + delayed retries (cards may load async) */
     addPreviewButtons();
     setTimeout(addPreviewButtons, 200);
     setTimeout(addPreviewButtons, 600);

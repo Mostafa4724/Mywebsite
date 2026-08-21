@@ -43,9 +43,10 @@
         border: none;
         background: #ffffff;
         display: block;
+        pointer-events: none;
       }
 
-      /* Transparent layer that blocks ALL interaction with the iframe */
+      /* Catches pointer events & forwards scroll to iframe */
       .preview-blocker {
         position: absolute;
         top: 0;
@@ -407,7 +408,7 @@
     <!-- Preview Overlay -->
     <div class="preview-overlay" id="previewOverlay">
       <iframe id="previewIframe" frameborder="0" scrolling="auto"></iframe>
-      <div class="preview-blocker"></div>
+      <div class="preview-blocker" id="previewBlocker"></div>
       <div class="preview-sidebar-controls">
         <button class="preview-close-btn" id="previewCloseBtn" aria-label="Close preview">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
