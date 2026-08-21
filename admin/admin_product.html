@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Products - Admin Panel</title>
     <link rel="stylesheet" href="../stylle.css" />
-<<<<<<< HEAD
-=======
     <style>
       /* ===== Preview Overlay ===== */
       .preview-overlay {
@@ -45,10 +43,9 @@
         border: none;
         background: #ffffff;
         display: block;
-        pointer-events: none;
       }
 
-      /* Catches pointer events & forwards scroll to iframe */
+      /* Transparent layer that blocks ALL interaction with the iframe */
       .preview-blocker {
         position: absolute;
         top: 0;
@@ -155,7 +152,6 @@
         flex-shrink: 0;
       }
     </style>
->>>>>>> 4ce88b3160c79b70dd2083aef04175daed4c64cf
   </head>
   <body class="admin-body">
     <aside class="admin-sidebar" id="adminSidebar">
@@ -411,7 +407,7 @@
     <!-- Preview Overlay -->
     <div class="preview-overlay" id="previewOverlay">
       <iframe id="previewIframe" frameborder="0" scrolling="auto"></iframe>
-      <div class="preview-blocker" id="previewBlocker"></div>
+      <div class="preview-blocker"></div>
       <div class="preview-sidebar-controls">
         <button class="preview-close-btn" id="previewCloseBtn" aria-label="Close preview">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -427,6 +423,7 @@
     <script src="order-bubble.js"></script>
     <script src="../script.js"></script>
     <script src="admin-products.js"></script>
-      <script src="admin-common.js"></script>
+    <script src="admin-common.js"></script>
+    <script src="preview-product.js"></script>
   </body>
 </html>
