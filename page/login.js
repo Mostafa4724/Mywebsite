@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = (window.SHOP_API_BASE || (location.port === "5500" ? `${location.protocol}//${location.hostname}:5000` : ""));
 
 const authBox = document.querySelector(".auth-box");
 const form = document.getElementById("authForm");
@@ -35,6 +35,7 @@ function setMode(next) {
   }
 
   username.required = register;
+  password.minLength = register ? 8 : 1;
 
   message.className = "";
   message.textContent = "";
@@ -222,3 +223,6 @@ async function initializeGoogleSignIn() {
 }
 
 initializeGoogleSignIn();
+
+const forgotPasswordLink=document.getElementById("forgotPasswordLink");
+forgotPasswordLink?.addEventListener("click",async()=>{const email=(document.getElementById("email")?.value||"").trim();if(!email){showMessage("Enter your email first.","error");return;}try{const r=await fetch(`${API_BASE}/forgot-password`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})});const d=await r.json();showMessage(d.message||"Check your email.",r.ok?"success":"error")}catch(e){showMessage("Could not connect to the server.","error")}});

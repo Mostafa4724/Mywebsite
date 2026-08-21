@@ -1549,195 +1549,58 @@ function renderDonutChart() {
 // ============================================================
 
 function getWeeklyData() {
-
-    const now =
-        startOfDay(
-            new Date()
-        );
-
+    const today = startOfDay(new Date());
+    const mondayOffset = (today.getDay() + 6) % 7;
+    const currentStart = addDays(today, -mondayOffset);
+    const previousStart = addDays(currentStart, -7);
     const current = [];
     const previous = [];
 
-    for (let i = 6; i >= 0; i--) {
-
-        const day =
-            addDays(now, -i);
-
-        const nextDay =
-            addDays(day, 1);
-
-        const previousDay =
-            addDays(day, -7);
-
-        const previousNext =
-            addDays(previousDay, 1);
-
-        const currentValue =
-            ordersData
-                .filter((order) => {
-
-                    const date =
-                        getOrderDate(order);
-
-                    return (
-                        date &&
-                        isValidOrder(order) &&
-                        date >= day &&
-                        date < nextDay
-                    );
-                })
-                .reduce(
-                    (sum, order) =>
-                        sum +
-                        getOrderTotal(order),
-                    0
-                );
-
-        const previousValue =
-            ordersData
-                .filter((order) => {
-
-                    const date =
-                        getOrderDate(order);
-
-                    return (
-                        date &&
-                        isValidOrder(order) &&
-                        date >= previousDay &&
-                        date < previousNext
-                    );
-                })
-                .reduce(
-                    (sum, order) =>
-                        sum +
-                        getOrderTotal(order),
-                    0
-                );
-
-        current.push(currentValue);
-        previous.push(previousValue);
+    for (let i = 0; i < 7; i++) {
+        const currentDay = addDays(currentStart, i);
+        const currentNext = addDays(currentDay, 1);
+        const previousDay = addDays(previousStart, i);
+        const previousNext = addDays(previousDay, 1);
+        const sumForRange = (start, end) => ordersData.filter((order) => {
+            const date = getOrderDate(order);
+            return date && isValidOrder(order) && date >= start && date < end;
+        }).reduce((sum, order) => sum + getOrderTotal(order), 0);
+        current.push(sumForRange(currentDay, currentNext));
+        previous.push(sumForRange(previousDay, previousNext));
     }
-
-    return {
-        current,
-        previous,
-    };
+    return { current, previous };
 }
 
 
+let weeklyComparisonChart = null;
+
 function renderWeeklyBars() {
-
-    const container =
-        $("#weeklyBars");
-
-    if (!container) return;
-
-    const data =
-        getWeeklyData();
-
-    const days = [
-        "Sun",
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat",
-    ];
-
-    const maxValue =
-        Math.max(
-            ...data.current,
-            ...data.previous,
-            1
-        );
-
-    container.innerHTML =
-        data.current
-            .map((value, index) => {
-
-                const currentHeight =
-                    (value /
-                        maxValue) *
-                    100;
-
-                const previousHeight =
-                    (data.previous[index] /
-                        maxValue) *
-                    100;
-
-                const date =
-                    addDays(
-                        startOfDay(
-                            new Date()
-                        ),
-                        index - 6
-                    );
-
-                const day =
-                    days[
-                        date.getDay()
-                    ];
-
-                return `
-
-                    <div class="aa-weekly-col">
-
-                        <div class="aa-weekly-amount">
-                            ${compactMoney(value)}
-                        </div>
-
-                        <div class="aa-weekly-bar-track">
-
-                            <div class="aa-weekly-bar-pair">
-
-                                <div
-                                    class="aa-weekly-fill current"
-                                    data-h="${currentHeight}"
-                                    title="Current: ${money(value)}"
-                                ></div>
-
-                                <div
-                                    class="aa-weekly-fill previous"
-                                    data-h="${previousHeight}"
-                                    title="Previous: ${money(
-                                        data.previous[index]
-                                    )}"
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                        <div class="aa-weekly-label">
-                            ${day}
-                        </div>
-
-                    </div>
-
-                `;
-
-            })
-            .join("");
-
-    requestAnimationFrame(() => {
-
-        setTimeout(() => {
-
-            container
-                .querySelectorAll(
-                    ".aa-weekly-fill"
-                )
-                .forEach((bar) => {
-
-                    bar.style.height =
-                        bar.dataset.h +
-                        "%";
-
-                });
-
-        }, 100);
-
+    const canvas = $("#weeklyComparisonChart");
+    if (!canvas || typeof Chart === "undefined") return;
+    const data = getWeeklyData();
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    if (weeklyComparisonChart) weeklyComparisonChart.destroy();
+    weeklyComparisonChart = new Chart(canvas.getContext("2d"), {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                { label: "Current Week", data: data.current, borderWidth: 1 },
+                { label: "Previous Week", data: data.previous, borderWidth: 1 },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { display: true },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${money(ctx.parsed.y)}` } },
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: (value) => compactMoney(value) } },
+            },
+        },
     });
 }
 
@@ -1785,9 +1648,7 @@ function getTopProducts() {
 
             }))
             .sort(
-                (a, b) =>
-                    b.revenue -
-                    a.revenue
+                (a, b) => (b.units - a.units) || (b.revenue - a.revenue)
             )
             .slice(0, 6);
     }
@@ -1864,24 +1725,15 @@ function renderProductTable() {
         return;
     }
 
-    const totalRevenue =
-        products.reduce(
-            (sum, product) =>
-                sum + product.revenue,
-            0
-        );
+    const totalUnits = products.reduce((sum, product) => sum + product.units, 0);
 
     tbody.innerHTML =
         products
             .map((product) => {
 
                 const conversion =
-                    totalRevenue > 0
-                        ? (
-                            product.revenue /
-                            totalRevenue *
-                            100
-                        )
+                    totalUnits > 0
+                        ? (product.units / totalUnits) * 100
                         : 0;
 
                 const good =

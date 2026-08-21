@@ -570,6 +570,22 @@ async function fetchAllProducts() {
   }
 }
 
+function isVariantSaleActive(variant) {
+  if (!variant || !variant.sale_enabled) return false;
+  const regular = Number(variant.price || variant.sizes?.[0]?.price || 0);
+  const sale = Number(variant.sale_price || 0);
+  if (!(sale > 0 && regular > sale)) return false;
+  const now = new Date();
+  if (variant.sale_start) { const start = new Date(variant.sale_start); if (!Number.isNaN(start.getTime()) && now < start) return false; }
+  if (variant.sale_end) { const end = new Date(variant.sale_end); if (!Number.isNaN(end.getTime()) && now > end) return false; }
+  return true;
+}
+
+function getVariantCartPrice(variant, sizeObj) {
+  const regular = Number(sizeObj?.price || variant?.price || 0);
+  return isVariantSaleActive(variant) ? Number(variant.sale_price || regular) : regular;
+}
+
 function matchCartItemToProduct(item, product) {
   if (!product) return false;
   if (item.productId && Number(item.productId) === Number(product.id)) {
@@ -622,12 +638,14 @@ async function normalizeCartItems(cart) {
           ? variant.sizes.find(s => String(s.size).toLowerCase() === String(item.size || "").toLowerCase())
           : null;
         if (variant && size) {
-          currentPrice = Number(size.price) || 0;
+          currentPrice = getVariantCartPrice(variant, size);
           currentImage = variant.image ? `${SHOP_API_BASE}/uploads/products/${variant.image}` : currentImage;
           item.color = variant.color;
           item.variant_image = currentImage;
+          item.tax_rate = Number(currentProduct.tax_rate ?? 8);
         }
       }
+      if (item.tax_rate !== Number(currentProduct.tax_rate ?? 8)) { item.tax_rate = Number(currentProduct.tax_rate ?? 8); updated = true; }
       if (item.price !== currentPrice) { item.price = currentPrice; updated = true; }
       if (item.name !== currentProduct.title) { item.name = currentProduct.title; updated = true; }
       if (item.image !== currentImage) { item.image = currentImage; updated = true; }
@@ -650,6 +668,7 @@ function buildCartItemState(item, currentProduct) {
   let productImage = currentProduct && currentProduct.image
     ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}`
     : item.image;
+  const taxRate = currentProduct ? Number(currentProduct.tax_rate ?? 8) : Number(item.tax_rate ?? 8);
   let color = item.color || null;
   let size = item.size || null;
 
@@ -659,7 +678,7 @@ function buildCartItemState(item, currentProduct) {
     if (!variant || !sizeObj || Number(variant.stock || 0) < Number(item.quantity || 1)) {
       return { available:false, name:productName, price:productPrice, image:productImage, status:"out", currentProduct };
     }
-    productPrice = Number(sizeObj.price) || 0;
+    productPrice = getVariantCartPrice(variant, sizeObj);
     productImage = variant.image ? `${SHOP_API_BASE}/uploads/products/${variant.image}` : productImage;
     color = variant.color;
     size = sizeObj.size;
@@ -674,6 +693,7 @@ function buildCartItemState(item, currentProduct) {
     status: statusText,
     color,
     size,
+    taxRate,
     currentProduct,
   };
 }
@@ -736,6 +756,7 @@ async function renderCartItems() {
       article.dataset.name = state.name;
       article.dataset.price = state.price;
       article.dataset.available = state.available ? "true" : "false";
+      article.dataset.taxRate = String(state.taxRate ?? 8);
 
       const availabilityMessage = state.available
         ? ""
@@ -775,6 +796,7 @@ async function renderCartItems() {
 function updateOrderSummary() {
   const items = document.querySelectorAll("#cart-items .cart-item");
   let subtotal = 0;
+  let tax = 0;
   let totalItems = 0;
   let hasUnavailable = false;
 
@@ -785,12 +807,15 @@ function updateOrderSummary() {
     }
     const price = parseFloat(item.dataset.price) || 0;
     const qty = parseInt(item.querySelector(".qty-value").textContent) || 0;
-    subtotal += price * qty;
+    const lineSubtotal = price * qty;
+    subtotal += lineSubtotal;
+    const taxRate = (parseFloat(item.dataset.taxRate) || 0) / 100;
+    tax += lineSubtotal * taxRate;
     totalItems += qty;
   });
 
   const shipping = totalItems > 0 ? 12.0 : 0;
-  const tax = subtotal * 0.08;
+  tax = Number(tax.toFixed(2));
   const total = subtotal + shipping + tax;
 
   const subtotalEl = document.getElementById("subtotal-value");
@@ -1184,6 +1209,7 @@ if (confirmBtn) {
   }
 
   let subtotal = 0;
+  let tax = 0;
   let totalItems = 0;
   let unavailableCount = 0;
 
@@ -1201,6 +1227,7 @@ if (confirmBtn) {
 
       const itemTotal = state.price * item.quantity;
       subtotal += itemTotal;
+      tax += itemTotal * ((Number(state.taxRate ?? 8) || 0) / 100);
       totalItems += item.quantity;
 
       const itemEl = document.createElement("div");
@@ -1231,7 +1258,7 @@ if (confirmBtn) {
   }
 
   const shipping = totalItems > 0 ? 12.0 : 0;
-  const tax = subtotal * 0.08;
+  tax = Number(tax.toFixed(2));
   const total = subtotal + shipping + tax;
 
   if (checkoutSubtotal)

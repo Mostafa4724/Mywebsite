@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Category</title>
+    <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="category.css" />
+      <link rel="stylesheet" href="orders-nav.css" />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <a href="home.html" class="logo">My Shop</a>
+
+        <ul class="nav-links" role="menu" aria-label="Main navigation">
+          <li>
+            <a href="home.html"><b>Home</b></a>
+          </li>
+          <li><a href="Category.html">Category</a></li>
+          <li><a href="Contact.html">Contact Us</a></li>
+          <li><a href="About us.html">About us</a></li>
+        </ul>
+
+        <div class="nav-icons">
+          <a class="icon-btn cart" href="cart.html" aria-label="Cart">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-bubble">0</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path
+                d="M6 6h15l-1.5 9h-12L4 2H2"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1" fill="currentColor" />
+              <circle cx="18" cy="20" r="1" fill="currentColor" />
+            </svg>
+          </a>
+
+          <a class="orders-nav-icon" href="orders.html" aria-label="My Orders" title="My Orders">
+            <img src="orders-icon.svg" alt="" aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="category-page">
+      <!-- HERO -->
+      <section class="hero reveal">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <div class="hero-eyebrow">
+              <span class="pulse-dot"></span>
+              Explore
+            </div>
+            <h1 class="hero-title">
+              Shop by<br><span class="highlight">Category</span>
+            </h1>
+            <p class="hero-desc">
+              Browse curated collections across trending styles, accessories, and everyday essentials — all in one place.
+            </p>
+          </div>
+          <div class="hero-preview">
+            <div class="preview-float preview-float--1">
+              <img src="https://picsum.photos/seed/catprev1/320/400.jpg" alt="Preview" loading="lazy" />
+            </div>
+            <div class="preview-float preview-float--2">
+              <img src="https://picsum.photos/seed/catprev2/280/340.jpg" alt="Preview" loading="lazy" />
+            </div>
+            <div class="preview-float preview-float--3">
+              <img src="https://picsum.photos/seed/catprev3/240/280.jpg" alt="Preview" loading="lazy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CATEGORIES -->
+      <div class="sec-head reveal">
+        <span class="sec-badge">Collections</span>
+        <h2 class="sec-title">Category</h2>
+        <div class="sec-line"></div>
+      </div>
+      <div class="store-search-wrap category-search-wrap">
+        <label class="store-search-label" for="categorySearch">Search categories</label>
+        <input id="categorySearch" class="store-search" type="search" placeholder="Search categories..." autocomplete="off" />
+      </div>
+      <div id="category-search-empty" class="store-search-empty" hidden>No categories match your search.</div>
+
+      <div class="cat-grid" id="catGrid"></div>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <p>&copy; 2026 My Shop. All Rights Reserved.</p>
+      </div>
+    </footer>
+
+            <script src="user-shell.js"></script>
+<script src="/script.js"></script>
+<script src="category.js"></script>
+  </body>
+</html>

@@ -172,3 +172,14 @@ body {
   .order-card-top, .order-card-bottom { align-items: flex-start; flex-direction: column; }
   .order-total { align-self: flex-start; }
 }
+/* My Orders now follows the storefront visual system while keeping all order data. */
+body { background: #f8fafc; color: #0f172a; }
+.orders-page { max-width: 1120px; margin: 0 auto; padding: 48px 24px 72px; }
+.orders-topbar { display: none; }
+.orders-heading { margin: 12px 0 28px; }
+.orders-eyebrow { color:#2563eb; font-size:.75rem; font-weight:800; letter-spacing:.12em; margin:0 0 8px; }
+.orders-heading h1 { margin:0 0 8px; font-size:clamp(2rem,4vw,3rem); }
+.orders-subtitle { color:#64748b; max-width:700px; line-height:1.6; margin:0; }
+.orders-container { display:grid; gap:16px; }
+.order-card, .orders-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 8px 28px rgba(15,23,42,.06); }
+@media (max-width:700px) { .orders-page { padding:32px 16px 56px; } }

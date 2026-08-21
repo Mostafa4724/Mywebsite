@@ -146,6 +146,11 @@ window.selectedFile = null;
         id,
         color: row.querySelector(".variant-color-input")?.value.trim() || "",
         stock: Number(row.querySelector(".variant-stock-input")?.value || 0),
+        price: Number(row.querySelector(".variant-base-price-input")?.value || 0),
+        sale_enabled: !!row.querySelector(".variant-sale-enabled")?.checked,
+        sale_price: Number(row.querySelector(".variant-sale-price-input")?.value || 0) || null,
+        sale_start: row.querySelector(".variant-sale-start")?.value || "",
+        sale_end: row.querySelector(".variant-sale-end")?.value || "",
         image: row.dataset.existingImage || "",
         sizes: Array.from(row.querySelectorAll(".variant-size-row")).map((sizeRow) => ({
           id: sizeRow.dataset.sizeId || undefined,
@@ -169,6 +174,14 @@ window.selectedFile = null;
         <div class="ap-row-2">
           <div class="variant-field"><label>Color name</label><input type="text" class="variant-color-input" value="${escapeHtml(variant.color || "")}" /></div>
           <div class="variant-field"><label>Stock quantity</label><input type="number" class="variant-stock-input" min="0" value="${Number(variant.stock || 0)}" /></div>
+        </div>
+        <div class="ap-row-2">
+          <div class="variant-field"><label>Color price <span class="req">*</span></label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-base-price-input" min="0" step="0.01" value="${Number(variant.price || (variant.sizes?.[0]?.price || 0))}" /></div></div>
+          <div class="variant-field"><label><input type="checkbox" class="variant-sale-enabled" ${variant.sale_enabled ? "checked" : ""} /> Color sale</label><div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-sale-price-input" min="0" step="0.01" value="${variant.sale_price ?? ""}" ${variant.sale_enabled ? "" : "disabled"} /></div></div>
+        </div>
+        <div class="ap-row-2 variant-sale-dates" ${variant.sale_enabled ? "" : "hidden"}>
+          <div class="variant-field"><label>Sale start</label><input type="datetime-local" class="variant-sale-start" value="${escapeHtml(String(variant.sale_start || "").slice(0,16))}" /></div>
+          <div class="variant-field"><label>Sale end</label><input type="datetime-local" class="variant-sale-end" value="${escapeHtml(String(variant.sale_end || "").slice(0,16))}" /></div>
         </div>
         <div class="variant-field">
           <label>Color image</label>
@@ -200,6 +213,14 @@ window.selectedFile = null;
         }
       }
       count.addEventListener("change", renderSizes);
+      const variantSaleEnabled = row.querySelector(".variant-sale-enabled");
+      const variantSalePrice = row.querySelector(".variant-sale-price-input");
+      const variantSaleDates = row.querySelector(".variant-sale-dates");
+      variantSaleEnabled?.addEventListener("change", () => {
+        variantSalePrice.disabled = !variantSaleEnabled.checked;
+        variantSaleDates.hidden = !variantSaleEnabled.checked;
+        markDirty();
+      });
       row.querySelector(".variant-remove").addEventListener("click", () => { row.remove(); markDirty(); });
       row.querySelector(".variant-image-input").addEventListener("change", () => markDirty());
       renderSizes();
@@ -250,10 +271,11 @@ window.selectedFile = null;
     tagsList.innerHTML = "";
     currentTags.forEach((tag, index) => {
       const el = document.createElement("span");
-      el.className = "tag";
+      el.className = "ap-tag";
       el.textContent = tag;
       const button = document.createElement("button");
       button.type = "button";
+      button.className = "ap-tag-remove";
       button.textContent = "×";
       button.addEventListener("click", () => {
         currentTags.splice(index, 1);
@@ -336,7 +358,7 @@ window.selectedFile = null;
     document.getElementById("prodDesc").value = p.description || "";
     document.getElementById("prodPrice").value = p.price ?? "";
     document.getElementById("prodCost").value = p.cost ?? 0;
-    document.getElementById("prodTax").value = p.tax_class || "standard";
+    document.getElementById("prodTax").value = p.tax_rate ?? 8;
     document.getElementById("prodStock").value = p.stock ?? 0;
     document.getElementById("prodLowStock").value = p.low_stock ?? 10;
 
@@ -423,6 +445,8 @@ window.selectedFile = null;
     if (!Number.isFinite(price) || price < 0) throw new Error("Price is invalid.");
     if (!Number.isInteger(stock) || stock < 0) throw new Error("Quantity is invalid.");
     if (!Number.isInteger(lowStock) || lowStock < 0) throw new Error("Low stock threshold is invalid.");
+    const taxRate = Number(document.getElementById("prodTax").value);
+    if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) throw new Error("Tax must be between 0% and 100%.");
     if (saleToggle.checked && salePrice !== null && (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= price)) {
       throw new Error("Sale price must be greater than 0 and lower than regular price.");
     }
@@ -437,7 +461,8 @@ window.selectedFile = null;
     body.append("category", categoryOption ? categoryOption.textContent.trim() : "");
     body.append("price", String(price));
     body.append("cost", String(Number(costInput.value) || 0));
-    body.append("tax_class", document.getElementById("prodTax").value || "standard");
+    body.append("tax_class", "custom");
+    body.append("tax_rate", String(taxRate));
     body.append("stock", String(stock));
     body.append("low_stock", String(lowStock));
     body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
@@ -584,7 +609,14 @@ window.selectedFile = null;
     if (imageInput) {
       imageInput.addEventListener("change", function (e) {
         const incoming = Array.from(e.target.files || []);
+        const seen = new Set(selectedImageFiles.map((file) => `${file.name}|${file.size}|${file.lastModified}`));
         const valid = incoming.filter((file) => {
+          const key = `${file.name}|${file.size}|${file.lastModified}`;
+          if (seen.has(key)) {
+            showToast(`"${file.name}" is already added.`, "warn");
+            return false;
+          }
+          seen.add(key);
           if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
             showToast("Only PNG, JPG or WebP images are allowed.", "warn");
             return false;

@@ -730,3 +730,5 @@
     height: 160px;
   }
 }
+
+.aa-weekly-chart-wrap { position: relative; height: 260px; min-height: 220px; width: 100%; }

@@ -548,6 +548,7 @@
       span.textContent = tag + " ";
       const btn = document.createElement("button");
       btn.type = "button";
+      btn.className = "ap-tag-remove";
       btn.innerHTML = "&times;";
       btn.addEventListener("click", () => removeTag(i));
       span.appendChild(btn);
@@ -615,6 +616,20 @@
           <input type="number" class="variant-stock-input" min="0" value="0" />
         </div>
       </div>
+      <div class="ap-row-2">
+        <div class="variant-field">
+          <label>Color price <span class="req">*</span></label>
+          <div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-base-price-input" min="0" step="0.01" placeholder="0.00" /></div>
+        </div>
+        <div class="variant-field variant-sale-box">
+          <label><input type="checkbox" class="variant-sale-enabled" /> Color sale</label>
+          <div class="ap-input-prefix sm"><span>$</span><input type="number" class="variant-sale-price-input" min="0" step="0.01" placeholder="Sale price" disabled /></div>
+        </div>
+      </div>
+      <div class="ap-row-2 variant-sale-dates" hidden>
+        <div class="variant-field"><label>Sale start</label><input type="datetime-local" class="variant-sale-start" /></div>
+        <div class="variant-field"><label>Sale end</label><input type="datetime-local" class="variant-sale-end" /></div>
+      </div>
       <div class="variant-field">
         <label>Color image</label>
         <input type="file" class="variant-image-input" accept="image/png,image/jpeg,image/webp" />
@@ -663,6 +678,13 @@
         preview.appendChild(img);
       }
     });
+    const saleEnabled = row.querySelector(".variant-sale-enabled");
+    const salePrice = row.querySelector(".variant-sale-price-input");
+    const saleDates = row.querySelector(".variant-sale-dates");
+    saleEnabled.addEventListener("change", () => {
+      salePrice.disabled = !saleEnabled.checked;
+      saleDates.hidden = !saleEnabled.checked;
+    });
     row.querySelector(".variant-remove").addEventListener("click", () => row.remove());
     renderSizes();
     return row;
@@ -697,6 +719,26 @@
         return false;
       }
       seenColors.add(key);
+
+      const basePrice = Number(row.querySelector(".variant-base-price-input")?.value || 0);
+      if (!Number.isFinite(basePrice) || basePrice < 0) {
+        showToast(`${color}: enter a valid color price.`);
+        row.querySelector(".variant-base-price-input")?.focus();
+        return false;
+      }
+      const saleEnabled = !!row.querySelector(".variant-sale-enabled")?.checked;
+      const salePrice = Number(row.querySelector(".variant-sale-price-input")?.value || 0);
+      if (saleEnabled && (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= basePrice)) {
+        showToast(`${color}: sale price must be lower than the color price.`);
+        row.querySelector(".variant-sale-price-input")?.focus();
+        return false;
+      }
+      const saleStart = row.querySelector(".variant-sale-start")?.value || "";
+      const saleEnd = row.querySelector(".variant-sale-end")?.value || "";
+      if (saleEnabled && saleStart && saleEnd && new Date(saleEnd) <= new Date(saleStart)) {
+        showToast(`${color}: sale end must be after sale start.`);
+        return false;
+      }
 
       const sizeRows = Array.from(row.querySelectorAll(".variant-size-row"));
       if (!sizeRows.length) {
@@ -744,7 +786,15 @@
       if (imageInput?.files?.[0]) {
         fd.append("variant_image_" + id, imageInput.files[0], imageInput.files[0].name);
       }
-      return { id, color, stock, sizes };
+      return {
+        id, color, stock,
+        price: Number(row.querySelector(".variant-base-price-input")?.value || 0),
+        sale_enabled: !!row.querySelector(".variant-sale-enabled")?.checked,
+        sale_price: Number(row.querySelector(".variant-sale-price-input")?.value || 0) || null,
+        sale_start: row.querySelector(".variant-sale-start")?.value || "",
+        sale_end: row.querySelector(".variant-sale-end")?.value || "",
+        sizes
+      };
     });
     fd.append("variant_data", JSON.stringify(variants));
     return variants;
@@ -912,6 +962,11 @@
       return fail(prodStock, "Stock must be a whole number of 0 or more.");
     }
 
+    const taxRate = parseFloat(prodTax?.value || 0);
+    if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) {
+      return fail(prodTax, "Tax must be between 0% and 100%.");
+    }
+
     const lowStock = parseInt(prodLowStock && prodLowStock.value, 10);
     if (
       prodLowStock &&
@@ -1004,7 +1059,8 @@
     );
 
     // --- Tax ---------------------------------------------------------------
-    fd.append("tax_class", prodTax ? prodTax.value : "standard");
+    fd.append("tax_class", "custom");
+    fd.append("tax_rate", String(Number(prodTax?.value || 0)));
 
     // --- Publish status ----------------------------------------------------
     const publishStatus = document.querySelector(

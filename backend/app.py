@@ -92,6 +92,38 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 db.init_app(app)
 
+
+def ensure_schema_compatibility():
+    """Safely add columns introduced by newer application versions.
+
+    This migration is additive only: it never drops tables or existing data.
+    It is intentionally SQLite-friendly for the local development database.
+    """
+    columns_by_table = {
+        "products": {
+            "tax_rate": "FLOAT NOT NULL DEFAULT 8.0",
+        },
+        "product_variants": {
+            "price": "FLOAT NOT NULL DEFAULT 0",
+            "sale_enabled": "BOOLEAN NOT NULL DEFAULT 0",
+            "sale_price": "FLOAT",
+            "sale_start": "DATETIME",
+            "sale_end": "DATETIME",
+        },
+    }
+    with db.engine.begin() as conn:
+        for table, columns in columns_by_table.items():
+            rows = conn.exec_driver_sql(f"PRAGMA table_info({table})").fetchall()
+            existing = {row[1] for row in rows}
+            if not rows:
+                continue
+            for column, definition in columns.items():
+                if column not in existing:
+                    conn.exec_driver_sql(
+                        f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
+                    )
+
+
 jwt = JWTManager(app)
 
 
@@ -109,6 +141,10 @@ from models import (
     Category,
     Review,
 )
+
+with app.app_context():
+    db.create_all()
+    ensure_schema_compatibility()
 
 
 # ============================================================
@@ -149,21 +185,37 @@ def admin_dashboard():
     order_count = len(orders)
     avg_order = revenue / len(valid_orders) if valid_orders else 0
 
-    # Category sales and product units are derived from order items.
+    # Category revenue and product units are derived from recognized order items.
+    # Category revenue is allocated from each recognized order total in proportion
+    # to its line revenue, so all category values add up exactly to total revenue
+    # (including shipping/tax/discounts already represented in Order.total).
     category_sales = {}
     product_units = {}
     for order in valid_orders:
+        line_values = []
         for item in order.items:
-            qty = int(item.quantity or 0)
+            qty = max(0, int(item.quantity or 0))
+            line_revenue = round(qty * float(item.unit_price or item.sale_price or item.original_price or 0), 2)
             product = Product.query.get(item.product_id) if item.product_id else None
             category = (
                 (product.category if product else None)
                 or (product.category_ref.name if product and product.category_ref else None)
                 or "Other"
             )
-            category_sales[category] = category_sales.get(category, 0) + qty * float(
-                item.unit_price or item.sale_price or item.original_price or 0
-            )
+            line_values.append((item, product, category, qty, line_revenue))
+
+        order_subtotal = sum(value for *_, value in line_values)
+        if order_subtotal <= 0:
+            continue
+        remaining_total = round(float(order.total or 0), 2)
+        for index, (item, product, category, qty, line_revenue) in enumerate(line_values):
+            if index == len(line_values) - 1:
+                allocated = remaining_total
+            else:
+                allocated = round(float(order.total or 0) * (line_revenue / order_subtotal), 2)
+                remaining_total = round(remaining_total - allocated, 2)
+            category_sales[category] = category_sales.get(category, 0) + allocated
+
             key = item.product_id or item.product_name or "unknown"
             if key not in product_units:
                 product_units[key] = {
@@ -174,11 +226,9 @@ def admin_dashboard():
                     "image": product.image if product else getattr(item, "image", None),
                 }
             product_units[key]["units"] += qty
-            product_units[key]["revenue"] += qty * float(
-                item.unit_price or item.sale_price or item.original_price or 0
-            )
+            product_units[key]["revenue"] += allocated
 
-    category_total = sum(category_sales.values())
+    category_total = round(sum(category_sales.values()), 2)
     categories = sorted(
         [
             {
@@ -190,7 +240,7 @@ def admin_dashboard():
         ],
         key=lambda x: x["revenue"],
         reverse=True,
-    )[:6]
+    )
 
     best_sellers = sorted(
         product_units.values(),

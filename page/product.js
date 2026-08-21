@@ -45,13 +45,36 @@ function renderGallery() {
   if (dots) dots.hidden = !multi;
 }
 
+function variantSaleIsActive(variant) {
+  if (!variant?.sale_enabled) return false;
+  const regular = Number(variant.price || variant.sizes?.[0]?.price || 0);
+  const sale = Number(variant.sale_price || 0);
+  if (!(sale > 0 && regular > sale)) return false;
+  const now = new Date();
+  if (variant.sale_start) {
+    const start = new Date(variant.sale_start);
+    if (!Number.isNaN(start.getTime()) && now < start) return false;
+  }
+  if (variant.sale_end) {
+    const end = new Date(variant.sale_end);
+    if (!Number.isNaN(end.getTime()) && now > end) return false;
+  }
+  return true;
+}
+
+function variantRegularPrice(variant) {
+  const size = selectedVariant && selectedSize
+    ? variant?.sizes?.find(s => String(s.id) === String(selectedSize) || String(s.size).toLowerCase() === String(selectedSize).toLowerCase())
+    : null;
+  return Number(size?.price || variant?.price || 0);
+}
+
 function selectedPrice() {
-  if (selectedVariant && selectedSize) {
-    const size = selectedVariant.sizes?.find(
-      s => String(s.id) === String(selectedSize) ||
-           String(s.size).toLowerCase() === String(selectedSize).toLowerCase()
-    );
-    if (size) return Number(size.price) || 0;
+  if (selectedVariant) {
+    const regular = variantRegularPrice(selectedVariant);
+    return variantSaleIsActive(selectedVariant)
+      ? Number(selectedVariant.sale_price || regular)
+      : regular;
   }
   return loadedProduct?.sale_active
     ? Number(loadedProduct.sale_price || loadedProduct.price || 0)
@@ -64,12 +87,15 @@ function renderPrice() {
   const originalEl = document.getElementById("product-original-price");
   if (priceEl) priceEl.textContent = "$" + price.toFixed(2);
 
-  const regular = selectedVariant && selectedSize
-    ? Number(selectedPrice())
+  const regular = selectedVariant
+    ? variantRegularPrice(selectedVariant)
     : Number(loadedProduct?.price || 0);
-  const saleActive = !selectedVariant && loadedProduct?.sale_active;
+  const saleActive = selectedVariant
+    ? variantSaleIsActive(selectedVariant)
+    : !!loadedProduct?.sale_active;
+
   if (originalEl) {
-    if (saleActive && Number(loadedProduct.sale_price) < regular) {
+    if (saleActive && price < regular) {
       originalEl.textContent = "$" + regular.toFixed(2);
       originalEl.style.display = "block";
     } else {
@@ -80,10 +106,10 @@ function renderPrice() {
 
   const saleCard = document.getElementById("product-sale-card");
   if (saleCard) {
-    if (saleActive) {
+    if (saleActive && price < regular) {
       saleCard.style.display = "inline-flex";
-      document.getElementById("sale-badge").textContent = loadedProduct.sale_badge || "Sale";
-      document.getElementById("sale-badge").style.background = loadedProduct.sale_badge_color || "#f97316";
+      document.getElementById("sale-badge").textContent = loadedProduct?.sale_badge || "Sale";
+      document.getElementById("sale-badge").style.background = loadedProduct?.sale_badge_color || "#f97316";
       document.getElementById("sale-price-text").textContent = "Now $" + price.toFixed(2);
       document.getElementById("sale-discount-text").textContent =
         Math.round(((regular - price) / regular) * 100) + "% off";
@@ -91,6 +117,12 @@ function renderPrice() {
       saleCard.style.display = "none";
     }
   }
+}
+
+function chooseRandomAvailableSize(variant) {
+  const available = (variant?.sizes || []).filter(() => Number(variant?.stock || 0) > 0);
+  if (!available.length) return null;
+  return available[Math.floor(Math.random() * available.length)].id;
 }
 
 function renderVariants() {
@@ -108,6 +140,7 @@ function renderVariants() {
 
   if (!selectedVariant || !variants.some(v => String(v.id) === String(selectedVariant.id))) {
     selectedVariant = variants[0];
+    selectedSize = chooseRandomAvailableSize(selectedVariant);
   }
 
   colors.innerHTML = "";
@@ -115,14 +148,14 @@ function renderVariants() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "product-color-option" + (String(variant.id) === String(selectedVariant.id) ? " active" : "");
-    button.title = variant.color;
+    button.title = variant.color + (variantSaleIsActive(variant) ? " — Sale" : "");
     const img = document.createElement("img");
     img.src = imageUrl(variant.image || loadedProduct.image);
     img.alt = variant.color;
     button.appendChild(img);
     button.addEventListener("click", () => {
       selectedVariant = variant;
-      selectedSize = null;
+      selectedSize = chooseRandomAvailableSize(variant);
       galleryImages = variant.image
         ? [variant.image].concat((loadedProduct.images || []).filter(x => x !== variant.image))
         : galleryImages;

@@ -2,7 +2,9 @@
 import json
 import os
 import uuid
+import hashlib
 from datetime import datetime
+from pathlib import Path
 
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
@@ -68,7 +70,17 @@ def _parse_image_json(raw):
             return []
     except (TypeError, ValueError, json.JSONDecodeError):
         return []
-    return [str(v) for v in values if isinstance(v, str) and v.strip()]
+    result = []
+    seen = set()
+    for v in values:
+        if not isinstance(v, str) or not v.strip():
+            continue
+        value = v.strip()
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
 
 
 def _collect_product_images(request, existing=None):
@@ -87,10 +99,27 @@ def _collect_product_images(request, existing=None):
     if len(keep) + len(new_files) > MAX_PRODUCT_IMAGES:
         raise ValueError(f"A product can have a maximum of {MAX_PRODUCT_IMAGES} images.")
 
-    result = list(keep)
+    result = list(dict.fromkeys(keep))
+    hashes = set()
+    upload_dir = current_app.config["UPLOAD_FOLDER"]
+    for name in result:
+        path = os.path.join(upload_dir, name)
+        if os.path.isfile(path):
+            try:
+                hashes.add(hashlib.sha256(Path(path).read_bytes()).hexdigest())
+            except Exception:
+                pass
     for file_obj in new_files:
+        file_obj.seek(0)
+        digest = hashlib.sha256(file_obj.read()).hexdigest()
+        file_obj.seek(0)
+        if digest in hashes:
+            continue
+        if len(result) >= MAX_PRODUCT_IMAGES:
+            break
         result.append(_save_image(file_obj))
-    return result[:MAX_PRODUCT_IMAGES]
+        hashes.add(digest)
+    return list(dict.fromkeys(result))[:MAX_PRODUCT_IMAGES]
 
 
 def _parse_variant_payload(raw):
@@ -149,11 +178,36 @@ def _parse_variant_payload(raw):
                 raise ValueError(f"Price cannot be negative for {color} / {size}.")
             clean_sizes.append({"id": s.get("id"), "size": size, "price": price})
 
+        try:
+            color_price = float(item.get("price")) if item.get("price") not in (None, "") else float(clean_sizes[0]["price"])
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid base price for {color}.") from exc
+        if color_price < 0:
+            raise ValueError(f"Price cannot be negative for {color}.")
+        sale_enabled = _parse_bool(item.get("sale_enabled"))
+        sale_price = None
+        if sale_enabled:
+            try:
+                sale_price = float(item.get("sale_price"))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"Sale price is required for {color}.") from exc
+            if sale_price <= 0 or sale_price >= color_price:
+                raise ValueError(f"Sale price for {color} must be lower than its price.")
+        sale_start = parse_store_datetime(item.get("sale_start"), f"{color} sale start") if item.get("sale_start") else None
+        sale_end = parse_store_datetime(item.get("sale_end"), f"{color} sale end") if item.get("sale_end") else None
+        if sale_start and sale_end and sale_end <= sale_start:
+            raise ValueError(f"Sale end must be after sale start for {color}.")
+
         result.append({
             "id": str(item.get("id") or f"new-{uuid.uuid4()}"),
             "color": color,
             "image": str(item.get("image") or ""),
             "stock": stock,
+            "price": color_price,
+            "sale_enabled": sale_enabled,
+            "sale_price": sale_price,
+            "sale_start": sale_start,
+            "sale_end": sale_end,
             "sizes": clean_sizes,
         })
     return result
@@ -187,11 +241,21 @@ def _apply_variants(product, payload):
                 product_id=product.id,
                 color=color,
                 stock=max(0, int(item.get("stock", 0) or 0)),
+                price=float(item.get("price") or 0),
+                sale_enabled=bool(item.get("sale_enabled")),
+                sale_price=item.get("sale_price"),
+                sale_start=item.get("sale_start"),
+                sale_end=item.get("sale_end"),
             )
             db.session.add(db_variant)
         else:
             db_variant.color = color
             db_variant.stock = max(0, int(item.get("stock", 0) or 0))
+            db_variant.price = float(item.get("price") or 0)
+            db_variant.sale_enabled = bool(item.get("sale_enabled"))
+            db_variant.sale_price = item.get("sale_price")
+            db_variant.sale_start = item.get("sale_start")
+            db_variant.sale_end = item.get("sale_end")
 
         image = item.get("image") or ""
         upload = request.files.get(f"variant_image_{variant_id}")
@@ -306,10 +370,13 @@ def add_product():
         cost = float(data.get("cost", 0))
         stock = int(data.get("stock", 0))
         low_stock = int(data.get("low_stock", 10))
+        tax_rate = float(data.get("tax_rate", 8.0) or 0)
     except (TypeError, ValueError):
         return jsonify(success=False, message="Price, cost, stock and low-stock threshold must be valid numbers."), 400
     if min(price, cost, stock, low_stock) < 0:
         return jsonify(success=False, message="Price, cost, stock and low-stock threshold cannot be negative."), 400
+    if not 0 <= tax_rate <= 100:
+        return jsonify(success=False, message="Tax rate must be between 0 and 100."), 400
 
     category = _resolve_category(data.get("category_id"), data.get("category"))
     if not category:
@@ -338,6 +405,7 @@ def add_product():
         stock=stock,
         low_stock=low_stock,
         tax_class=data.get("tax_class", "standard"),
+        tax_rate=tax_rate,
         image=images[0] if images else "",
         images=json.dumps(images),
         status=status,
@@ -382,10 +450,13 @@ def edit_product(id):
         cost = float(data.get("cost", product.cost or 0))
         stock = int(data.get("stock", product.stock or 0))
         low_stock = int(data.get("low_stock", product.low_stock if product.low_stock is not None else 10))
+        tax_rate = float(data.get("tax_rate", product.tax_rate if product.tax_rate is not None else 8.0) or 0)
     except (TypeError, ValueError):
         return jsonify(success=False, message="Price, cost, stock and low-stock threshold must be valid numbers."), 400
     if min(price, cost, stock, low_stock) < 0:
         return jsonify(success=False, message="Price, cost, stock and low-stock threshold cannot be negative."), 400
+    if not 0 <= tax_rate <= 100:
+        return jsonify(success=False, message="Tax rate must be between 0 and 100."), 400
 
     category = _resolve_category(data.get("category_id"), data.get("category"))
     if not category:
@@ -415,6 +486,7 @@ def edit_product(id):
     product.stock = stock
     product.low_stock = low_stock
     product.tax_class = data.get("tax_class", product.tax_class or "standard")
+    product.tax_rate = tax_rate
     product.status = status
     product.sale_enabled = sale_enabled
     product.sale_price = sale_price

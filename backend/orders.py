@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 
 from models import User, Product, Order, OrderItem, ProductVariant, VariantSize
 from database import db
-from sales import sale_is_active, current_price, now_store
+from sales import sale_is_active, current_price, now_store, variant_current_price, variant_sale_is_active
 
 from security import (
     user_required,
@@ -29,10 +29,16 @@ def _product_tax_rate(product):
     if product is None:
         return TAX_RATE
     try:
-        return max(0.0, min(100.0, float(getattr(product, "tax_rate", product.tax_class)))) / 100.0
+        rate = getattr(product, "tax_rate", None)
+        if rate is not None:
+            return max(0.0, min(100.0, float(rate))) / 100.0
     except (TypeError, ValueError):
+        pass
+    try:
         legacy_rates = {"standard": 0.08, "reduced": 0.04, "zero": 0.0, "none": 0.0}
         return legacy_rates.get(str(getattr(product, "tax_class", "")).strip().lower(), TAX_RATE)
+    except (TypeError, ValueError):
+        return TAX_RATE
 
 
 def _parse_float(value, default=0.0):
@@ -282,7 +288,7 @@ def create_order():
                     raise ValueError(
                         f"Only {available} of '{product.title}' / {variant.color} are in stock."
                     )
-                unit_price = float(size_obj.price)
+                unit_price = float(variant_current_price(variant, size_obj))
                 color = variant.color
                 size = size_obj.size
                 variant_id = variant.id

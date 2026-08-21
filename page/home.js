@@ -3,6 +3,9 @@ function isStorefrontProductVisible(product) {
 }
 
 const productsContainer = document.getElementById("product-container");
+const homeSearch = document.getElementById("homeProductSearch");
+const homeSearchEmpty = document.getElementById("product-search-empty");
+let homeProducts = [];
 
 // ==========================================================================
 // Home page uses the SHARED product-card renderer from /script.js
@@ -66,29 +69,56 @@ function appendProductCard(product, index) {
   }
 }
 
+function matchesHomeSearch(product, rawQuery) {
+  const query = String(rawQuery || "").trim().toLowerCase();
+  if (!query) return true;
+  const salePrice = Number(product.sale_active ? product.sale_price : product.price) || 0;
+  const text = [
+    product.title,
+    product.category,
+    product.tags,
+    Array.isArray(product.tags) ? product.tags.join(" ") : "",
+  ].filter(Boolean).join(" ").toLowerCase();
+  const range = query.match(/^price\s*(<=|>=|=|<|>)\s*([0-9]+(?:\.[0-9]+)?)$/i) || query.match(/^(<=|>=|=|<|>)\s*([0-9]+(?:\.[0-9]+)?)$/);
+  if (range) {
+    const op = range[1], value = Number(range[2]);
+    return op === "<" ? salePrice < value : op === "<=" ? salePrice <= value : op === ">" ? salePrice > value : op === ">=" ? salePrice >= value : Math.abs(salePrice - value) < 0.01;
+  }
+  if (/^price\s*:\s*/i.test(query)) {
+    const value = Number(query.replace(/^price\s*:\s*/i, ""));
+    return Number.isFinite(value) && Math.abs(salePrice - value) < 0.01;
+  }
+  if (/^\$?\d+(?:\.\d+)?$/.test(query)) {
+    const value = Number(query.replace("$", ""));
+    return Math.abs(salePrice - value) < 0.01;
+  }
+  return text.includes(query) || String(salePrice).includes(query);
+}
+
+function renderHomeProducts() {
+  productsContainer.querySelectorAll(".product-card").forEach((card) => {
+    if (card._imageRotationTimer) clearInterval(card._imageRotationTimer);
+  });
+  productsContainer.innerHTML = "";
+  const query = homeSearch?.value || "";
+  const visibleProducts = homeProducts.filter(isStorefrontProductVisible).filter((p) => matchesHomeSearch(p, query));
+  visibleProducts.forEach((product, index) => appendProductCard(product, index));
+  if (homeSearchEmpty) homeSearchEmpty.hidden = visibleProducts.length > 0;
+}
+
 async function loadProducts() {
   try {
     const response = await fetch("http://127.0.0.1:5000/products");
     const data = await response.json();
-
-    if (!data.success) {
-      return;
-    }
-
-    productsContainer.querySelectorAll(".product-card").forEach((card) => {
-      if (card._imageRotationTimer) clearInterval(card._imageRotationTimer);
-    });
-    productsContainer.innerHTML = "";
-
-    const visibleProducts = data.products.filter(isStorefrontProductVisible);
-
-    visibleProducts.forEach((product, index) => {
-      appendProductCard(product, index);
-    });
+    if (!data.success) return;
+    homeProducts = data.products || [];
+    renderHomeProducts();
   } catch (err) {
     console.log(err);
   }
 }
+
+homeSearch?.addEventListener("input", renderHomeProducts);
 
 loadProducts();
 

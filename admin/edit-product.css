@@ -1577,3 +1577,5 @@
 .ap-variant-group .variant-remove{border:0;background:transparent;color:#dc2626;cursor:pointer}
 .ap-variant-group .variant-size-list{display:grid;gap:8px}
 @media(max-width:700px){.ap-preview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.upload-main-text { margin: 8px 0 2px; font-size: .9rem; line-height: 1.25; }
+.upload-sub-text { margin: 0; font-size: .74rem; line-height: 1.25; max-width: 280px; margin-inline: auto; }

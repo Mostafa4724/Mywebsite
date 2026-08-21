@@ -83,8 +83,16 @@ def _product_images(product):
         values = []
     if not isinstance(values, list):
         values = []
-    result = [str(v) for v in values if isinstance(v, str) and v.strip()]
-    if product.image and product.image not in result:
+    result = []
+    seen = set()
+    for v in values:
+        if not isinstance(v, str) or not v.strip():
+            continue
+        value = v.strip()
+        if value not in seen:
+            seen.add(value)
+            result.append(value)
+    if product.image and product.image not in seen:
         result.insert(0, product.image)
     return result[:5]
 
@@ -210,6 +218,13 @@ class Product(db.Model):
         default="standard"
     )
 
+    # Product-specific tax percentage entered by the administrator.
+    tax_rate = db.Column(
+        db.Float,
+        default=8.0,
+        nullable=False
+    )
+
     # ---------------------------------------------------------
     # Main Image
     # ---------------------------------------------------------
@@ -331,6 +346,7 @@ class Product(db.Model):
             "stock_status": self.stock_status,
 
             "tax_class": self.tax_class,
+            "tax_rate": float(self.tax_rate if self.tax_rate is not None else 8.0),
 
             "image": self.image,
 
@@ -378,6 +394,14 @@ class ProductVariant(db.Model):
     image = db.Column(db.String(500), nullable=True)
     stock = db.Column(db.Integer, nullable=False, default=0)
 
+    # Optional color-level base price and sale configuration. Size prices remain
+    # supported for backwards compatibility and can override this base price.
+    price = db.Column(db.Float, nullable=False, default=0)
+    sale_enabled = db.Column(db.Boolean, nullable=False, default=False)
+    sale_price = db.Column(db.Float, nullable=True)
+    sale_start = db.Column(db.DateTime, nullable=True)
+    sale_end = db.Column(db.DateTime, nullable=True)
+
     sizes = db.relationship(
         "VariantSize",
         backref="variant",
@@ -393,6 +417,11 @@ class ProductVariant(db.Model):
             "color": self.color,
             "image": self.image,
             "stock": max(0, int(self.stock or 0)),
+            "price": float(self.price or 0),
+            "sale_enabled": bool(self.sale_enabled),
+            "sale_price": float(self.sale_price) if self.sale_price is not None else None,
+            "sale_start": _local_datetime_string(self.sale_start),
+            "sale_end": _local_datetime_string(self.sale_end),
             "sizes": [size.to_dict() for size in self.sizes],
         }
 

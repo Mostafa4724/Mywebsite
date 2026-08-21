@@ -40,6 +40,7 @@ def get_category(id):
 
 
 @categories_bp.route("/categories", methods=["POST"])
+@admin_required
 def create_category():
     """Create a category (admin). Validates non-empty and unique name."""
     data = request.get_json(silent=True) or {}
