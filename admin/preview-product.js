@@ -20,7 +20,6 @@
     var s = document.createElement("style");
     s.id = "preview-host-css";
     s.textContent =
-      "#previewBlocker{pointer-events:none!important}" +
       "#previewIframe{width:100%!important;height:100%!important;border:none!important;display:block!important}" +
       "#previewCloseBtn{z-index:10!important;position:relative!important}";
     document.head.appendChild(s);
@@ -84,9 +83,9 @@
       var style = doc.createElement("style");
       style.id = "preview-ro-s";
       style.textContent =
-        /* force scroll */
-        "html,body{overflow:auto!important;overflow-x:hidden!important;height:auto!important;min-height:100%!important}" +
-        /* blanket-disable every interactive element */
+        "html,body{overflow-y:auto!important;overflow-x:hidden!important;height:auto!important;min-height:100%!important;max-height:none!important}" +
+        "body,*{scroll-behavior:auto!important}" +
+
         "button,input,textarea,select,a,form," +
         "[role='button'],[onclick],[data-action]," +
         ".star-btn,.back-btn," +
@@ -98,9 +97,10 @@
         ".promo-input-group button," +
         ".newsletter-box button" +
         "{pointer-events:none!important;opacity:.45!important;cursor:not-allowed!important;filter:grayscale(.3)}" +
-        /* re-enable only gallery arrows */
-        ALLOW + "{pointer-events:auto!important;opacity:1!important;cursor:pointer!important;filter:none!important}" +
-        /* watermark */
+
+        ALLOW +
+        "{pointer-events:auto!important;opacity:1!important;cursor:pointer!important;filter:none!important}" +
+
         "body::after{content:'READ-ONLY PREVIEW';position:fixed;bottom:16px;right:16px;padding:6px 14px;" +
         "background:rgba(15,23,36,.85);color:rgba(255,255,255,.6);font-size:11px;font-weight:700;" +
         "letter-spacing:1px;border-radius:8px;z-index:9999;pointer-events:none;backdrop-filter:blur(6px)}";
