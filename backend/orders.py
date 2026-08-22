@@ -753,6 +753,11 @@ def update_payment_status(order_id):
     if order.payment_method != "transfer":
         return jsonify(success=False, message="Manual payment verification is only available for bank transfers."), 400
 
+    # Keep the previous value so inventory can only be restored once.
+    old_payment_status = (
+        order.payment_status or ""
+    ).strip().lower()
+
     order.payment_status = requested
     order.payment_verified_at = now_store().replace(tzinfo=None)
     order.payment_verified_by = int(get_jwt_identity())
@@ -761,8 +766,38 @@ def update_payment_status(order_id):
         order.revenue_recognized_at = None
         order.revenue_recognized_by = None
 
-        # A refused payment cancels the entire order.
+        # A refused payment cancels the order.
         order.status = "cancelled"
+
+        # The order already removed these quantities when it was created.
+        # Return them to inventory when payment is refused. The old-status
+        # check prevents stock from being restored twice if the endpoint is
+        # called again for an order that is already rejected.
+        if old_payment_status != "rejected":
+            for item in order.items:
+                qty = max(0, int(item.quantity or 0))
+
+                if qty <= 0:
+                    continue
+
+                if item.variant_id:
+                    variant = ProductVariant.query.get(item.variant_id)
+
+                    if variant is not None:
+                        variant.stock = max(
+                            0,
+                            int(variant.stock or 0) + qty
+                        )
+                        _recalculate_product_stock(variant.product)
+                else:
+                    product = Product.query.get(item.product_id)
+
+                    if product is not None:
+                        product.stock = max(
+                            0,
+                            int(product.stock or 0) + qty
+                        )
+                        _recalculate_product_stock(product)
 
     try:
         db.session.commit()
