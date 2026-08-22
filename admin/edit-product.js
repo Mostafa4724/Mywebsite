@@ -428,6 +428,38 @@ window.selectedFile = null;
 
   // ─── SAVE PRODUCT ──────────────────────────────────────
 
+    function syncStockStatusFromQuantity() {
+    const stockInput = document.getElementById("prodStock");
+    const thresholdInput = document.getElementById("prodLowStock");
+
+    if (!stockInput || !thresholdInput) return;
+
+    const stock = Number(stockInput.value);
+    const threshold = Number(thresholdInput.value);
+
+    let status = "in";
+
+    if (!Number.isFinite(stock) || stock <= 0) {
+      status = "out";
+    } else if (stock <= threshold) {
+      status = "low";
+    }
+
+    const radio = document.querySelector(
+      `input[name="stockStatus"][value="${status}"]`
+    );
+
+    if (radio) {
+      radio.checked = true;
+    }
+
+    document.querySelectorAll(".ap-stock-chip").forEach(chip => {
+      chip.classList.toggle(
+        "active",
+        chip.dataset.stock === status
+      );
+    });
+  }
   async function saveProduct() {
     const name = document.getElementById("prodName").value.trim();
     const description = document.getElementById("prodDesc").value.trim();
@@ -437,7 +469,6 @@ window.selectedFile = null;
     const lowStock = Number(document.getElementById("prodLowStock").value || 0);
     const salePrice = salePriceField.value === "" ? null : Number(salePriceField.value);
     const selectedStatus = document.querySelector('input[name="publishStatus"]:checked');
-    const selectedStockStatus = document.querySelector('input[name="stockStatus"]:checked');
 
     if (!name) throw new Error("Please enter a product name.");
     if (!description) throw new Error("Description is required.");
@@ -465,7 +496,6 @@ window.selectedFile = null;
     body.append("tax_rate", String(taxRate));
     body.append("stock", String(stock));
     body.append("low_stock", String(lowStock));
-    body.append("stock_status", selectedStockStatus ? selectedStockStatus.value : "");
     body.append("status", selectedStatus ? selectedStatus.value : "draft");
     body.append("sale_enabled", saleToggle.checked ? "true" : "false");
     body.append("sale_price", saleToggle.checked && salePrice !== null ? String(salePrice) : "");
@@ -565,6 +595,18 @@ window.selectedFile = null;
       el.addEventListener("input", markDirty);
       el.addEventListener("change", markDirty);
     });
+    const stockInput = document.getElementById("prodStock");
+    const thresholdInput = document.getElementById("prodLowStock");
+
+    if (stockInput) {
+      stockInput.addEventListener("input", syncStockStatusFromQuantity);
+      stockInput.addEventListener("change", syncStockStatusFromQuantity);
+    }
+
+    if (thresholdInput) {
+      thresholdInput.addEventListener("input", syncStockStatusFromQuantity);
+      thresholdInput.addEventListener("change", syncStockStatusFromQuantity);
+    }
 
     priceInput.addEventListener("input", () => { updateProfit(); updateSalePreview(); });
     costInput.addEventListener("input", updateProfit);
