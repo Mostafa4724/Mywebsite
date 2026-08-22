@@ -465,17 +465,10 @@
 
     <script src="user-shell.js"></script>
     <script src="../script.js"></script>
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
-    <script src="checkout-map.js"></script>
-    <script src="checkout-form.js"></script>
     <script>
       (function() {
         var phoneInput = document.getElementById('phoneInput');
-        var streetInput = document.getElementById('streetInput'); // ADDED: Get street input
+        var streetInput = document.getElementById('streetInput'); 
         
         if (!phoneInput) return;
 
@@ -488,7 +481,6 @@
         var prefix = document.createElement('span');
         prefix.textContent = '+20 ';
         prefix.id = 'phonePrefix';
-        // Copy the input's computed font so it blends in perfectly
         var cs = window.getComputedStyle(phoneInput);
         prefix.style.cssText =
           'position:absolute;' +
@@ -505,19 +497,15 @@
           'line-height:1;';
         parent.insertBefore(prefix, phoneInput);
 
-        // Push the input's text right so it doesn't overlap the +20
         var prefixWidth = prefix.offsetWidth + 4;
         phoneInput.style.paddingLeft = prefixWidth + 'px';
 
         // --- PHONE INPUT LISTENER ---
         phoneInput.addEventListener('input', function() {
           let value = this.value.replace(/[^0-9]/g, '');
-          
-          // Remove leading zeros
           if (value.startsWith('0')) {
             value = value.replace(/^0+/, '');
           }
-          
           this.value = value.slice(0, 10);
         });
 
@@ -536,21 +524,38 @@
         phoneInput.addEventListener('paste', function(e) {
           e.preventDefault();
           var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
-          
-          // Remove leading zeros from pasted text
           if (pasted.startsWith('0')) {
             pasted = pasted.replace(/^0+/, '');
           }
-          
           this.value = pasted.slice(0, 10);
           this.dispatchEvent(new Event('input', { bubbles: true }));
         });
 
-        // --- ADDED: STREET REAL-TIME ERROR CLEARING ---
+        // --- ADDED: STREET REAL-TIME BLOCKING ---
         if (streetInput) {
           streetInput.addEventListener('input', function() {
+            let value = this.value;
+            
+            // If the field has text, and the VERY FIRST character is NOT a number
+            if (value.length > 0 && isNaN(value.charAt(0))) {
+              
+              // Search the text to find the first number
+              let match = value.match(/\d/);
+              
+              if (match) {
+                // If a number is found later (e.g., pasting "Street 123"), chop off the letters
+                this.value = value.substring(match.index);
+              } else {
+                // If it's only letters, completely clear the field
+                this.value = '';
+              }
+            }
+            
+            // Clear the red error text if they successfully start with a number
             var streetError = document.getElementById('streetError');
-            if (streetError) streetError.textContent = '';
+            if (streetError && this.value.length > 0 && !isNaN(this.value.charAt(0))) {
+              streetError.textContent = '';
+            }
           });
         }
 
@@ -573,30 +578,28 @@
               if (phoneError) phoneError.textContent = 'Phone number must be exactly 10 digits after +20';
               hasError = true;
             } else {
-              // Valid phone: temporarily add +20 for checkout-form.js
               phoneInput.value = '+20' + phoneVal;
               setTimeout(function() { phoneInput.value = phoneVal; }, 0);
             }
 
-            // 2. Validate Street Address (Must start with number)
+            // 2. Validate Street Address (Fallback check)
             if (streetInput) {
               if (!streetVal) {
                 if (streetError) streetError.textContent = 'Street address is required';
                 hasError = true;
               } else if (isNaN(streetVal.charAt(0))) {
-                // If the very first character is NOT a number (e.g., 0-9)
                 if (streetError) streetError.textContent = 'Street address must start with a building number';
                 hasError = true;
               }
             }
 
-            // 3. If ANY errors occurred, stop the form from submitting
+            // 3. Stop form if errors exist
             if (hasError) {
               e.stopImmediatePropagation();
               e.preventDefault();
             }
             
-          }, true); // 'true' ensures this runs before your main checkout-form.js
+          }, true);
         }
       })();
     </script>
