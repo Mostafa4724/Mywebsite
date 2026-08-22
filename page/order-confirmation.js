@@ -569,25 +569,44 @@
     );
 
 
-    h +=
-      '<div class="oc-info-row">' +
-      '<span class="oc-info-label">Shipping To</span>' +
-      '<span class="oc-info-value">' +
-      "<strong>" +
-      esc(
-        display(
-          name,
-          "Customer"
-        )
-      ) +
-      "</strong>" +
-      (
-        addr.length
-          ? "<br>" +
-            addr.map(esc).join("<br>")
-          : ""
-      ) +
-      "</span></div>";
+    var paymentMethod = String(
+    order.payment_method || ""
+  ).trim().toLowerCase();
+
+  var paymentStatus = String(
+    order.payment_status || ""
+  ).trim().toLowerCase();
+
+  var paymentText = display(
+    order.payment_method,
+    "Payment method not provided"
+  );
+
+  var paymentStatusText = "";
+
+  if (paymentStatus === "rejected") {
+    paymentStatusText = "Payment Method Refused";
+  } else if (paymentStatus === "verified") {
+    paymentStatusText = "Payment Verified";
+  } else if (paymentMethod === "cod") {
+    paymentStatusText = "Cash on Delivery";
+  }
+
+  h +=
+    '<div class="oc-info-row">' +
+    '<span class="oc-info-label">Payment</span>' +
+    '<span class="oc-info-value">' +
+    '<span class="oc-pay-badge">' +
+    esc(paymentText) +
+    "</span>" +
+    (
+      paymentStatusText
+        ? '<span class="oc-payment-status">' +
+          esc(paymentStatusText) +
+          "</span>"
+        : ""
+    ) +
+    "</span></div>";
 
 
     h +=
