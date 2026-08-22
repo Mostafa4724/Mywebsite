@@ -761,6 +761,9 @@ def update_payment_status(order_id):
         order.revenue_recognized_at = None
         order.revenue_recognized_by = None
 
+        # A refused payment cancels the entire order.
+        order.status = "cancelled"
+
     try:
         db.session.commit()
     except Exception:

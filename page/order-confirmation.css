@@ -426,3 +426,30 @@ body {
   .oc-card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
   .oc-hero, .oc-card { animation: none; }
 }
+
+.oc-hero-icon.payment-refused {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.oc-hero-icon.payment-refused::before {
+  background: #dc2626;
+}
+
+.oc-payment-refused-title {
+  margin-top: 10px;
+  color: #dc2626;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.oc-msg.payment-refused {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.oc-msg.payment-refused svg {
+  color: #dc2626;
+  flex-shrink: 0;
+}
