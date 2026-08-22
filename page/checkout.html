@@ -475,6 +475,8 @@
     <script>
       (function() {
         var phoneInput = document.getElementById('phoneInput');
+        var streetInput = document.getElementById('streetInput'); // ADDED: Get street input
+        
         if (!phoneInput) return;
 
         phoneInput.setAttribute('maxlength', '10');
@@ -507,11 +509,11 @@
         var prefixWidth = prefix.offsetWidth + 4;
         phoneInput.style.paddingLeft = prefixWidth + 'px';
 
-        // --- UPDATED INPUT LISTENER ---
+        // --- PHONE INPUT LISTENER ---
         phoneInput.addEventListener('input', function() {
           let value = this.value.replace(/[^0-9]/g, '');
           
-          // ADDED: Remove leading zeros
+          // Remove leading zeros
           if (value.startsWith('0')) {
             value = value.replace(/^0+/, '');
           }
@@ -530,12 +532,12 @@
           }
         });
 
-        // --- UPDATED PASTE LISTENER ---
+        // --- PHONE PASTE LISTENER ---
         phoneInput.addEventListener('paste', function(e) {
           e.preventDefault();
           var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
           
-          // ADDED: Remove leading zeros from pasted text
+          // Remove leading zeros from pasted text
           if (pasted.startsWith('0')) {
             pasted = pasted.replace(/^0+/, '');
           }
@@ -544,25 +546,57 @@
           this.dispatchEvent(new Event('input', { bubbles: true }));
         });
 
-        // On submit: prepend +20 so checkout-form.js reads the full number
+        // --- ADDED: STREET REAL-TIME ERROR CLEARING ---
+        if (streetInput) {
+          streetInput.addEventListener('input', function() {
+            var streetError = document.getElementById('streetError');
+            if (streetError) streetError.textContent = '';
+          });
+        }
+
+        // --- ON SUBMIT: VALIDATE BOTH PHONE AND STREET ---
         var confirmBtn = document.getElementById('confirmPayBtn');
         if (confirmBtn) {
           confirmBtn.addEventListener('click', function(e) {
             var phoneError = document.getElementById('phoneError');
-            var val = phoneInput.value.trim();
-            if (!val) {
+            var streetError = document.getElementById('streetError');
+            
+            var phoneVal = phoneInput.value.trim();
+            var streetVal = streetInput ? streetInput.value.trim() : '';
+            var hasError = false;
+
+            // 1. Validate Phone Number
+            if (!phoneVal) {
               if (phoneError) phoneError.textContent = 'Phone number is required';
-              e.stopImmediatePropagation();
-              e.preventDefault();
-            } else if (val.length !== 10) {
+              hasError = true;
+            } else if (phoneVal.length !== 10) {
               if (phoneError) phoneError.textContent = 'Phone number must be exactly 10 digits after +20';
+              hasError = true;
+            } else {
+              // Valid phone: temporarily add +20 for checkout-form.js
+              phoneInput.value = '+20' + phoneVal;
+              setTimeout(function() { phoneInput.value = phoneVal; }, 0);
+            }
+
+            // 2. Validate Street Address (Must start with number)
+            if (streetInput) {
+              if (!streetVal) {
+                if (streetError) streetError.textContent = 'Street address is required';
+                hasError = true;
+              } else if (isNaN(streetVal.charAt(0))) {
+                // If the very first character is NOT a number (e.g., 0-9)
+                if (streetError) streetError.textContent = 'Street address must start with a building number';
+                hasError = true;
+              }
+            }
+
+            // 3. If ANY errors occurred, stop the form from submitting
+            if (hasError) {
               e.stopImmediatePropagation();
               e.preventDefault();
-            } else {
-              phoneInput.value = '+20' + val;
-              setTimeout(function() { phoneInput.value = val; }, 0);
             }
-          }, true);
+            
+          }, true); // 'true' ensures this runs before your main checkout-form.js
         }
       })();
     </script>
