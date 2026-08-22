@@ -228,7 +228,7 @@
               </div>
               <div class="form-group full-width">
                 <label>Phone Number <span class="required">*</span></label>
-                <input type="tel" id="phoneInput" placeholder="XXXXXXXXXX" required />
+                <input type="tel" id="phoneInput" pattern="[1-9][0-9]*" placeholder="XXXXXXXXXX" required />
                 <span class="field-error" id="phoneError"></span>
               </div>
             </div>
@@ -507,9 +507,16 @@
         var prefixWidth = prefix.offsetWidth + 4;
         phoneInput.style.paddingLeft = prefixWidth + 'px';
 
-        // Digits only, max 10
+        // --- UPDATED INPUT LISTENER ---
         phoneInput.addEventListener('input', function() {
-          this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+          let value = this.value.replace(/[^0-9]/g, '');
+          
+          // ADDED: Remove leading zeros
+          if (value.startsWith('0')) {
+            value = value.replace(/^0+/, '');
+          }
+          
+          this.value = value.slice(0, 10);
         });
 
         phoneInput.addEventListener('keydown', function(e) {
@@ -523,10 +530,17 @@
           }
         });
 
+        // --- UPDATED PASTE LISTENER ---
         phoneInput.addEventListener('paste', function(e) {
           e.preventDefault();
-          var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 10);
-          this.value = pasted;
+          var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+          
+          // ADDED: Remove leading zeros from pasted text
+          if (pasted.startsWith('0')) {
+            pasted = pasted.replace(/^0+/, '');
+          }
+          
+          this.value = pasted.slice(0, 10);
           this.dispatchEvent(new Event('input', { bubbles: true }));
         });
 
