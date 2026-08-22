@@ -1448,6 +1448,13 @@
   }
 
   async function updatePaymentStatus(status) {
+    const verify = document.getElementById("verifyTransferBtn");
+    const reject = document.getElementById("rejectTransferBtn");
+
+    // Prevent accidental double clicks while the request is in progress.
+    if (verify) verify.disabled = true;
+    if (reject) reject.disabled = true;
+
     try {
       const token = sessionStorage.getItem("token");
 
@@ -1467,15 +1474,41 @@
           body: JSON.stringify({ status })
         }
       );
-      const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || "Payment update failed.");
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Payment update failed.");
+      }
+
       orderData = data.order;
       renderPaymentActions();
       renderStatusBadge();
-      showToast("Payment marked " + status + ".", "success");
+
+      if (data.notification && data.notification.sms_sent && data.notification.email_sent) {
+        showToast(
+          "Payment " + (status === "verified" ? "verified" : "refused") +
+          " successfully. Customer SMS and email notifications were sent.",
+          "success"
+        );
+      } else {
+        showToast(
+          data.message ||
+          "Payment updated successfully, but one or more customer notifications could not be delivered.",
+          "warn"
+        );
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Payment update:", error);
       showToast(error.message || "Unable to update payment.", "warn");
+    } finally {
+      // renderPaymentActions() hides the buttons after a successful update.
+      // Re-enable them only when they are still applicable.
+      const box = document.getElementById("transferPaymentActions");
+      if (box && !box.hidden) {
+        if (verify) verify.disabled = false;
+        if (reject) reject.disabled = false;
+      }
     }
   }
 

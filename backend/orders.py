@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import func
+from sqlalchemy import func, update
 
 from flask import Blueprint, request, jsonify
 
@@ -13,6 +13,8 @@ from security import (
     current_user
 )
 from flask_jwt_extended import get_jwt_identity
+from notification_service import send_payment_notification
+import logging
 
 
 orders_bp = Blueprint(
@@ -753,18 +755,79 @@ def update_payment_status(order_id):
     if order.payment_method != "transfer":
         return jsonify(success=False, message="Manual payment verification is only available for bank transfers."), 400
 
-    order.payment_status = requested
-    order.payment_verified_at = now_store().replace(tzinfo=None)
-    order.payment_verified_by = int(get_jwt_identity())
+    # Atomically accept only a still-pending payment. This prevents a double
+    # click or two concurrent admin requests from sending duplicate notices.
+    verified_at = now_store().replace(tzinfo=None)
+    verified_by = int(get_jwt_identity())
+
+    values = {
+        "payment_status": requested,
+        "payment_verified_at": verified_at,
+        "payment_verified_by": verified_by,
+    }
 
     if requested == "rejected":
-        order.revenue_recognized_at = None
-        order.revenue_recognized_by = None
+        values["revenue_recognized_at"] = None
+        values["revenue_recognized_by"] = None
 
     try:
+        result = db.session.execute(
+            update(Order)
+            .where(
+                Order.id == order_id,
+                Order.payment_status == "pending",
+            )
+            .values(**values)
+        )
+
+        if result.rowcount != 1:
+            db.session.rollback()
+            current = Order.query.get(order_id)
+            current_status = (current.payment_status if current else "").lower()
+            if current_status == requested:
+                return jsonify(
+                    success=False,
+                    duplicate=True,
+                    message=f"Payment is already marked {requested}. No duplicate notification was sent.",
+                    order=_order_to_dict(current),
+                ), 409
+            return jsonify(
+                success=False,
+                message="Payment has already been processed and cannot be changed again.",
+            ), 409
+
         db.session.commit()
+        db.session.refresh(order)
+
     except Exception:
         db.session.rollback()
         return jsonify(success=False, message="Unable to update payment status."), 500
 
-    return jsonify(success=True, message=f"Payment marked {requested}.", order=_order_to_dict(order))
+    # The payment update is already committed. Notification failures must never
+    # undo a successful payment decision.
+    notification = send_payment_notification(order, requested)
+
+    failed_channels = []
+    if not notification["sms_sent"]:
+        failed_channels.append("SMS")
+        logging.warning("Payment notification SMS failed for order #%s: %s", order.id, notification["sms_error"])
+    if not notification["email_sent"]:
+        failed_channels.append("email")
+        logging.warning("Payment notification email failed for order #%s: %s", order.id, notification["email_error"])
+
+    if not failed_channels:
+        message = (
+            f"Payment marked {requested}. Customer SMS and email notifications were sent."
+        )
+    else:
+        message = (
+            f"Payment marked {requested}, but the {', '.join(failed_channels)} "
+            "notification could not be delivered."
+        )
+
+    return jsonify(
+        success=True,
+        message=message,
+        notification=notification,
+        order=_order_to_dict(order),
+    )
