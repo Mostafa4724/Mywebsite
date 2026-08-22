@@ -1429,22 +1429,57 @@
 
 
   function renderPaymentActions() {
-    const box = document.getElementById("transferPaymentActions");
-    const verify = document.getElementById("verifyTransferBtn");
-    const reject = document.getElementById("rejectTransferBtn");
-    if (!box) return;
-    const isTransfer = String(orderData?.payment_method || "").toLowerCase() === "transfer";
-    const pending = String(orderData?.payment_status || "pending").toLowerCase() === "pending";
-    box.hidden = !(isTransfer && pending);
+      const box = document.getElementById("transferPaymentActions");
+      const verify = document.getElementById("verifyTransferBtn");
+      const reject = document.getElementById("rejectTransferBtn");
 
-    if (verify && !verify.dataset.bound) {
-      verify.dataset.bound = "1";
-      verify.addEventListener("click", () => updatePaymentStatus("verified"));
-    }
-    if (reject && !reject.dataset.bound) {
-      reject.dataset.bound = "1";
-      reject.addEventListener("click", () => updatePaymentStatus("rejected"));
-    }
+      if (!box) return;
+
+      const paymentMethod = String(
+          orderData?.payment_method || ""
+      ).trim().toLowerCase();
+
+      const paymentStatus = String(
+          orderData?.payment_status || "pending"
+      ).trim().toLowerCase();
+
+      const isTransfer = paymentMethod === "transfer";
+      const isCOD = paymentMethod === "cod";
+      const pending = paymentStatus === "pending";
+
+      // Payment verification/rejection is only available for bank transfer.
+      const showActions =
+          isTransfer &&
+          !isCOD &&
+          pending;
+
+      box.hidden = !showActions;
+
+      if (verify) {
+          verify.hidden = !showActions;
+      }
+
+      if (reject) {
+          reject.hidden = !showActions;
+      }
+
+      if (!showActions) {
+          return;
+      }
+
+      if (verify && !verify.dataset.bound) {
+          verify.dataset.bound = "1";
+          verify.addEventListener("click", () =>
+              updatePaymentStatus("verified")
+          );
+      }
+
+      if (reject && !reject.dataset.bound) {
+          reject.dataset.bound = "1";
+          reject.addEventListener("click", () =>
+              updatePaymentStatus("rejected")
+          );
+      }
   }
 
   async function updatePaymentStatus(status) {
