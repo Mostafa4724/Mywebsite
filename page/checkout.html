@@ -472,16 +472,51 @@
     ></script>
     <script src="checkout-map.js"></script>
     <script src="checkout-form.js"></script>
-        <script>
+    <script>
       (function() {
+        // --- 1. INJECT CSS FOR RED OUTLINE ---
+        // This adds the red border style directly so you don't have to edit your CSS file
+        var style = document.createElement('style');
+        style.innerHTML = '.input-error { border: 1px solid #ff4d4f !important; outline: 1px solid #ff4d4f !important; }';
+        document.head.appendChild(style);
+
+        // --- 2. HELPER FUNCTIONS FOR ERRORS ---
+        function setError(inputId, errorId, message) {
+          var input = document.getElementById(inputId);
+          var errorSpan = document.getElementById(errorId);
+          if (input) input.classList.add('input-error');
+          if (errorSpan) errorSpan.textContent = message;
+        }
+
+        function clearError(inputId, errorId) {
+          var input = document.getElementById(inputId);
+          var errorSpan = document.getElementById(errorId);
+          if (input) input.classList.remove('input-error');
+          if (errorSpan) errorSpan.textContent = '';
+        }
+
+        // --- 3. GET ELEMENTS ---
         var phoneInput = document.getElementById('phoneInput');
-        var streetInput = document.getElementById('streetInput'); 
+        var streetInput = document.getElementById('streetInput');
         
         if (!phoneInput) return;
 
-        phoneInput.setAttribute('maxlength', '10');
+        // --- 4. REAL-TIME CLEARING: Remove red outline when user starts fixing the field ---
+        var requiredIds = ['firstNameInput', 'lastNameInput', 'checkoutEmail', 'streetInput', 'architectureInput', 'phoneInput'];
+        requiredIds.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('input', function() {
+              // Find the error span inside the parent div
+              var errorSpan = this.parentElement.querySelector('.field-error');
+              this.classList.remove('input-error');
+              if (errorSpan) errorSpan.textContent = '';
+            });
+          }
+        });
 
-        // Inject the +20 prefix as a fixed span inside the input's parent
+        // --- 5. PHONE NUMBER LOGIC ---
+        phoneInput.setAttribute('maxlength', '10');
         var parent = phoneInput.parentElement;
         parent.style.position = 'relative';
 
@@ -507,7 +542,6 @@
         var prefixWidth = prefix.offsetWidth + 4;
         phoneInput.style.paddingLeft = prefixWidth + 'px';
 
-        // --- PHONE INPUT LISTENER ---
         phoneInput.addEventListener('input', function() {
           let value = this.value.replace(/[^0-9]/g, '');
           if (value.startsWith('0')) {
@@ -527,7 +561,6 @@
           }
         });
 
-        // --- PHONE PASTE LISTENER ---
         phoneInput.addEventListener('paste', function(e) {
           e.preventDefault();
           var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
@@ -538,72 +571,92 @@
           this.dispatchEvent(new Event('input', { bubbles: true }));
         });
 
-        // --- ADDED: STREET REAL-TIME BLOCKING ---
+        // --- 6. STREET REAL-TIME BLOCKING (Must start with number) ---
         if (streetInput) {
           streetInput.addEventListener('input', function() {
             let value = this.value;
-            
-            // If the field has text, and the VERY FIRST character is NOT a number
             if (value.length > 0 && isNaN(value.charAt(0))) {
-              
-              // Search the text to find the first number
               let match = value.match(/\d/);
-              
               if (match) {
-                // If a number is found later (e.g., pasting "Street 123"), chop off the letters
                 this.value = value.substring(match.index);
               } else {
-                // If it's only letters, completely clear the field
                 this.value = '';
               }
-            }
-            
-            // Clear the red error text if they successfully start with a number
-            var streetError = document.getElementById('streetError');
-            if (streetError && this.value.length > 0 && !isNaN(this.value.charAt(0))) {
-              streetError.textContent = '';
             }
           });
         }
 
-        // --- ON SUBMIT: VALIDATE BOTH PHONE AND STREET ---
+        // --- 7. ON SUBMIT: VALIDATE ALL FIELDS ---
         var confirmBtn = document.getElementById('confirmPayBtn');
         if (confirmBtn) {
           confirmBtn.addEventListener('click', function(e) {
-            var phoneError = document.getElementById('phoneError');
-            var streetError = document.getElementById('streetError');
-            
-            var phoneVal = phoneInput.value.trim();
-            var streetVal = streetInput ? streetInput.value.trim() : '';
             var hasError = false;
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-            // 1. Validate Phone Number
+            // First Name
+            if (!document.getElementById('firstNameInput').value.trim()) {
+              setError('firstNameInput', 'firstNameError', 'Please enter a valid First Name');
+              hasError = true;
+            }
+
+            // Last Name
+            if (!document.getElementById('lastNameInput').value.trim()) {
+              setError('lastNameInput', 'lastNameError', 'Please enter a valid Last Name');
+              hasError = true;
+            }
+
+            // Email
+            var emailVal = document.getElementById('checkoutEmail').value.trim();
+            if (!emailVal || !emailRegex.test(emailVal)) {
+              setError('checkoutEmail', 'emailError', 'Please enter a valid Email Address');
+              hasError = true;
+            }
+
+            // Street Address
+            var streetVal = streetInput ? streetInput.value.trim() : '';
+            if (!streetVal) {
+              setError('streetInput', 'streetError', 'Please enter a valid Street Address');
+              hasError = true;
+            } else if (isNaN(streetVal.charAt(0))) {
+              setError('streetInput', 'streetError', 'Please enter a valid Street Address (must start with a number)');
+              hasError = true;
+            }
+
+            // Building No.
+            if (!document.getElementById('architectureInput').value.trim()) {
+              setError('architectureInput', 'architectureError', 'Please enter a valid Building No.');
+              hasError = true;
+            }
+
+            // Map Location (Checks if the hidden lat/lng inputs have values)
+            var mapLat = document.getElementById('mapLat');
+            var mapError = document.getElementById('mapError');
+            if (!mapLat || !mapLat.value.trim()) {
+              if (mapError) mapError.textContent = 'Please select a valid Location on the map';
+              hasError = true;
+            }
+
+            // Phone Number
+            var phoneVal = phoneInput.value.trim();
             if (!phoneVal) {
-              if (phoneError) phoneError.textContent = 'Phone number is required';
+              setError('phoneInput', 'phoneError', 'Please enter a valid Phone Number');
               hasError = true;
             } else if (phoneVal.length !== 10) {
-              if (phoneError) phoneError.textContent = 'Phone number must be exactly 10 digits after +20';
+              setError('phoneInput', 'phoneError', 'Please enter a valid Phone Number (10 digits)');
               hasError = true;
             } else {
+              // Valid phone: temporarily add +20 for checkout-form.js
               phoneInput.value = '+20' + phoneVal;
               setTimeout(function() { phoneInput.value = phoneVal; }, 0);
             }
 
-            // 2. Validate Street Address (Fallback check)
-            if (streetInput) {
-              if (!streetVal) {
-                if (streetError) streetError.textContent = 'Street address is required';
-                hasError = true;
-              } else if (isNaN(streetVal.charAt(0))) {
-                if (streetError) streetError.textContent = 'Street address must start with a building number';
-                hasError = true;
-              }
-            }
-
-            // 3. Stop form if errors exist
+            // Stop submission if ANY field failed
             if (hasError) {
               e.stopImmediatePropagation();
               e.preventDefault();
+              // Optional: Scroll to the first error
+              var firstError = document.querySelector('.input-error');
+              if(firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             
           }, true);
