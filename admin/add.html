@@ -801,7 +801,9 @@
           <h3 id="addCategoryTitle">Add Category</h3>
           <button type="button" class="admin-modal-close" id="addCategoryClose" aria-label="Close">&times;</button>
         </div>
-        <div class="admin-modal-body">
+        <div class="admin-modal-body category-management-body">
+          <div class="category-management-grid">
+            <div class="category-create-panel">
           <div class="form-field">
             <label for="newCategoryName">Category Name <span class="req">*</span></label>
             <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
@@ -831,9 +833,17 @@
             <span class="form-error" id="newCategoryImageError"></span>
           </div>
 
-          <div class="category-list-section">
+          <div class="category-create-tip">
+            <span class="category-create-tip-icon">＋</span>
+            <span>Add a category and it will appear here immediately. You can manage existing categories without leaving this window.</span>
+          </div>
+            </div>
+
+            <div class="category-list-section">
             <div class="category-list-heading">Existing Categories</div>
             <div class="category-list" id="categoryList" aria-live="polite"></div>
+          </div>
+            </div>
           </div>
         </div>
         <div class="admin-modal-foot">
