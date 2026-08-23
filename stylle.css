@@ -69,6 +69,7 @@ body {
   font-size: 20px;
   letter-spacing: 0.3px;
   color: #ffffff;
+   text-decoration: none;
 }
 
 .nav-links {
@@ -3322,6 +3323,7 @@ footer {
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+ 
 }
 
 .logout-btn:hover {
