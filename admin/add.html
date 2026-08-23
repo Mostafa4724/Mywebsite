@@ -801,9 +801,7 @@
           <h3 id="addCategoryTitle">Add Category</h3>
           <button type="button" class="admin-modal-close" id="addCategoryClose" aria-label="Close">&times;</button>
         </div>
-        <div class="admin-modal-body category-management-body">
-          <div class="category-management-grid">
-            <div class="category-create-panel">
+        <div class="admin-modal-body">
           <div class="form-field">
             <label for="newCategoryName">Category Name <span class="req">*</span></label>
             <input type="text" id="newCategoryName" placeholder="e.g. Footwear" maxlength="100" />
@@ -833,44 +831,18 @@
             <span class="form-error" id="newCategoryImageError"></span>
           </div>
 
-          <div class="category-create-tip">
-            <span class="category-create-tip-icon">＋</span>
-            <span>Add a category and it will appear here immediately. You can manage existing categories without leaving this window.</span>
-          </div>
-            </div>
-
-            <div class="category-list-section">
+          <div class="category-list-section">
             <div class="category-list-heading">Existing Categories</div>
-            <div class="category-list" id="categoryList" aria-live="polite"></div>
-          </div>
+            <div class="category-list" id="categoryList" aria-live="polite">
+              <div class="category-list-empty">Loading categories...</div>
             </div>
-          </div>
-        </div>
+          </div>        </div>
         <div class="admin-modal-foot">
           <button type="button" class="btn-secondary" id="cancelCategoryBtn">Cancel</button>
           <button type="button" class="btn-primary" id="saveCategoryBtn">Add Category</button>
         </div>
       </div>
     </div>
-
-    <!-- Delete Category Confirmation -->
-    <div class="admin-modal-overlay category-confirm-overlay" id="deleteCategoryModal" hidden>
-      <div class="admin-modal category-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="deleteCategoryTitle">
-        <div class="admin-modal-head">
-          <h3 id="deleteCategoryTitle">Delete Category</h3>
-          <button type="button" class="admin-modal-close" id="deleteCategoryClose" aria-label="Close">&times;</button>
-        </div>
-        <div class="admin-modal-body">
-          <p class="category-confirm-text">Are you sure you want to delete "<strong id="deleteCategoryName"></strong>"?</p>
-          <p class="category-confirm-warning">This action cannot be undone.</p>
-        </div>
-        <div class="admin-modal-foot">
-          <button type="button" class="btn-secondary" id="cancelDeleteCategoryBtn">Cancel</button>
-          <button type="button" class="btn-primary category-delete-confirm-btn" id="confirmDeleteCategoryBtn">Delete</button>
-        </div>
-      </div>
-    </div>
-
     <script src="order-bubble.js"></script>
     <script src="/script.js"></script>
     <script src="add.js"></script>

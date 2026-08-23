@@ -46,12 +46,6 @@
   const categoryImagePlaceholder = el("categoryImagePlaceholder");
   const removeCategoryImageBtn = el("removeCategoryImageBtn");
   const newCategoryImageError = el("newCategoryImageError");
-  const categoryList = el("categoryList");
-  const deleteCategoryModal = el("deleteCategoryModal");
-  const deleteCategoryClose = el("deleteCategoryClose");
-  const cancelDeleteCategoryBtn = el("cancelDeleteCategoryBtn");
-  const confirmDeleteCategoryBtn = el("confirmDeleteCategoryBtn");
-  const deleteCategoryName = el("deleteCategoryName");
 
   const saleToggle = el("saleToggle");
   const saleFields = el("saleFields");
@@ -237,161 +231,54 @@
   // Categories
   // ---------------------------------------------------------------------------
   function renderCategoryList(categories) {
-    if (!categoryList) return;
-
-    categoryList.innerHTML = "";
-
+    const list = document.getElementById("categoryList");
+    if (!list) return;
+    list.innerHTML = "";
     if (!categories.length) {
       const empty = document.createElement("div");
       empty.className = "category-list-empty";
       empty.textContent = "No categories have been added yet.";
-      categoryList.appendChild(empty);
+      list.appendChild(empty);
       return;
     }
-
-    categories.forEach((category) => {
+    categories.forEach((cat) => {
       const row = document.createElement("div");
       row.className = "category-list-item";
-      row.dataset.categoryId = String(category.id);
-
       const name = document.createElement("span");
       name.className = "category-list-name";
-      name.textContent = category.name;
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "category-delete-btn";
-      deleteBtn.dataset.categoryId = String(category.id);
-      deleteBtn.dataset.categoryName = category.name;
-      deleteBtn.setAttribute("aria-label", `Delete category ${category.name}`);
-      deleteBtn.title = "Delete category";
-      deleteBtn.textContent = "×";
-
-      row.append(name, deleteBtn);
-      categoryList.appendChild(row);
+      name.textContent = cat.name;
+      row.appendChild(name);
+      list.appendChild(row);
     });
   }
 
-  async function loadCategories(selectedId = null) {
-    if (!categorySelect && !categoryList) return;
+  async function loadCategories(selectedId) {
+    if (!categorySelect) return;
     try {
       const response = await fetch(API_BASE + "/categories");
       const data = await readJson(response);
-      if (!data.success) throw new Error(data.message || "Could not load categories.");
-
+      if (!response.ok || !data.success) throw new Error(data.message || "Could not load categories.");
       const categories = data.categories || [];
       renderCategoryList(categories);
 
-      if (!categorySelect) return;
-
-      const currentValue = categorySelect.value;
-      categorySelect.innerHTML =
-        '<option value="" disabled>Select category</option>';
-
+      const currentValue = selectedId != null ? String(selectedId) : categorySelect.value;
+      categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
       categories.forEach((cat) => {
-        const opt = document.createElement("option");
-        opt.value = String(cat.id);
-        opt.dataset.name = cat.name;
-        opt.textContent = cat.name;
-        categorySelect.appendChild(opt);
+        const option = document.createElement("option");
+        option.value = String(cat.id);
+        option.dataset.name = cat.name;
+        option.textContent = cat.name;
+        categorySelect.appendChild(option);
       });
-
       const addOpt = document.createElement("option");
       addOpt.value = ADD_CATEGORY_VALUE;
       addOpt.textContent = "+ Add Category";
       categorySelect.appendChild(addOpt);
-
-      const wantedValue = selectedId != null ? String(selectedId) : currentValue;
-      if (wantedValue && wantedValue !== ADD_CATEGORY_VALUE) {
-        const exists = Array.from(categorySelect.options).some(
-          (o) => o.value === wantedValue
-        );
-        if (exists) categorySelect.value = wantedValue;
-      }
+      if (currentValue && currentValue !== ADD_CATEGORY_VALUE) categorySelect.value = currentValue;
     } catch (err) {
       console.error("Failed to load categories:", err);
+      renderCategoryList([]);
       showToast("Could not load categories. Is the server running?");
-    }
-  }
-
-  function closeDeleteCategoryModal() {
-    if (!deleteCategoryModal) return;
-    deleteCategoryModal.classList.remove("show");
-    deleteCategoryModal.style.display = "none";
-    deleteCategoryModal.setAttribute("hidden", "");
-  }
-
-  function openDeleteCategoryModal(id, name) {
-    if (!deleteCategoryModal || !deleteCategoryName || !confirmDeleteCategoryBtn) return;
-
-    deleteCategoryModal.dataset.categoryId = String(id);
-    deleteCategoryName.textContent = name;
-    confirmDeleteCategoryBtn.disabled = false;
-    confirmDeleteCategoryBtn.textContent = "Delete";
-    deleteCategoryModal.removeAttribute("hidden");
-    deleteCategoryModal.classList.add("show");
-    deleteCategoryModal.style.display = "flex";
-  }
-
-  function removeSavedCategoryImage(categoryId) {
-    try {
-      const images = getCategoryImages();
-      delete images[String(categoryId)];
-      localStorage.setItem(CATEGORY_IMAGES_STORAGE_KEY, JSON.stringify(images));
-    } catch (err) {
-      console.warn("Could not remove saved category image:", err);
-    }
-  }
-
-  function removeCategoryFromUI(categoryId) {
-    const id = String(categoryId);
-    categoryList?.querySelector(`[data-category-id="${CSS.escape(id)}"]`)?.remove();
-
-    if (categoryList && !categoryList.querySelector(".category-list-item")) {
-      const empty = document.createElement("div");
-      empty.className = "category-list-empty";
-      empty.textContent = "No categories have been added yet.";
-      categoryList.appendChild(empty);
-    }
-
-    const option = categorySelect?.querySelector(`option[value="${CSS.escape(id)}"]`);
-    option?.remove();
-  }
-
-  async function deleteCategory() {
-    if (!deleteCategoryModal || !confirmDeleteCategoryBtn) return;
-
-    const categoryId = deleteCategoryModal.dataset.categoryId;
-    if (!categoryId) return;
-
-    confirmDeleteCategoryBtn.disabled = true;
-    confirmDeleteCategoryBtn.textContent = "Deleting...";
-
-    try {
-      const response = await fetch(API_BASE + `/categories/${encodeURIComponent(categoryId)}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(false),
-      });
-      const data = await readJson(response);
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Could not delete category.");
-      }
-
-      const selected = categorySelect && categorySelect.value === String(categoryId);
-      removeSavedCategoryImage(categoryId);
-      removeCategoryFromUI(categoryId);
-      if (selected && categorySelect) categorySelect.value = "";
-      closeDeleteCategoryModal();
-      // Refresh from the backend after the immediate UI update. If the refresh
-      // fails, the successful DELETE result has already been reflected locally.
-      await loadCategories(selected ? null : undefined);
-      showToast(data.message || "Category deleted successfully.");
-    } catch (err) {
-      console.error("Failed to delete category:", err);
-      showToast(err.message || "Could not delete category.");
-      confirmDeleteCategoryBtn.disabled = false;
-      confirmDeleteCategoryBtn.textContent = "Delete";
     }
   }
 
@@ -455,8 +342,26 @@
         saveCategoryImage(data.category.id, pendingCategoryImageData);
       }
 
-      await loadCategories(data.category ? data.category.id : null);
+      if (categorySelect && data.category) {
+        const option = document.createElement("option");
+        option.value = String(data.category.id);
+        option.dataset.name = data.category.name;
+        option.textContent = data.category.name;
 
+        const addCategoryOption = Array.from(categorySelect.options).find(
+          (opt) => opt.value === ADD_CATEGORY_VALUE
+        );
+
+        if (addCategoryOption) {
+          categorySelect.insertBefore(option, addCategoryOption);
+        } else {
+          categorySelect.appendChild(option);
+        }
+
+        categorySelect.value = String(data.category.id);
+      }
+
+      await loadCategories(data.category ? data.category.id : null);
       closeAddCategoryModal();
       resetCategoryImagePicker();
       showToast('Category "' + data.category.name + '" created!');
@@ -508,23 +413,6 @@
       createCategory(e);
     }, true);
   }
-  if (categoryList) {
-    categoryList.addEventListener("click", (e) => {
-      const button = e.target.closest(".category-delete-btn");
-      if (!button || button.disabled) return;
-      openDeleteCategoryModal(button.dataset.categoryId, button.dataset.categoryName || "");
-    });
-  }
-
-  if (deleteCategoryClose) deleteCategoryClose.addEventListener("click", closeDeleteCategoryModal);
-  if (cancelDeleteCategoryBtn) cancelDeleteCategoryBtn.addEventListener("click", closeDeleteCategoryModal);
-  if (confirmDeleteCategoryBtn) confirmDeleteCategoryBtn.addEventListener("click", deleteCategory);
-  if (deleteCategoryModal) {
-    deleteCategoryModal.addEventListener("click", (e) => {
-      if (e.target === deleteCategoryModal) closeDeleteCategoryModal();
-    });
-  }
-
   if (addCategoryModal) {
     addCategoryModal.addEventListener("click", (e) => {
       if (e.target === addCategoryModal) closeAddCategoryModal();
