@@ -36,6 +36,12 @@ window.selectedFile = null;
   const unsavedModal = document.getElementById("unsavedModal");
   const stayOnPage = document.getElementById("stayOnPage");
   const leaveAnyway = document.getElementById("leaveAnyway");
+  const categoryList = document.getElementById("categoryList");
+  const deleteCategoryModal = document.getElementById("deleteCategoryModal");
+  const deleteCategoryClose = document.getElementById("deleteCategoryClose");
+  const cancelDeleteCategoryBtn = document.getElementById("cancelDeleteCategoryBtn");
+  const confirmDeleteCategoryBtn = document.getElementById("confirmDeleteCategoryBtn");
+  const deleteCategoryName = document.getElementById("deleteCategoryName");
 
   let productId = null;
   let product = null;
@@ -238,11 +244,50 @@ window.selectedFile = null;
     return data;
   }
 
+  function renderCategoryList(categories) {
+    if (!categoryList) return;
+
+    categoryList.innerHTML = "";
+
+    if (!categories.length) {
+      const empty = document.createElement("div");
+      empty.className = "category-list-empty";
+      empty.textContent = "No categories have been added yet.";
+      categoryList.appendChild(empty);
+      return;
+    }
+
+    categories.forEach((category) => {
+      const row = document.createElement("div");
+      row.className = "category-list-item";
+      row.dataset.categoryId = String(category.id);
+
+      const name = document.createElement("span");
+      name.className = "category-list-name";
+      name.textContent = category.name;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "category-delete-btn";
+      deleteBtn.dataset.categoryId = String(category.id);
+      deleteBtn.dataset.categoryName = category.name;
+      deleteBtn.setAttribute("aria-label", `Delete category ${category.name}`);
+      deleteBtn.title = "Delete category";
+      deleteBtn.textContent = "×";
+
+      row.append(name, deleteBtn);
+      categoryList.appendChild(row);
+    });
+  }
+
   async function loadCategories(selectedId) {
     const response = await fetch(API_BASE + "/categories");
     const data = await responseJson(response);
+    const categories = data.categories || [];
+    renderCategoryList(categories);
+
     categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
-    data.categories.forEach((cat) => {
+    categories.forEach((cat) => {
       const option = document.createElement("option");
       option.value = String(cat.id);
       option.textContent = cat.name;
@@ -254,6 +299,70 @@ window.selectedFile = null;
     categorySelect.appendChild(add);
     if (selectedId !== null && selectedId !== undefined) {
       categorySelect.value = String(selectedId);
+    }
+  }
+
+  function closeDeleteCategoryModal() {
+    if (!deleteCategoryModal) return;
+    deleteCategoryModal.classList.remove("show");
+    deleteCategoryModal.style.display = "none";
+    deleteCategoryModal.setAttribute("hidden", "");
+  }
+
+  function openDeleteCategoryModal(id, name) {
+    if (!deleteCategoryModal || !deleteCategoryName || !confirmDeleteCategoryBtn) return;
+    deleteCategoryModal.dataset.categoryId = String(id);
+    deleteCategoryName.textContent = name;
+    confirmDeleteCategoryBtn.disabled = false;
+    confirmDeleteCategoryBtn.textContent = "Delete";
+    deleteCategoryModal.removeAttribute("hidden");
+    deleteCategoryModal.classList.add("show");
+    deleteCategoryModal.style.display = "flex";
+  }
+
+  function removeCategoryFromUI(categoryId) {
+    const id = String(categoryId);
+    categoryList?.querySelector(`[data-category-id="${CSS.escape(id)}"]`)?.remove();
+
+    if (categoryList && !categoryList.querySelector(".category-list-item")) {
+      const empty = document.createElement("div");
+      empty.className = "category-list-empty";
+      empty.textContent = "No categories have been added yet.";
+      categoryList.appendChild(empty);
+    }
+
+    categorySelect?.querySelector(`option[value="${CSS.escape(id)}"]`)?.remove();
+  }
+
+  async function deleteCategory() {
+    if (!deleteCategoryModal || !confirmDeleteCategoryBtn) return;
+
+    const categoryId = deleteCategoryModal.dataset.categoryId;
+    if (!categoryId) return;
+
+    confirmDeleteCategoryBtn.disabled = true;
+    confirmDeleteCategoryBtn.textContent = "Deleting...";
+
+    try {
+      const response = await fetch(API_BASE + `/categories/${encodeURIComponent(categoryId)}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      const data = await responseJson(response);
+
+      const selected = categorySelect && categorySelect.value === String(categoryId);
+      removeCategoryFromUI(categoryId);
+      if (selected && categorySelect) categorySelect.value = "";
+      closeDeleteCategoryModal();
+      // Refresh from the backend after the immediate UI update.
+      await loadCategories(selected ? null : categorySelect?.value || null);
+      markDirty();
+      showToast(data.message || "Category deleted successfully.", "success");
+    } catch (error) {
+      console.error("Failed to delete category:", error);
+      showToast(error.message || "Could not delete category.", "warn");
+      confirmDeleteCategoryBtn.disabled = false;
+      confirmDeleteCategoryBtn.textContent = "Delete";
     }
   }
 
@@ -747,6 +856,7 @@ window.selectedFile = null;
     document.getElementById("addCategoryClose")?.addEventListener("click", closeCategory);
     document.getElementById("cancelCategoryBtn")?.addEventListener("click", closeCategory);
     document.getElementById("saveCategoryBtn")?.addEventListener("click", async () => {
+      const button = document.getElementById("saveCategoryBtn");
       const input = document.getElementById("newCategoryName");
       const errorEl = document.getElementById("newCategoryError");
       const name = input.value.trim();
@@ -754,6 +864,11 @@ window.selectedFile = null;
         errorEl.textContent = "Category name is required.";
         return;
       }
+
+      button.disabled = true;
+      button.textContent = "Saving...";
+      errorEl.textContent = "";
+
       try {
         const response = await fetch(API_BASE + "/categories", {
           method: "POST",
@@ -763,11 +878,28 @@ window.selectedFile = null;
         const data = await responseJson(response);
         await loadCategories(data.category.id);
         closeCategory();
+        input.value = "";
         markDirty();
         showToast(`Category "${data.category.name}" created!`, "success");
       } catch (error) {
         errorEl.textContent = error.message;
+      } finally {
+        button.disabled = false;
+        button.textContent = "Add Category";
       }
+    });
+
+    categoryList?.addEventListener("click", (event) => {
+      const button = event.target.closest(".category-delete-btn");
+      if (!button || button.disabled) return;
+      openDeleteCategoryModal(button.dataset.categoryId, button.dataset.categoryName || "");
+    });
+
+    deleteCategoryClose?.addEventListener("click", closeDeleteCategoryModal);
+    cancelDeleteCategoryBtn?.addEventListener("click", closeDeleteCategoryModal);
+    confirmDeleteCategoryBtn?.addEventListener("click", deleteCategory);
+    deleteCategoryModal?.addEventListener("click", (event) => {
+      if (event.target === deleteCategoryModal) closeDeleteCategoryModal();
     });
 
     // Variants are managed by the dynamic variant group controls above.

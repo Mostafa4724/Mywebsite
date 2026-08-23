@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 
-from models import Category
+from models import Category, Product
+from sqlalchemy.exc import IntegrityError
 from database import db
 from security import admin_required
 
@@ -71,11 +72,78 @@ def create_category():
 
     category = Category(name=name)
 
-    db.session.add(category)
-    db.session.commit()
+    try:
+        db.session.add(category)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": "Category already exists."
+        }), 409
+    except Exception:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": "Could not create the category. Please try again."
+        }), 500
 
     return jsonify({
         "success": True,
         "message": "Category created.",
         "category": category.to_dict()
     }), 201
+
+
+@categories_bp.route("/categories/<int:id>", methods=["DELETE"])
+@admin_required
+def delete_category(id):
+    """Delete a category safely (admin).
+
+    A category that is still assigned to one or more products is not deleted.
+    This avoids leaving products with a broken category relationship and keeps
+    the existing database schema unchanged.
+    """
+    category = Category.query.get(id)
+
+    if category is None:
+        return jsonify({
+            "success": False,
+            "message": "Category not found."
+        }), 404
+
+    product_count = Product.query.filter(Product.category_id == id).count()
+
+    if product_count > 0:
+        return jsonify({
+            "success": False,
+            "message": (
+                f'Cannot delete "{category.name}" because {product_count} '
+                f'product{"s" if product_count != 1 else ""} use this category. '
+                "Move or delete those products first."
+            )
+        }), 409
+
+    category_name = category.name
+
+    try:
+        db.session.delete(category)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": "This category cannot be deleted because it is still in use."
+        }), 409
+    except Exception:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": "Could not delete the category. Please try again."
+        }), 500
+
+    return jsonify({
+        "success": True,
+        "message": f'Category "{category_name}" deleted.',
+        "category_id": id
+    }), 200

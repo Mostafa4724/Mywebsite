@@ -6860,3 +6860,121 @@ footer {
     font-size: 0.8rem !important;
   }
 }
+
+
+/* ===== Category Management ===== */
+.category-list-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.category-list-heading {
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 190px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.category-list-empty {
+  padding: 12px 14px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 0.86rem;
+}
+
+.category-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.category-list-name {
+  min-width: 0;
+  color: #0f1724;
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-delete-btn {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff;
+  color: #dc2626;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.category-delete-btn:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.category-delete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.category-confirm-overlay {
+  z-index: 120;
+}
+
+.category-confirm-modal {
+  max-width: 460px;
+}
+
+.category-confirm-text {
+  margin: 0;
+  color: #0f1724;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.category-confirm-warning {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.category-delete-confirm-btn {
+  background: #dc2626;
+}
+
+.category-delete-confirm-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+@media (max-width: 560px) {
+  .category-list {
+    max-height: 160px;
+  }
+}
