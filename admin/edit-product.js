@@ -238,35 +238,11 @@ window.selectedFile = null;
     return data;
   }
 
-  function renderCategoryList(categories) {
-    const list = document.getElementById("categoryList");
-    if (!list) return;
-    list.innerHTML = "";
-    if (!categories.length) {
-      const empty = document.createElement("div");
-      empty.className = "category-list-empty";
-      empty.textContent = "No categories have been added yet.";
-      list.appendChild(empty);
-      return;
-    }
-    categories.forEach((cat) => {
-      const row = document.createElement("div");
-      row.className = "category-list-item";
-      const name = document.createElement("span");
-      name.className = "category-list-name";
-      name.textContent = cat.name;
-      row.appendChild(name);
-      list.appendChild(row);
-    });
-  }
-
   async function loadCategories(selectedId) {
     const response = await fetch(API_BASE + "/categories");
     const data = await responseJson(response);
-    const categories = data.categories || [];
-    renderCategoryList(categories);
     categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
-    categories.forEach((cat) => {
+    data.categories.forEach((cat) => {
       const option = document.createElement("option");
       option.value = String(cat.id);
       option.textContent = cat.name;
@@ -276,7 +252,9 @@ window.selectedFile = null;
     add.value = "__add_category__";
     add.textContent = "+ Add Category";
     categorySelect.appendChild(add);
-    if (selectedId !== null && selectedId !== undefined) categorySelect.value = String(selectedId);
+    if (selectedId !== null && selectedId !== undefined) {
+      categorySelect.value = String(selectedId);
+    }
   }
 
   function parseTags(value) {

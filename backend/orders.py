@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import func
+from sqlalchemy import func, update
 
 from flask import Blueprint, request, jsonify
 
@@ -742,67 +742,145 @@ def update_order_status(order_id):
 @orders_bp.route("/orders/<int:order_id>/payment", methods=["PUT"])
 @admin_required
 def update_payment_status(order_id):
+    """
+    Verify or reject a bank-transfer payment.
+
+    Rejection is inventory-sensitive: the quantities reserved when the
+    order was created are returned exactly once, and the order is cancelled.
+    The "payment_status != rejected" UPDATE is deliberately atomic so two
+    concurrent rejection requests cannot both restore the same stock.
+    """
+    data = request.get_json(silent=True) or {}
+    requested = str(data.get("status") or "").strip().lower()
+
+    if requested not in {"verified", "rejected"}:
+        return jsonify(
+            success=False,
+            message="Payment status must be verified or rejected."
+        ), 400
+
+    # Keep the existing rule: manual verification/rejection is only for
+    # bank-transfer orders.
     order = Order.query.get(order_id)
     if order is None:
         return jsonify(success=False, message="Order not found"), 404
 
-    data = request.get_json(silent=True) or {}
-    requested = str(data.get("status") or "").strip().lower()
-    if requested not in {"verified", "rejected"}:
-        return jsonify(success=False, message="Payment status must be verified or rejected."), 400
     if order.payment_method != "transfer":
-        return jsonify(success=False, message="Manual payment verification is only available for bank transfers."), 400
+        return jsonify(
+            success=False,
+            message="Manual payment verification is only available for bank transfers."
+        ), 400
 
-    # Keep the previous value so inventory can only be restored once.
-    old_payment_status = (
-        order.payment_status or ""
-    ).strip().lower()
+    admin_id = int(get_jwt_identity())
+    timestamp = now_store().replace(tzinfo=None)
 
-    order.payment_status = requested
-    order.payment_verified_at = now_store().replace(tzinfo=None)
-    order.payment_verified_by = int(get_jwt_identity())
+    try:
+        if requested == "rejected":
+            # Atomically claim the one-time inventory restoration.
+            #
+            # The WHERE clause is evaluated by the database, not by Python
+            # state. This prevents two simultaneous reject requests from
+            # both observing "pending" and both restoring stock.
+            claim = (
+                update(Order)
+                .where(
+                    Order.id == order_id,
+                    func.lower(func.coalesce(Order.payment_status, "")) != "rejected",
+                )
+                .values(
+                    payment_status="rejected",
+                    payment_verified_at=timestamp,
+                    payment_verified_by=admin_id,
+                    revenue_recognized_at=None,
+                    revenue_recognized_by=None,
+                    status="cancelled",
+                )
+            )
 
-    if requested == "rejected":
-        order.revenue_recognized_at = None
-        order.revenue_recognized_by = None
+            result = db.session.execute(claim)
+            inventory_restored_now = result.rowcount == 1
 
-        # A refused payment cancels the order.
-        order.status = "cancelled"
+            # Refresh the ORM object after the bulk UPDATE.
+            db.session.expire(order)
+            order = db.session.get(Order, order_id)
 
-        # The order already removed these quantities when it was created.
-        # Return them to inventory when payment is refused. The old-status
-        # check prevents stock from being restored twice if the endpoint is
-        # called again for an order that is already rejected.
-        if old_payment_status != "rejected":
-            for item in order.items:
-                qty = max(0, int(item.quantity or 0))
+            if inventory_restored_now:
+                # Every OrderItem stores the exact variant selected at
+                # checkout. Restore variant stock when variant_id exists;
+                # otherwise restore the normal product stock.
+                for item in order.items:
+                    qty = max(0, int(item.quantity or 0))
+                    if qty <= 0:
+                        continue
 
-                if qty <= 0:
-                    continue
+                    if item.variant_id is not None:
+                        variant = ProductVariant.query.filter_by(
+                            id=item.variant_id,
+                            product_id=item.product_id,
+                        ).first()
 
-                if item.variant_id:
-                    variant = ProductVariant.query.get(item.variant_id)
+                        if variant is None:
+                            raise ValueError(
+                                f"Unable to restore stock for order item {item.id}: "
+                                "the ordered variant no longer exists."
+                            )
 
-                    if variant is not None:
                         variant.stock = max(
                             0,
                             int(variant.stock or 0) + qty
                         )
                         _recalculate_product_stock(variant.product)
-                else:
-                    product = Product.query.get(item.product_id)
+                    else:
+                        product = Product.query.get(item.product_id)
 
-                    if product is not None:
+                        if product is None:
+                            raise ValueError(
+                                f"Unable to restore stock for order item {item.id}: "
+                                "the ordered product no longer exists."
+                            )
+
                         product.stock = max(
                             0,
                             int(product.stock or 0) + qty
                         )
                         _recalculate_product_stock(product)
 
-    try:
+            # Always enforce the final rejected-payment state, including
+            # legacy/already-rejected orders that reach this endpoint again.
+            order.payment_status = "rejected"
+            order.payment_verified_at = timestamp
+            order.payment_verified_by = admin_id
+            order.revenue_recognized_at = None
+            order.revenue_recognized_by = None
+            order.status = "cancelled"
+
+        else:
+            # Preserve the existing successful-payment workflow.
+            order.payment_status = "verified"
+            order.payment_verified_at = timestamp
+            order.payment_verified_by = admin_id
+
         db.session.commit()
+
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify(success=False, message=str(exc)), 409
     except Exception:
         db.session.rollback()
-        return jsonify(success=False, message="Unable to update payment status."), 500
+        return jsonify(
+            success=False,
+            message="Unable to update payment status."
+        ), 500
 
-    return jsonify(success=True, message=f"Payment marked {requested}.", order=_order_to_dict(order))
+    message = (
+        "Payment marked rejected and order cancelled."
+        if requested == "rejected"
+        else "Payment marked verified."
+    )
+
+    return jsonify(
+        success=True,
+        message=message,
+        order=_order_to_dict(order),
+    )
+

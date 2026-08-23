@@ -230,54 +230,38 @@
   // ---------------------------------------------------------------------------
   // Categories
   // ---------------------------------------------------------------------------
-  function renderCategoryList(categories) {
-    const list = document.getElementById("categoryList");
-    if (!list) return;
-    list.innerHTML = "";
-    if (!categories.length) {
-      const empty = document.createElement("div");
-      empty.className = "category-list-empty";
-      empty.textContent = "No categories have been added yet.";
-      list.appendChild(empty);
-      return;
-    }
-    categories.forEach((cat) => {
-      const row = document.createElement("div");
-      row.className = "category-list-item";
-      const name = document.createElement("span");
-      name.className = "category-list-name";
-      name.textContent = cat.name;
-      row.appendChild(name);
-      list.appendChild(row);
-    });
-  }
-
-  async function loadCategories(selectedId) {
+  async function loadCategories() {
     if (!categorySelect) return;
     try {
       const response = await fetch(API_BASE + "/categories");
       const data = await readJson(response);
-      if (!response.ok || !data.success) throw new Error(data.message || "Could not load categories.");
-      const categories = data.categories || [];
-      renderCategoryList(categories);
+      if (!data.success) return;
 
-      const currentValue = selectedId != null ? String(selectedId) : categorySelect.value;
-      categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
-      categories.forEach((cat) => {
-        const option = document.createElement("option");
-        option.value = String(cat.id);
-        option.dataset.name = cat.name;
-        option.textContent = cat.name;
-        categorySelect.appendChild(option);
+      const currentValue = categorySelect.value;
+      categorySelect.innerHTML =
+        '<option value="" disabled selected>Select category</option>';
+
+      (data.categories || []).forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = String(cat.id);
+        opt.dataset.name = cat.name;
+        opt.textContent = cat.name;
+        categorySelect.appendChild(opt);
       });
+
       const addOpt = document.createElement("option");
       addOpt.value = ADD_CATEGORY_VALUE;
       addOpt.textContent = "+ Add Category";
       categorySelect.appendChild(addOpt);
-      if (currentValue && currentValue !== ADD_CATEGORY_VALUE) categorySelect.value = currentValue;
+
+      if (currentValue && currentValue !== ADD_CATEGORY_VALUE) {
+        const exists = Array.from(categorySelect.options).some(
+          (o) => o.value === currentValue
+        );
+        if (exists) categorySelect.value = currentValue;
+      }
     } catch (err) {
       console.error("Failed to load categories:", err);
-      renderCategoryList([]);
       showToast("Could not load categories. Is the server running?");
     }
   }
@@ -361,7 +345,6 @@
         categorySelect.value = String(data.category.id);
       }
 
-      await loadCategories(data.category ? data.category.id : null);
       closeAddCategoryModal();
       resetCategoryImagePicker();
       showToast('Category "' + data.category.name + '" created!');
