@@ -315,6 +315,13 @@ def payment_settings():
 # Product Uploads
 # ============================================================
 
+@app.route("/uploads/categories/<filename>")
+def category_upload(filename):
+    return send_from_directory(
+        os.path.join(app.config["UPLOAD_FOLDER"], "categories"),
+        filename
+    )
+
 @app.route("/uploads/products/<filename>")
 def uploaded_file(filename):
     return send_from_directory(

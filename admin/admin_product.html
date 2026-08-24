@@ -151,16 +151,17 @@
       .preview-product-btn svg {
         flex-shrink: 0;
       }
-
-      .category-management-modal { max-width: 560px; width: calc(100% - 32px); }
-      .admin-category-list { display:flex; flex-direction:column; gap:8px; margin-top:10px; max-height:300px; overflow:auto; }
-      .admin-category-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; }
-      .admin-category-name { font-weight:600; color:#1f2937; overflow-wrap:anywhere; }
-      .admin-category-delete { width:32px; height:32px; border:0; border-radius:8px; background:transparent; color:#dc2626; font-size:20px; line-height:1; cursor:pointer; }
-      .admin-category-delete:hover { background:#fee2e2; }
-      .admin-category-empty { color:#64748b; padding:12px 0; text-align:center; }
-      .category-list-wrap h4 { margin:18px 0 0; color:#334155; }
-    </style>
+    
+      .category-management-modal{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto}
+      .category-image-preview{margin-top:10px;width:120px;height:120px;border:1px dashed #cbd5e1;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#94a3b8;font-size:12px;background:#f8fafc}
+      .category-image-preview img{width:100%;height:100%;object-fit:cover}
+      .admin-category-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto}
+      .admin-category-row{display:flex;align-items:center;gap:12px;padding:8px;border:1px solid #e5e7eb;border-radius:10px}
+      .admin-category-thumb{width:46px;height:46px;border-radius:8px;object-fit:cover;background:#f1f5f9;flex-shrink:0}
+      .admin-category-name{flex:1;font-weight:600}
+      .admin-category-delete{width:32px;height:32px;border:0;background:transparent;color:#dc2626;font-size:20px;cursor:pointer}
+      .category-list-empty{padding:12px;text-align:center;color:#94a3b8}
+</style>
   </head>
   <body class="admin-body">
     <aside class="admin-sidebar" id="adminSidebar">
@@ -325,10 +326,7 @@
             />
           </div>
           <button class="admin-add-btn" id="addCategoryBtn" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add Category
           </button>
           <button class="admin-add-btn" id="addProductBtn">
@@ -377,23 +375,25 @@
       </div>
     </div>
 
-    <!-- Category Management Modal -->
-    <div class="admin-modal-overlay" id="categoryManagementModal" hidden>
-      <div class="admin-modal category-management-modal" role="dialog" aria-modal="true" aria-labelledby="categoryManagementTitle">
+
+    <div class="admin-modal-overlay" id="categoryManagementModal" style="display:none;">
+      <div class="admin-modal category-management-modal">
         <div class="admin-modal-head">
-          <h3 id="categoryManagementTitle">Add Category</h3>
-          <button type="button" class="admin-modal-close" id="categoryManagementClose" aria-label="Close">&times;</button>
+          <h3>Add Category</h3>
+          <button class="modal-close" id="categoryManagementClose" type="button">&times;</button>
         </div>
         <div class="admin-modal-body">
           <div class="form-field">
-            <label for="adminNewCategoryName">Category Name</label>
-            <input type="text" id="adminNewCategoryName" maxlength="100" placeholder="Enter category name" />
-            <span class="form-error" id="adminCategoryError"></span>
+            <label>Category Name</label>
+            <input id="adminNewCategoryName" type="text" maxlength="100" placeholder="Enter category name">
           </div>
-          <div class="category-list-wrap">
-            <h4>Existing Categories</h4>
-            <div id="adminCategoryList" class="admin-category-list"></div>
+          <div class="form-field">
+            <label>Category Image</label>
+            <input id="adminCategoryImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+            <div id="adminCategoryImagePreview" class="category-image-preview"><span>Image preview</span></div>
           </div>
+          <div id="adminCategoryError" class="form-error"></div>
+          <div class="category-list-wrap"><h4>Existing Categories</h4><div id="adminCategoryList" class="admin-category-list"></div></div>
         </div>
         <div class="admin-modal-foot">
           <button type="button" class="btn-secondary" id="categoryManagementCancel">Cancel</button>
