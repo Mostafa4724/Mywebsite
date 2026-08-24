@@ -59,12 +59,11 @@
    *
    * Put the real Nasr City GeoJSON file at:
    *
-   *     /data/nasr-city.geojson
    *
    * The GeoJSON should contain the actual Nasr City polygon.
    */
 
-  fetch("../data/nasr-city.geojson")
+  fetch("../data/Egypt.geojson")
     .then(function (response) {
       if (!response.ok) {
         throw new Error(
@@ -123,7 +122,7 @@
       console.error("Nasr City boundary error:", error);
 
       showMapError(
-        "Delivery area could not be loaded. Check the nasr-city.geojson file."
+        "Delivery area could not be loaded. Check the Egypt.geojson file."
       );
     });
 
