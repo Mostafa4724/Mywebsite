@@ -30,6 +30,7 @@
     const value = String(status || "placed").trim().toLowerCase();
     if (value === "confirmed") return "order-status--confirmed";
     if (value === "shipped") return "order-status--shipped";
+    if (value === "processing") return "order-status--processing";
     if (value === "delivered") return "order-status--delivered";
     if (value === "cancelled" || value === "canceled") return "order-status--cancelled";
     return "order-status--placed";
