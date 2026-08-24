@@ -227,12 +227,9 @@
   font-weight: 700;
 }
 
-.vo-status-badge.placed { background: transparent; color: inherit; }
-.vo-status-badge.confirmed { background: #dcfce7; color: #166534; }
 .vo-status-badge.processing { background: #fef3c7; color: #b45309; }
 .vo-status-badge.shipped { background: #dbeafe; color: #1d4ed8; }
 .vo-status-badge.delivered { background: #dcfce7; color: #166534; }
-.vo-status-badge.cancelled { background: #fef2f2; color: #dc2626; }
 
 .vo-status-dot {
   width: 8px;

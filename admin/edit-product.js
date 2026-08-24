@@ -468,7 +468,7 @@ window.selectedFile = null;
 
     if (!name) throw new Error("Please enter a product name.");
     if (!description) throw new Error("Description is required.");
-    if (!categoryId || false) throw new Error("Please select a category.");
+    if (!categoryId || categoryId === "__add_category__") throw new Error("Please select a category.");
     if (!Number.isFinite(price) || price < 0) throw new Error("Price is invalid.");
     if (!Number.isInteger(stock) || stock < 0) throw new Error("Quantity is invalid.");
     if (!Number.isInteger(lowStock) || lowStock < 0) throw new Error("Low stock threshold is invalid.");
@@ -723,16 +723,11 @@ window.selectedFile = null;
       }
     });
 
+
     // Variants are managed by the dynamic variant group controls above.
   }
 
   // ─── INIT ─────────────────────────────────────────────
-
-  window.addEventListener("storage", (event) => {
-    if (event.key === "categoryListChanged" && product) {
-      loadCategories(product.category_id);
-    }
-  });
 
   setupEvents();
   loadProduct();

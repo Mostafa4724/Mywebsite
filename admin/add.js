@@ -10,6 +10,7 @@
   "use strict";
 
   const API_BASE = "http://127.0.0.1:5000";
+  const ADD_CATEGORY_VALUE = "__add_category__"; // internal legacy value; never rendered as an option
   const LOGIN_PAGE = "../page/login.html";
   const PRODUCTS_PAGE = "admin_product.html";
 
@@ -36,6 +37,7 @@
   const addCategoryModal = el("addCategoryModal");
   const addCategoryClose = el("addCategoryClose");
   const cancelCategoryBtn = el("cancelCategoryBtn");
+  const saveCategoryBtn = el("saveCategoryBtn");
   const newCategoryName = el("newCategoryName");
   const newCategoryError = el("newCategoryError");
   const newCategoryImage = el("newCategoryImage");
@@ -247,7 +249,7 @@
         categorySelect.appendChild(opt);
       });
 
-      if (currentValue && currentValue) {
+      if (currentValue && currentValue !== ADD_CATEGORY_VALUE) {
         const exists = Array.from(categorySelect.options).some(
           (o) => o.value === currentValue
         );
@@ -259,6 +261,121 @@
     }
   }
 
+  function openAddCategoryModal() {
+    if (!addCategoryModal || !newCategoryName || !newCategoryError) return;
+    newCategoryName.value = "";
+    newCategoryError.textContent = "";
+    resetCategoryImagePicker();
+    addCategoryModal.removeAttribute("hidden");
+    addCategoryModal.classList.add("show");
+    addCategoryModal.style.display = "flex";
+    setTimeout(() => newCategoryName.focus(), 50);
+  }
+
+  function closeAddCategoryModal() {
+    if (!addCategoryModal) return;
+    addCategoryModal.classList.remove("show");
+    addCategoryModal.style.display = "none";
+    addCategoryModal.setAttribute("hidden", "");
+  }
+
+  async function createCategory(event) {
+    // Category creation must never submit/navigate the product form.
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!newCategoryName || !newCategoryError || !saveCategoryBtn) return;
+
+    const name = newCategoryName.value.trim();
+    if (!name) {
+      newCategoryError.textContent = "Category name is required.";
+      return;
+    }
+
+    newCategoryError.textContent = "";
+    if (!pendingCategoryImageData) {
+      if (newCategoryImageError) newCategoryImageError.textContent = "Please choose a category image.";
+      return;
+    }
+    saveCategoryBtn.disabled = true;
+    saveCategoryBtn.textContent = "Saving...";
+
+    try {
+      const response = await fetch(API_BASE + "/categories", {
+        method: "POST",
+        headers: getAuthHeaders(true),
+        body: JSON.stringify({ name: name }),
+      });
+      const data = await readJson(response);
+
+      if (!response.ok || !data.success) {
+        newCategoryError.textContent =
+          data.message || "Could not create category.";
+        return;
+      }
+
+      // Update the existing dropdown in place. Do not reload/rebuild the page.
+      if (data.category && pendingCategoryImageData) {
+        saveCategoryImage(data.category.id, pendingCategoryImageData);
+      }
+
+      if (categorySelect && data.category) {
+        const option = document.createElement("option");
+        option.value = String(data.category.id);
+        option.dataset.name = data.category.name;
+        option.textContent = data.category.name;
+
+        const addCategoryOption = Array.from(categorySelect.options).find(
+          (opt) => opt.value === ADD_CATEGORY_VALUE
+        );
+
+        if (addCategoryOption) {
+          categorySelect.insertBefore(option, addCategoryOption);
+        } else {
+          categorySelect.appendChild(option);
+        }
+
+        categorySelect.value = String(data.category.id);
+      }
+
+      closeAddCategoryModal();
+      resetCategoryImagePicker();
+      showToast('Category "' + data.category.name + '" created!');
+    } catch (err) {
+      console.error("Failed to create category:", err);
+      newCategoryError.textContent = "Failed to connect. Please try again.";
+    } finally {
+      saveCategoryBtn.disabled = false;
+      saveCategoryBtn.textContent = "Add Category";
+    }
+  }
+
+  if (categoryImageDropzone && newCategoryImage) {
+    categoryImageDropzone.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      newCategoryImage.click();
+    });
+
+    newCategoryImage.addEventListener("change", () => {
+      handleCategoryImageChange(newCategoryImage.files && newCategoryImage.files[0]);
+    });
+  }
+
+  if (removeCategoryImageBtn) {
+    removeCategoryImageBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      resetCategoryImagePicker();
+    });
+  }
+
+
+  loadCategories();
+
+  // ---------------------------------------------------------------------------
   // Stock status
   // ---------------------------------------------------------------------------
   function getDerivedStockStatus(stockValue, lowStockValue) {
@@ -788,7 +905,7 @@
       }
     }
 
-    if (categorySelect) {
+    if (categorySelect && categorySelect.value === ADD_CATEGORY_VALUE) {
       return fail(categorySelect, "Please choose a category.");
     }
 
@@ -873,7 +990,7 @@
     const categoryId = categorySelect.value;
     fd.append(
       "category_id",
-      categoryId
+      categoryId && categoryId !== ADD_CATEGORY_VALUE ? categoryId : ""
     );
     fd.append(
       "category",
@@ -1036,10 +1153,6 @@
       setBusy(false, "");
     }
   }
-
-  window.addEventListener("storage", (event) => {
-    if (event.key === "categoryListChanged") loadCategories();
-  });
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
