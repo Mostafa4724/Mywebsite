@@ -248,10 +248,6 @@ window.selectedFile = null;
       option.textContent = cat.name;
       categorySelect.appendChild(option);
     });
-    const add = document.createElement("option");
-    add.value = "__add_category__";
-    add.textContent = "+ Add Category";
-    categorySelect.appendChild(add);
     if (selectedId !== null && selectedId !== undefined) {
       categorySelect.value = String(selectedId);
     }
@@ -727,48 +723,6 @@ window.selectedFile = null;
       }
     });
 
-    categorySelect.addEventListener("change", async () => {
-      if (categorySelect.value !== "__add_category__") return;
-      categorySelect.value = product ? String(product.category_id || "") : "";
-      const modal = document.getElementById("addCategoryModal");
-      if (modal) {
-        modal.removeAttribute("hidden");
-        modal.style.display = "flex";
-      }
-    });
-
-    const closeCategory = () => {
-      const modal = document.getElementById("addCategoryModal");
-      if (modal) {
-        modal.setAttribute("hidden", "");
-        modal.style.display = "none";
-      }
-    };
-    document.getElementById("addCategoryClose")?.addEventListener("click", closeCategory);
-    document.getElementById("cancelCategoryBtn")?.addEventListener("click", closeCategory);
-    document.getElementById("saveCategoryBtn")?.addEventListener("click", async () => {
-      const input = document.getElementById("newCategoryName");
-      const errorEl = document.getElementById("newCategoryError");
-      const name = input.value.trim();
-      if (!name) {
-        errorEl.textContent = "Category name is required.";
-        return;
-      }
-      try {
-        const response = await fetch(API_BASE + "/categories", {
-          method: "POST",
-          headers: { ...authHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
-        const data = await responseJson(response);
-        await loadCategories(data.category.id);
-        closeCategory();
-        markDirty();
-        showToast(`Category "${data.category.name}" created!`, "success");
-      } catch (error) {
-        errorEl.textContent = error.message;
-      }
-    });
 
     // Variants are managed by the dynamic variant group controls above.
   }

@@ -249,10 +249,6 @@
         categorySelect.appendChild(opt);
       });
 
-      const addOpt = document.createElement("option");
-      addOpt.value = ADD_CATEGORY_VALUE;
-      addOpt.textContent = "+ Add Category";
-      categorySelect.appendChild(addOpt);
 
       if (currentValue && currentValue !== ADD_CATEGORY_VALUE) {
         const exists = Array.from(categorySelect.options).some(
@@ -377,14 +373,7 @@
     });
   }
 
-  if (categorySelect) {
-    categorySelect.addEventListener("change", function () {
-      if (this.value === ADD_CATEGORY_VALUE) {
-        openAddCategoryModal();
-        this.value = "";
-      }
-    });
-  }
+
   if (addCategoryClose)
     addCategoryClose.addEventListener("click", closeAddCategoryModal);
   if (cancelCategoryBtn)
