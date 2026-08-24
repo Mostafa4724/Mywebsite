@@ -411,17 +411,32 @@
     categoriesById={}; (d.categories||[]).forEach(c=>categoriesById[String(c.id)]=c.name); renderCategoryList(d.categories||[]);
     window.dispatchEvent(new CustomEvent("categoriesUpdated",{detail:d.categories||[]}));
   }
-  function openCategoryModal(){ if(!categoryModal)return; categoryModal.style.display="flex"; categoryError.textContent=""; categoryNameInput.value=""; categoryImageInput.value=""; categoryImagePreview.innerHTML="<span>Image preview</span>"; refreshCategories().catch(e=>categoryError.textContent=e.message); setTimeout(()=>categoryNameInput.focus(),0); }
+  function openCategoryModal(){ if(!categoryModal)return; categoryModal.style.display="flex"; categoryError.textContent=""; if (nameInput) nameInput.value=""; if (imageInput) imageInput.value=""; if (categoryImagePreview) categoryImagePreview.innerHTML="<span>Image preview</span>"; refreshCategories().catch(e=>categoryError.textContent=e.message); setTimeout(()=>categoryNameInput.focus(),0); }
   function closeCategoryModal(){if(categoryModal)categoryModal.style.display="none";}
   categoryImageInput?.addEventListener("change",()=>{ const f=categoryImageInput.files?.[0]; if(!f){categoryImagePreview.innerHTML="<span>Image preview</span>";return;} const u=URL.createObjectURL(f); categoryImagePreview.innerHTML=""; const img=new Image(); img.onload=()=>URL.revokeObjectURL(u); img.src=u; categoryImagePreview.appendChild(img); });
-  async function saveCategory(){
-    const name=categoryNameInput.value.trim(); const file=categoryImageInput.files?.[0];
-    if(!name){categoryError.textContent="Category name is required.";return;}
-    if(!file){categoryError.textContent="Please choose a category image.";return;}
+  async function saveCategory(event){
+    if (event) event.preventDefault();
+    // Read the values directly from the modal every time. This avoids using a
+    // stale reference if the admin modal is opened/closed more than once.
+    const nameInput = document.getElementById("adminNewCategoryName");
+    const imageInput = document.getElementById("adminCategoryImage");
+    const errorBox = document.getElementById("adminCategoryError");
+    const name = nameInput ? nameInput.value.trim() : "";
+    const file = imageInput && imageInput.files ? imageInput.files[0] : null;
+
+    if (!name) {
+      if (errorBox) errorBox.textContent = "Category name is required.";
+      nameInput?.focus();
+      return;
+    }
+    if (!file) {
+      if (errorBox) errorBox.textContent = "Please choose a category image.";
+      return;
+    }
     const fd=new FormData(); fd.append("name",name); fd.append("image",file);
-    const btn=document.getElementById("adminSaveCategory"); btn.disabled=true; btn.textContent="Creating..."; categoryError.textContent="";
-    try{ const r=await fetch(API_BASE+"/categories",{method:"POST",headers:categoryAuth(),body:fd}); const d=await r.json(); if(!r.ok||!d.success)throw Error(d.message||"Could not create category."); await refreshCategories(); window.dispatchEvent(new StorageEvent("storage",{key:"categoryListChanged"})); categoryNameInput.value=""; categoryImageInput.value=""; categoryImagePreview.innerHTML="<span>Image preview</span>"; }
-    catch(e){categoryError.textContent=e.message;} finally{btn.disabled=false;btn.textContent="Create Category";}
+    const btn=document.getElementById("adminSaveCategory"); btn.disabled=true; btn.textContent="Creating..."; if (errorBox) errorBox.textContent="";
+    try{ const r=await fetch(API_BASE+"/categories",{method:"POST",headers:categoryAuth(),body:fd}); const d=await r.json(); if(!r.ok||!d.success)throw Error(d.message||"Could not create category."); await refreshCategories(); window.dispatchEvent(new StorageEvent("storage",{key:"categoryListChanged"})); if (nameInput) nameInput.value=""; if (imageInput) imageInput.value=""; if (categoryImagePreview) categoryImagePreview.innerHTML="<span>Image preview</span>"; }
+    catch(e){if (errorBox) errorBox.textContent=e.message;} finally{btn.disabled=false;btn.textContent="Create Category";}
   }
   async function deleteCategory(id){
     try{const r=await fetch(API_BASE+"/categories/"+encodeURIComponent(id),{method:"DELETE",headers:categoryAuth()});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"Could not delete category.");await refreshCategories();window.dispatchEvent(new StorageEvent("storage",{key:"categoryListChanged"}));}catch(e){alert(e.message);}
