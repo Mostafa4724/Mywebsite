@@ -358,6 +358,220 @@
     }
   }
 
+
+  // ---------------------------------------------------------------------------
+  // Category management
+  // ---------------------------------------------------------------------------
+  const addCategoryBtn = document.getElementById("addCategoryBtn");
+  const categoryManagerModal = document.getElementById("categoryManagerModal");
+  const categoryManagerClose = document.getElementById("categoryManagerClose");
+  const categoryManagerCancel = document.getElementById("categoryManagerCancel");
+  const categoryManagerSave = document.getElementById("categoryManagerSave");
+  const categoryManagerName = document.getElementById("categoryManagerName");
+  const categoryManagerError = document.getElementById("categoryManagerError");
+  const categoryManagerList = document.getElementById("categoryManagerList");
+
+  function getCategoryAuthHeaders() {
+    const token = getToken();
+    return token ? { Authorization: "Bearer " + token } : {};
+  }
+
+  function setCategoryError(message) {
+    if (categoryManagerError) categoryManagerError.textContent = message || "";
+  }
+
+  function renderCategoryManagerList(categories) {
+    if (!categoryManagerList) return;
+
+    categoryManagerList.innerHTML = "";
+
+    if (!categories.length) {
+      categoryManagerList.innerHTML =
+        '<div class="category-list-message">No categories have been added yet.</div>';
+      return;
+    }
+
+    categories.forEach((category) => {
+      const row = document.createElement("div");
+      row.className = "category-manager-item";
+      row.dataset.categoryId = String(category.id);
+
+      const name = document.createElement("span");
+      name.className = "category-manager-name";
+      name.textContent = category.name;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "category-delete-btn";
+      deleteBtn.title = "Delete category";
+      deleteBtn.setAttribute("aria-label", `Delete category ${category.name}`);
+      deleteBtn.textContent = "×";
+
+      deleteBtn.addEventListener("click", () => deleteCategory(category));
+
+      row.appendChild(name);
+      row.appendChild(deleteBtn);
+      categoryManagerList.appendChild(row);
+    });
+  }
+
+  async function fetchCategoriesForManager() {
+    const response = await fetch(API_BASE + "/categories");
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Could not load categories.");
+    }
+
+    const categories = Array.isArray(data.categories) ? data.categories : [];
+    categoriesById = {};
+    categories.forEach((category) => {
+      categoriesById[String(category.id)] = category.name;
+    });
+
+    renderCategoryManagerList(categories);
+    return categories;
+  }
+
+  function openCategoryManager() {
+    if (!categoryManagerModal) return;
+
+    setCategoryError("");
+    if (categoryManagerName) categoryManagerName.value = "";
+
+    categoryManagerModal.removeAttribute("hidden");
+    categoryManagerModal.classList.add("show");
+    categoryManagerModal.style.display = "flex";
+
+    fetchCategoriesForManager().catch((error) => {
+      console.error("Failed to load categories:", error);
+      if (categoryManagerList) {
+        categoryManagerList.innerHTML =
+          '<div class="category-list-message">Could not load categories.</div>';
+      }
+      setCategoryError(error.message);
+    });
+
+    setTimeout(() => categoryManagerName?.focus(), 50);
+  }
+
+  function closeCategoryManager() {
+    if (!categoryManagerModal) return;
+    categoryManagerModal.classList.remove("show");
+    categoryManagerModal.style.display = "none";
+    categoryManagerModal.setAttribute("hidden", "");
+    setCategoryError("");
+  }
+
+  async function createCategoryFromManager() {
+    if (!categoryManagerName || !categoryManagerSave) return;
+
+    const name = categoryManagerName.value.trim();
+    if (!name) {
+      setCategoryError("Category name is required.");
+      categoryManagerName.focus();
+      return;
+    }
+
+    const token = getToken();
+    if (!token) {
+      setCategoryError("Your admin session has expired. Please log in again.");
+      return;
+    }
+
+    setCategoryError("");
+    categoryManagerSave.disabled = true;
+    categoryManagerSave.textContent = "Saving...";
+
+    try {
+      const response = await fetch(API_BASE + "/categories", {
+        method: "POST",
+        headers: {
+          ...getCategoryAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Could not create category.");
+      }
+
+      categoryManagerName.value = "";
+      await fetchCategoriesForManager();
+
+      // Let already-open Add/Edit Product pages refresh their dropdowns.
+      localStorage.setItem("categoryListChanged", String(Date.now()));
+
+      showToast(`Category "${data.category.name}" created!`);
+      categoryManagerName.focus();
+    } catch (error) {
+      console.error("Failed to create category:", error);
+      setCategoryError(error.message || "Could not create category.");
+    } finally {
+      categoryManagerSave.disabled = false;
+      categoryManagerSave.textContent = "Add Category";
+    }
+  }
+
+  async function deleteCategory(category) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${category.name}"?`
+    );
+
+    if (!confirmed) return;
+
+    const token = getToken();
+    if (!token) {
+      window.alert("Your admin session has expired. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        API_BASE + "/categories/" + encodeURIComponent(category.id),
+        {
+          method: "DELETE",
+          headers: getCategoryAuthHeaders(),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Could not delete category.");
+      }
+
+      await fetchCategoriesForManager();
+      localStorage.setItem("categoryListChanged", String(Date.now()));
+      showToast(`Category "${category.name}" deleted.`);
+    } catch (error) {
+      console.error("Failed to delete category:", error);
+      window.alert(error.message || "Could not delete category. Please try again.");
+    }
+  }
+
+  if (addCategoryBtn) {
+    addCategoryBtn.addEventListener("click", openCategoryManager);
+  }
+
+  categoryManagerClose?.addEventListener("click", closeCategoryManager);
+  categoryManagerCancel?.addEventListener("click", closeCategoryManager);
+  categoryManagerSave?.addEventListener("click", createCategoryFromManager);
+
+  categoryManagerName?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      createCategoryFromManager();
+    }
+  });
+
+  categoryManagerModal?.addEventListener("click", (event) => {
+    if (event.target === categoryManagerModal) closeCategoryManager();
+  });
+
   if (searchInput) {
     searchInput.addEventListener(
       "input",

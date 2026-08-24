@@ -4147,9 +4147,14 @@ footer {
   white-space: nowrap;
 }
 
+.dash-order-status.confirmed,
 .dash-order-status.delivered {
   background: #f0fdf4;
   color: #16a34a;
+}
+.dash-order-status.placed {
+  background: transparent;
+  color: inherit;
 }
 .dash-order-status.shipped {
   background: #eff6ff;

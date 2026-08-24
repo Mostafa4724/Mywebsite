@@ -79,3 +79,34 @@ def create_category():
         "message": "Category created.",
         "category": category.to_dict()
     }), 201
+
+
+@categories_bp.route("/categories/<int:id>", methods=["DELETE"])
+@admin_required
+def delete_category(id):
+    """Delete a category (admin) without deleting its products."""
+    category = Category.query.get(id)
+
+    if category is None:
+        return jsonify({
+            "success": False,
+            "message": "Category not found."
+        }), 404
+
+    try:
+        # Keep existing products intact. SQLAlchemy will clear the nullable
+        # category_id relationship when the category is removed.
+        db.session.delete(category)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": "Could not delete this category. It may still be in use."
+        }), 409
+
+    return jsonify({
+        "success": True,
+        "message": "Category deleted.",
+        "category_id": id
+    })
