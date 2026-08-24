@@ -11,84 +11,9 @@
 
   const searchInput = document.getElementById("productSearch");
   const addProductBtn = document.getElementById("addProductBtn");
-  const addCategoryBtn = document.getElementById("addCategoryBtn");
 
   let products = [];
   let categoriesById = {};
-
-  const categoryModal = document.getElementById("categoryManagementModal");
-  const categoryList = document.getElementById("adminCategoryList");
-  const categoryNameInput = document.getElementById("adminNewCategoryName");
-  const categoryError = document.getElementById("adminCategoryError");
-
-  function authHeaders(json = false) {
-    const h = { Authorization: "Bearer " + (getToken() || "") };
-    if (json) h["Content-Type"] = "application/json";
-    return h;
-  }
-
-  function renderCategoryList(categories) {
-    if (!categoryList) return;
-    if (!categories.length) { categoryList.innerHTML = '<div class="admin-category-empty">No categories yet.</div>'; return; }
-    categoryList.innerHTML = categories.map(cat =>
-      '<div class="admin-category-row" data-category-id="' + escapeHtml(cat.id) + '">' +
-        '<span class="admin-category-name">' + escapeHtml(cat.name) + '</span>' +
-        '<button type="button" class="admin-category-delete" data-category-id="' + escapeHtml(cat.id) + '" data-category-name="' + escapeHtml(cat.name) + '" aria-label="Delete ' + escapeHtml(cat.name) + '">&times;</button>' +
-      '</div>'
-    ).join("");
-  }
-
-  async function refreshAdminCategories() {
-    const response = await fetch(API_BASE + "/categories", { cache: "no-store" });
-    const data = await response.json();
-    if (!response.ok || !data.success) throw new Error(data.message || "Could not load categories.");
-    const cats = Array.isArray(data.categories) ? data.categories : [];
-    categoriesById = {}; cats.forEach(c => { categoriesById[String(c.id)] = c.name; });
-    renderCategoryList(cats);
-    window.dispatchEvent(new CustomEvent("categoriesUpdated", { detail: cats }));
-    return cats;
-  }
-
-  function closeCategoryModal() {
-    if (!categoryModal) return;
-    categoryModal.hidden = true; categoryModal.style.display = "none";
-    if (categoryNameInput) categoryNameInput.value = "";
-    if (categoryError) categoryError.textContent = "";
-  }
-
-  function openCategoryModal() {
-    if (!categoryModal) return;
-    categoryModal.hidden = false; categoryModal.style.display = "flex";
-    refreshAdminCategories().catch(err => { if (categoryError) categoryError.textContent = err.message; });
-    setTimeout(() => categoryNameInput?.focus(), 0);
-  }
-
-  async function createAdminCategory() {
-    const name = categoryNameInput?.value.trim();
-    if (!name) { if (categoryError) categoryError.textContent = "Category name is required."; return; }
-    const btn = document.getElementById("adminSaveCategory");
-    if (btn) { btn.disabled = true; btn.textContent = "Creating..."; }
-    try {
-      const response = await fetch(API_BASE + "/categories", { method:"POST", headers:authHeaders(true), body:JSON.stringify({name}) });
-      const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || "Could not create category.");
-      await refreshAdminCategories();
-      if (categoryNameInput) categoryNameInput.value = "";
-      if (categoryError) categoryError.textContent = "";
-    } catch (err) { if (categoryError) categoryError.textContent = err.message; }
-    finally { if (btn) { btn.disabled=false; btn.textContent="Create Category"; } }
-  }
-
-  async function deleteAdminCategory(id, name) {
-    if (!window.confirm('Are you sure you want to delete "' + name + '"?')) return;
-    try {
-      const response = await fetch(API_BASE + "/categories/" + encodeURIComponent(id), { method:"DELETE", headers:authHeaders() });
-      const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || "Could not delete category.");
-      await refreshAdminCategories();
-      await loadProducts();
-    } catch (err) { window.alert(err.message || "Unable to delete category."); }
-  }
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -452,22 +377,59 @@
     );
   }
 
-  addCategoryBtn?.addEventListener("click", openCategoryModal);
-  document.getElementById("categoryManagementClose")?.addEventListener("click", closeCategoryModal);
-  document.getElementById("categoryManagementCancel")?.addEventListener("click", closeCategoryModal);
-  document.getElementById("adminSaveCategory")?.addEventListener("click", createAdminCategory);
-  categoryNameInput?.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); createAdminCategory(); } });
-  categoryModal?.addEventListener("click", e => { if (e.target === categoryModal) closeCategoryModal(); });
-  categoryList?.addEventListener("click", e => {
-    const btn = e.target.closest(".admin-category-delete");
-    if (btn) deleteAdminCategory(btn.dataset.categoryId, btn.dataset.categoryName);
-  });
-
   async function init() {
     await loadCategories();
-    await refreshAdminCategories();
     await loadProducts();
   }
 
   init();
+  const addCategoryBtn = document.getElementById("addCategoryBtn");
+  const categoryModal = document.getElementById("categoryManagementModal");
+  const categoryNameInput = document.getElementById("adminNewCategoryName");
+  const categoryImageInput = document.getElementById("adminCategoryImage");
+  const categoryImagePreview = document.getElementById("adminCategoryImagePreview");
+  const categoryList = document.getElementById("adminCategoryList");
+  const categoryError = document.getElementById("adminCategoryError");
+
+  function categoryAuth(){ const t=getToken(); return t ? {Authorization:"Bearer "+t} : {}; }
+  function renderCategoryList(cats){
+    if(!categoryList)return; categoryList.innerHTML="";
+    if(!cats.length){categoryList.innerHTML='<div class="category-list-empty">No categories yet.</div>';return;}
+    cats.forEach(c=>{
+      const row=document.createElement("div"); row.className="admin-category-row";
+      const img=document.createElement("img"); img.className="admin-category-thumb"; img.alt=""; img.src=c.image_url ? API_BASE+c.image_url : "";
+      if(!c.image_url) img.style.visibility="hidden";
+      const name=document.createElement("span"); name.className="admin-category-name"; name.textContent=c.name;
+      const del=document.createElement("button"); del.className="admin-category-delete"; del.type="button"; del.textContent="×"; del.title="Delete category";
+      del.onclick=()=>{if(confirm('Are you sure you want to delete "'+c.name+'"?')) deleteCategory(c.id);};
+      row.append(img,name,del); categoryList.appendChild(row);
+    });
+  }
+  async function refreshCategories(){
+    const r=await fetch(API_BASE+"/categories",{cache:"no-store"}); const d=await r.json();
+    if(!r.ok||!d.success)throw Error(d.message||"Could not load categories.");
+    categoriesById={}; (d.categories||[]).forEach(c=>categoriesById[String(c.id)]=c.name); renderCategoryList(d.categories||[]);
+    window.dispatchEvent(new CustomEvent("categoriesUpdated",{detail:d.categories||[]}));
+  }
+  function openCategoryModal(){ if(!categoryModal)return; categoryModal.style.display="flex"; categoryError.textContent=""; categoryNameInput.value=""; categoryImageInput.value=""; categoryImagePreview.innerHTML="<span>Image preview</span>"; refreshCategories().catch(e=>categoryError.textContent=e.message); setTimeout(()=>categoryNameInput.focus(),0); }
+  function closeCategoryModal(){if(categoryModal)categoryModal.style.display="none";}
+  categoryImageInput?.addEventListener("change",()=>{ const f=categoryImageInput.files?.[0]; if(!f){categoryImagePreview.innerHTML="<span>Image preview</span>";return;} const u=URL.createObjectURL(f); categoryImagePreview.innerHTML=""; const img=new Image(); img.onload=()=>URL.revokeObjectURL(u); img.src=u; categoryImagePreview.appendChild(img); });
+  async function saveCategory(){
+    const name=categoryNameInput.value.trim(); const file=categoryImageInput.files?.[0];
+    if(!name){categoryError.textContent="Category name is required.";return;}
+    if(!file){categoryError.textContent="Please choose a category image.";return;}
+    const fd=new FormData(); fd.append("name",name); fd.append("image",file);
+    const btn=document.getElementById("adminSaveCategory"); btn.disabled=true; btn.textContent="Creating..."; categoryError.textContent="";
+    try{ const r=await fetch(API_BASE+"/categories",{method:"POST",headers:categoryAuth(),body:fd}); const d=await r.json(); if(!r.ok||!d.success)throw Error(d.message||"Could not create category."); await refreshCategories(); window.dispatchEvent(new StorageEvent("storage",{key:"categoryListChanged"})); categoryNameInput.value=""; categoryImageInput.value=""; categoryImagePreview.innerHTML="<span>Image preview</span>"; }
+    catch(e){categoryError.textContent=e.message;} finally{btn.disabled=false;btn.textContent="Create Category";}
+  }
+  async function deleteCategory(id){
+    try{const r=await fetch(API_BASE+"/categories/"+encodeURIComponent(id),{method:"DELETE",headers:categoryAuth()});const d=await r.json();if(!r.ok||!d.success)throw Error(d.message||"Could not delete category.");await refreshCategories();window.dispatchEvent(new StorageEvent("storage",{key:"categoryListChanged"}));}catch(e){alert(e.message);}
+  }
+  addCategoryBtn?.addEventListener("click",openCategoryModal);
+  document.getElementById("categoryManagementClose")?.addEventListener("click",closeCategoryModal);
+  document.getElementById("categoryManagementCancel")?.addEventListener("click",closeCategoryModal);
+  document.getElementById("adminSaveCategory")?.addEventListener("click",saveCategory);
+  categoryNameInput?.addEventListener("keydown",e=>{if(e.key==="Enter")saveCategory();});
+
 })();

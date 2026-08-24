@@ -10,7 +10,7 @@
   "use strict";
 
   const API_BASE = "http://127.0.0.1:5000";
-  const ADD_CATEGORY_VALUE = "__add_category__"; // internal legacy value; never rendered as an option
+  const ADD_CATEGORY_VALUE = "__add_category__";
   const LOGIN_PAGE = "../page/login.html";
   const PRODUCTS_PAGE = "admin_product.html";
 
@@ -249,6 +249,11 @@
         categorySelect.appendChild(opt);
       });
 
+      const addOpt = document.createElement("option");
+      addOpt.value = ADD_CATEGORY_VALUE;
+      addOpt.textContent = "+ Add Category";
+      categorySelect.appendChild(addOpt);
+
       if (currentValue && currentValue !== ADD_CATEGORY_VALUE) {
         const exists = Array.from(categorySelect.options).some(
           (o) => o.value === currentValue
@@ -372,6 +377,39 @@
     });
   }
 
+  if (categorySelect) {
+    categorySelect.addEventListener("change", function () {
+      if (this.value === ADD_CATEGORY_VALUE) {
+        openAddCategoryModal();
+        this.value = "";
+      }
+    });
+  }
+  if (addCategoryClose)
+    addCategoryClose.addEventListener("click", closeAddCategoryModal);
+  if (cancelCategoryBtn)
+    cancelCategoryBtn.addEventListener("click", closeAddCategoryModal);
+  if (saveCategoryBtn) {
+    saveCategoryBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      createCategory(e);
+    }, true);
+  }
+  if (addCategoryModal) {
+    addCategoryModal.addEventListener("click", (e) => {
+      if (e.target === addCategoryModal) closeAddCategoryModal();
+    });
+  }
+  if (newCategoryName) {
+    newCategoryName.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        createCategory(e);
+      }
+    });
+  }
 
   loadCategories();
 
