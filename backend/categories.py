@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 
-from models import Category
+from models import Category, Product
 from database import db
 from security import admin_required
 from werkzeug.utils import secure_filename
@@ -11,6 +11,7 @@ categories_bp = Blueprint("categories", __name__)
 
 CATEGORY_IMAGE_META = os.path.join(os.path.dirname(__file__), "category_images.json")
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+DEFAULT_FALLBACK_CATEGORY = "Others"
 
 def _images():
     try:
@@ -117,19 +118,116 @@ def create_category():
 @categories_bp.route("/categories/<int:id>", methods=["DELETE"])
 @admin_required
 def delete_category(id):
+    """
+    Delete a category safely.
+
+    Every product that belongs to the deleted category is moved to the
+    permanent "Others" category. Both category_id and the legacy category
+    text field are updated so product pages cannot keep displaying the
+    deleted category.
+    """
     category = Category.query.get(id)
+
     if category is None:
-        return jsonify(success=False, message="Category not found."), 404
+        return jsonify(
+            success=False,
+            message="Category not found."
+        ), 404
+
+    category_name = (category.name or "").strip()
+
+    # "Others" is the permanent fallback category.
+    if category_name.casefold() == DEFAULT_FALLBACK_CATEGORY.casefold():
+        return jsonify(
+            success=False,
+            message="The Others category cannot be deleted."
+        ), 400
+
     try:
+        # Always use a real database category as the fallback.
+        others = Category.query.filter(
+            db.func.lower(Category.name)
+            == DEFAULT_FALLBACK_CATEGORY.lower()
+        ).first()
+
+        if others is None:
+            others = Category(name=DEFAULT_FALLBACK_CATEGORY)
+            db.session.add(others)
+            db.session.flush()
+
+        # Move products that use the category relation OR the legacy text
+        # field. This covers old products created before category_id existed.
+        products = Product.query.filter(
+            db.or_(
+                Product.category_id == category.id,
+                db.func.lower(Product.category) == category_name.lower()
+            )
+        ).all()
+
+        moved_products = 0
+
+        for product in products:
+            product.category_id = others.id
+            product.category = others.name
+            moved_products += 1
+
+        # Remove category image metadata.
         meta = _images()
         filename = meta.pop(str(id), None)
+
+        # Delete the category only after every product reference has been
+        # redirected to Others.
         db.session.delete(category)
+
+        # This commit contains the category deletion AND all product updates.
         db.session.commit()
+
+        # Clean up the deleted category's image after the DB transaction
+        # succeeds.
         if filename:
-            try: os.remove(os.path.join(current_app.config["UPLOAD_FOLDER"], "categories", filename))
-            except OSError: pass
+            try:
+                os.remove(
+                    os.path.join(
+                        current_app.config["UPLOAD_FOLDER"],
+                        "categories",
+                        filename
+                    )
+                )
+            except OSError:
+                current_app.logger.warning(
+                    "Could not remove category image: %s",
+                    filename
+                )
+
+        try:
             _save_images(meta)
-        return jsonify(success=True, message="Category deleted.")
+        except OSError:
+            current_app.logger.exception(
+                "Could not update category image metadata after deleting %s",
+                category_name
+            )
+
+        return jsonify(
+            success=True,
+            message=(
+                f'Category "{category_name}" deleted successfully. '
+                f"{moved_products} product(s) moved to Others."
+            ),
+            moved_products=moved_products,
+            fallback_category={
+                "id": others.id,
+                "name": others.name
+            }
+        )
+
     except Exception:
         db.session.rollback()
-        return jsonify(success=False, message="Could not delete category."), 500
+        current_app.logger.exception(
+            "Failed to delete category id=%s",
+            id
+        )
+
+        return jsonify(
+            success=False,
+            message="Could not delete category."
+        ), 500

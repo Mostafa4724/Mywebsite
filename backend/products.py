@@ -332,6 +332,16 @@ def _validate_sale(data, price, current=None):
 
 def _serialize_product(product):
     data = product.to_dict()
+
+    # category_id is the authoritative relationship. The legacy `category`
+    # text is kept for compatibility, but API consumers should always receive
+    # the current category name when the relationship exists.
+    if product.category_ref is not None:
+        data["category"] = product.category_ref.name
+        data["category_id"] = product.category_ref.id
+    elif product.category_id is None and not str(product.category or "").strip():
+        data["category"] = "Others"
+
     data["sale_active"] = sale_is_active(product)
     data["current_price"] = current_price(product)
     data["sale_start"] = as_store_iso(product.sale_start)

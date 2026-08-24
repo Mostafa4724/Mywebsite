@@ -241,13 +241,20 @@
       categorySelect.innerHTML =
         '<option value="" disabled selected>Select category</option>';
 
-      (data.categories || []).forEach((cat) => {
-        const opt = document.createElement("option");
-        opt.value = String(cat.id);
-        opt.dataset.name = cat.name;
-        opt.textContent = cat.name;
-        categorySelect.appendChild(opt);
-      });
+      // "Others" is a backend fallback category. Keep it out of the
+      // Add Product UI so admins only choose real storefront categories.
+      (data.categories || [])
+        .filter(
+          (cat) =>
+            String(cat.name || "").trim().toLowerCase() !== "others"
+        )
+        .forEach((cat) => {
+          const opt = document.createElement("option");
+          opt.value = String(cat.id);
+          opt.dataset.name = cat.name;
+          opt.textContent = cat.name;
+          categorySelect.appendChild(opt);
+        });
 
 
       if (currentValue && currentValue !== ADD_CATEGORY_VALUE) {
@@ -322,7 +329,11 @@
         saveCategoryImage(data.category.id, pendingCategoryImageData);
       }
 
-      if (categorySelect && data.category) {
+      if (
+        categorySelect &&
+        data.category &&
+        String(data.category.name || "").trim().toLowerCase() !== "others"
+      ) {
         const option = document.createElement("option");
         option.value = String(data.category.id);
         option.dataset.name = data.category.name;

@@ -41,7 +41,12 @@ async function loadCategories() {
     const response = await fetch(SHOP_API_BASE + "/categories");
     const data = await response.json();
     if (!data.success) return;
-    allCategories = data.categories || [];
+    // "Others" is a backend fallback category for products whose original
+    // category was deleted. It is intentionally hidden from the public
+    // category browsing UI.
+    allCategories = (data.categories || []).filter(
+      (cat) => String(cat.name || "").trim().toLowerCase() !== "others"
+    );
     filterCategories();
   } catch (err) {
     console.error("Failed to load categories:", err);
