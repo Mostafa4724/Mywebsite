@@ -10,19 +10,6 @@ function categoryEmoji(index) {
   return emojiFallback[index % emojiFallback.length];
 }
 
-const CATEGORY_IMAGES_STORAGE_KEY = "shop_category_images";
-
-function getSavedCategoryImage(categoryId) {
-  try {
-    const raw = localStorage.getItem(CATEGORY_IMAGES_STORAGE_KEY);
-    const images = raw ? JSON.parse(raw) : {};
-    return images[String(categoryId)] || "";
-  } catch (err) {
-    console.warn("Could not read category images:", err);
-    return "";
-  }
-}
-
 // Load categories from the backend and render category cards
 function renderCategories(categories) {
   if (!catGrid) return;
@@ -39,7 +26,7 @@ function renderCategories(categories) {
     card.href = "catagory-species.html?category=" + cat.id;
     card.setAttribute("aria-label", cat.name);
     card.dataset.name = cat.name;
-    const categoryImage = getSavedCategoryImage(cat.id) || "https://picsum.photos/seed/" + encodeURIComponent(cat.name) + "/600/400.jpg";
+    const categoryImage = cat.image_url ? (SHOP_API_BASE + cat.image_url) : "https://picsum.photos/seed/" + encodeURIComponent(cat.name) + "/600/400.jpg";
     card.innerHTML = '<div class="cat-item__img"><span class="cat-item__num">' + String(index + 1).padStart(2, "0") + '</span><img src="' + categoryImage + '" alt="' + cat.name + '" loading="lazy" /><div class="cat-item__icon-wrap">' + categoryEmoji(index) + '</div></div>' +
       '<div class="cat-item__body"><h3 class="cat-item__name">' + cat.name + '</h3><p class="cat-item__desc">Browse all products in ' + cat.name + '.</p><div class="cat-item__footer"><span class="cat-item__count">' + (cat.product_count || 0) + ' items</span><span class="cat-item__arrow">↗</span></div></div>';
     catGrid.appendChild(card);

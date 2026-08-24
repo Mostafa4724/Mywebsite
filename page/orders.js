@@ -25,6 +25,16 @@
     });
   }
 
+
+  function statusClass(status) {
+    const value = String(status || "placed").trim().toLowerCase();
+    if (value === "confirmed") return "order-status--confirmed";
+    if (value === "shipped") return "order-status--shipped";
+    if (value === "delivered") return "order-status--delivered";
+    if (value === "cancelled" || value === "canceled") return "order-status--cancelled";
+    return "order-status--placed";
+  }
+
   function show(message) {
     container.innerHTML = message;
   }
@@ -60,7 +70,7 @@
             '<span class="order-items">' +
               itemCount + (itemCount === 1 ? " item" : " items") +
             "</span>" +
-            '<span class="order-status">' + escapeHtml(order.status || "placed") + "</span>" +
+            '<span class="order-status ' + statusClass(order.status) + '">' + escapeHtml(order.status || "placed") + "</span>" +
           "</div>" +
         "</a>"
       );
