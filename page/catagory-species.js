@@ -1,3 +1,4 @@
+
 function isStorefrontProductVisible(product) {
   return String(product && product.status || "draft").toLowerCase() === "published";
 }
@@ -26,30 +27,46 @@ function showEmptyMessage() {
   productGrid.innerHTML =
     '<p class="category-empty" style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--fg-muted);font-size:1rem;">' +
     "No products in this category yet.</p>";
-  heroCount.textContent = "0 Products";
+
+  if (heroCount) {
+    heroCount.textContent = "0 Products";
+  }
 }
 
 async function loadCategoryProducts() {
   if (!productGrid) return;
 
   try {
-    var catRes = await fetch(SHOP_API_BASE + "/categories/" + categoryId);
+    var catRes = await fetch(
+      SHOP_API_BASE + "/categories/" + categoryId
+    );
+
     var catData = await catRes.json();
     var category = catData.success ? catData.category : null;
 
     var name = category ? category.name : "Category";
 
     document.title = name;
-    if (crumbName) crumbName.textContent = name;
-    if (heroTitle) heroTitle.textContent = name;
+
+    if (crumbName) {
+      crumbName.textContent = name;
+    }
+
+    if (heroTitle) {
+      heroTitle.textContent = name;
+    }
+
     if (heroTags) {
-      heroTags.innerHTML = '<span class="fw-tag">' + name + "</span>";
+      heroTags.innerHTML =
+        '<span class="fw-tag">' + name + "</span>";
     }
 
     var prodUrl =
       SHOP_API_BASE +
       "/products" +
-      (categoryId ? "?category_id=" + encodeURIComponent(categoryId) : "");
+      (categoryId
+        ? "?category_id=" + encodeURIComponent(categoryId)
+        : "");
 
     var res = await fetch(prodUrl);
     var data = await res.json();
@@ -66,26 +83,34 @@ async function loadCategoryProducts() {
 
     productGrid.innerHTML = "";
 
-    const visibleProducts = data.products.filter(isStorefrontProductVisible);
+    const visibleProducts = data.products.filter(
+      isStorefrontProductVisible
+    );
 
     if (visibleProducts.length === 0) {
       showEmptyMessage();
       return;
     }
 
-    if (heroCount) heroCount.textContent = visibleProducts.length + " Products";
+    if (heroCount) {
+      heroCount.textContent =
+        visibleProducts.length + " Products";
+    }
 
     visibleProducts.forEach(function (product, index) {
       var card = renderProductCard(product, index);
       productGrid.appendChild(card);
     });
 
-    initReveal();
     bindAddToCart();
     initTilt();
+
   } catch (err) {
     console.error("Failed to load category products:", err);
-    if (productGrid) showEmptyMessage();
+
+    if (productGrid) {
+      showEmptyMessage();
+    }
   }
 }
 
@@ -99,7 +124,10 @@ function initReveal() {
         }
       });
     },
-    { threshold: 0.06, rootMargin: "0px 0px -30px 0px" }
+    {
+      threshold: 0.06,
+      rootMargin: "0px 0px -30px 0px"
+    }
   );
 
   document.querySelectorAll(".reveal").forEach(function (el) {
@@ -111,6 +139,7 @@ function initReveal() {
 function bindAddToCart() {
   document.querySelectorAll(".add-to-cart-btn").forEach(function (btn) {
     if (btn.dataset.cartBound) return;
+
     btn.dataset.cartBound = "1";
 
     btn.addEventListener("click", function (e) {
@@ -133,20 +162,28 @@ function bindAddToCart() {
 
 /* ===== CARD TILT ===== */
 function initTilt() {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    return;
+  }
 
   document.querySelectorAll(".product-card").forEach(function (card) {
     if (card.dataset.tiltBound) return;
+
     card.dataset.tiltBound = "1";
 
     card.addEventListener("mousemove", function (e) {
       var rect = this.getBoundingClientRect();
       var x = e.clientX - rect.left;
       var y = e.clientY - rect.top;
+
       var cx = rect.width / 2;
       var cy = rect.height / 2;
+
       var rx = ((y - cy) / cy) * -2.5;
       var ry = ((x - cx) / cx) * 2.5;
+
       this.style.transform =
         "translateY(-8px) perspective(700px) rotateX(" +
         rx +
@@ -161,4 +198,13 @@ function initTilt() {
   });
 }
 
+/*
+ * IMPORTANT:
+ * Initialize the reveal animation independently from product loading.
+ * This makes the hero/upper category design appear even when the
+ * category contains zero published products.
+ */
+initReveal();
+
 loadCategoryProducts();
+

@@ -4,7 +4,7 @@ const categorySearch = document.getElementById("categorySearch");
 const categorySearchEmpty = document.getElementById("category-search-empty");
 let allCategories = [];
 
-const emojiFallback = ["🛍️", "🪞", "⌚", "🎒", "🧢", "📦", "🔋", "🏷️"];
+const emojiFallback = [""];
 
 function categoryEmoji(index) {
   return emojiFallback[index % emojiFallback.length];
@@ -15,7 +15,12 @@ function renderCategories(categories) {
   if (!catGrid) return;
   catGrid.innerHTML = "";
   if (!categories.length) {
-    if (categorySearchEmpty) categorySearchEmpty.hidden = false;
+    if (categorySearchEmpty) {
+      categorySearchEmpty.textContent = allCategories.length
+        ? "No categories match your search."
+        : "No categories available yet.";
+      categorySearchEmpty.hidden = false;
+    }
     return;
   }
   if (categorySearchEmpty) categorySearchEmpty.hidden = true;
@@ -40,7 +45,11 @@ async function loadCategories() {
   try {
     const response = await fetch(SHOP_API_BASE + "/categories");
     const data = await response.json();
-    if (!data.success) return;
+    if (!data.success) {
+      allCategories = [];
+      renderCategories([]);
+      return;
+    }
     // "Others" is a backend fallback category for products whose original
     // category was deleted. It is intentionally hidden from the public
     // category browsing UI.
@@ -50,6 +59,8 @@ async function loadCategories() {
     filterCategories();
   } catch (err) {
     console.error("Failed to load categories:", err);
+    allCategories = [];
+    renderCategories([]);
   }
 }
 
@@ -60,6 +71,11 @@ function filterCategories() {
 }
 
 categorySearch?.addEventListener("input", filterCategories);
+
+/* Initialize page reveal independently of category loading.
+   Previously this only ran after category cards were rendered, so when
+   there were zero categories the hero/section header stayed opacity: 0. */
+initReveal();
 
 /* ===== SCROLL REVEAL ===== */
 function initReveal() {
