@@ -144,16 +144,7 @@
           [
             31.7769058,
             28.804922
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
+          ],
           [
             31.7779147,
             28.8063916

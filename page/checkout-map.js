@@ -391,7 +391,7 @@
 
       if (!isInsideShippingArea(center)) {
         showMapError(
-          "Please select a location inside the highlighted Nasr City delivery area."
+          "Please select a location inside the highlighted Egypt delivery area."
         );
         return;
       }
