@@ -2,10 +2,8 @@
   "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {},
       "geometry": {
-        "type": "LineString",
+        "type": "MultiPolygon",
         "coordinates": [
           [
             33.4702758,
@@ -30,16 +28,7 @@
           [
             33.398119,
             25.389443
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
+          ],
           [
             33.3977273,
             25.3896851
@@ -107,16 +96,7 @@
           [
             33.2101079,
             25.5985495
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
+          ],
           [
             33.2099871,
             25.5986088
@@ -336,16 +316,7 @@
           [
             32.7270094,
             25.8111301
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
+          ],
           [
             32.7270017,
             25.8108937
@@ -357,16 +328,7 @@
           [
             32.7267302,
             25.8126241
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
+          ],
           [
             32.7267327,
             25.8126242
@@ -394,16 +356,7 @@
           [
             32.7113909,
             25.8157829
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
+          ],
           [
             32.7113831,
             25.8157945
@@ -669,7 +622,16 @@
             25.3076292
           ]
         ]
-      }
+
+    }, 
+      "type": "Feature", 
+      "properties": {
+        "source": "https://simplemaps.com", 
+        "id": "EG", 
+        "name": "Egypt"
+      }, 
+      "id": 1
+      
     }
   ]
 }
