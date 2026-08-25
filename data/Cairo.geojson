@@ -1,9 +1,10 @@
 {
-  "type": "Feature",
-  "properties": {},
-  "geometry": {
-    "type": "LineString",
-    "coordinates": [
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
       [
         31.3334104,
         29.768081
@@ -631,7 +632,18 @@
       [
         31.3332717,
         29.7679724
-      ]
-    ]
-  }
+          ]
+        ]
+
+    }, 
+      "type": "Feature", 
+      "properties": {
+        "source": "https://simplemaps.com", 
+        "id": "EG", 
+        "name": "Egypt"
+      }, 
+      "id": 1
+      
+    }
+  ]
 }
