@@ -472,7 +472,7 @@
             }
 
             showMapError(
-              "Your current location is outside our Nasr City delivery area."
+              "Your current location is outside our  delivery area."
             );
 
             setTimeout(function () {

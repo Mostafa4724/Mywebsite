@@ -5,6 +5,8 @@
       "geometry": {
         "type": "MultiPolygon",
         "coordinates": [
+    [
+ [
       [
         32.0727192,
         31.3600902
@@ -565,7 +567,9 @@
         32.072687,
         31.3599069
           ]
-        ]
+             ]
+   ]
+]
 
     }, 
       "type": "Feature", 
