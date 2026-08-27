@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const API_BASE = "http://127.0.0.1:5000";
+ 
 
   const publishedGrid = document.getElementById("publishedProductsGrid");
   const draftGrid = document.getElementById("draftProductsGrid");

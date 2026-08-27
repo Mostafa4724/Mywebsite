@@ -4,7 +4,7 @@ window.selectedFile = null;
 (function () {
   "use strict";
 
-  const API_BASE = "http://127.0.0.1:5000";
+ 
   const token = () => sessionStorage.getItem("token") || "";
 
   const form = document.getElementById("editProductForm");

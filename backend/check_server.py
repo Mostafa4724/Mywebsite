@@ -1,10 +1,38 @@
-import json
+import re
+import os
+import pathlib
 import urllib.request
 import urllib.error
 
-API = "http://127.0.0.1:5000"
 
 
+def get_config(key, path, default=None):
+    """يقرأ ثابت من ملف إعدادات بأي صيغة: JSON / ENV / JS / PY / INI / YAML."""
+    if os.getenv(key):
+        return os.getenv(key)
+
+    p = pathlib.Path(path)
+    if not p.is_absolute():
+        p = pathlib.Path(__file__).parent / p
+
+    try:
+        text = p.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return default
+
+    m = re.search(
+        rf'["\']?\b{re.escape(key)}\b["\']?\s*[:=]\s*["\']?([^"\',;\r\n}}]+)',
+        text,
+    )
+    if not m:
+        return default
+
+    value = m.group(1).strip()
+    value = re.split(r'\s+//|\s+#', value)[0].strip()  # شيل التعليقات في آخر السطر
+    return value or default
+
+API = get_config("API", "../config.js", "http://127.0.0.1:5000").rstrip("/")
+ 
 def req(path, method="GET", body=None):
     url = API + path
     data = None

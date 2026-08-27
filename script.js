@@ -47,7 +47,7 @@ function saveCart(cart) {
   scheduleBackInStockCheck();
 }
 
-const SHOP_API_BASE = "http://127.0.0.1:5000";
+
 let _allProductsCache = null;
 let _productByIdCache = {};
 
@@ -1571,7 +1571,7 @@ if (typeof setupPromoCode === "function") {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/me", {
+      const response = await fetch(`${API}/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

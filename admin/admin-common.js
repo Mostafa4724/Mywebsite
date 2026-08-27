@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const API_BASE = "http://127.0.0.1:5000";
+  
   async function loadAdminAvatar() {
     const avatar = document.querySelector(".admin-user-avatar");
     if (!avatar) return;

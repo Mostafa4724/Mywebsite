@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  const API_BASE = "http://127.0.0.1:5000";
+  
   const ADD_CATEGORY_VALUE = "__add_category__";
   const LOGIN_PAGE = "../page/login.html";
   const PRODUCTS_PAGE = "admin_product.html";

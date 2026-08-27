@@ -4,7 +4,6 @@
   const list=document.getElementById("variantsList");
   if(!list) return;
   const addBtn=document.getElementById("addVariantBtn");
-  const API="http://127.0.0.1:5000";
   let seq=0;
   const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   function id(){ seq++; return "v-"+Date.now().toString(36)+"-"+seq; }

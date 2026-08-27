@@ -1,6 +1,6 @@
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
-const API = "http://127.0.0.1:5000";
+//const API = "http://127.0.0.1:5000";
 
 let loadedProduct = null;
 let selectedVariant = null;
@@ -9,6 +9,7 @@ let galleryImages = [];
 let galleryIndex = 0;
 
 function imageUrl(name) {
+ 
   if (!name) return "https://picsum.photos/500/400?random=" + productId;
   if (/^https?:\/\//i.test(String(name))) return String(name);
   return `${API}/uploads/products/${encodeURIComponent(name)}`;
@@ -418,7 +419,7 @@ async function submitReview() {
 
     const response = await fetch(
 
-        `http://127.0.0.1:5000/products/${productId}/reviews`,
+        `${API}/products/${productId}/reviews`,
 
         {
 
@@ -468,7 +469,7 @@ async function loadReviews() {
 
     const response = await fetch(
 
-        `http://127.0.0.1:5000/products/${productId}/reviews`
+        `${API}/products/${productId}/reviews`
 
     );
 

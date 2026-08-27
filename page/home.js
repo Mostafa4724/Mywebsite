@@ -108,7 +108,7 @@ function renderHomeProducts() {
 
 async function loadProducts() {
   try {
-    const response = await fetch("http://127.0.0.1:5000/products");
+    const response = await fetch(`${API}/products`);
     const data = await response.json();
     if (!data.success) return;
     homeProducts = data.products || [];

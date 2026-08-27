@@ -70,7 +70,7 @@
 
   async function loadBankTransferInstructions() {
     try {
-      const response = await fetch("http://127.0.0.1:5000/payment-settings");
+      const response = await fetch(`${API}/payment-settings`);
       const data = await response.json();
       if (!data.success) return;
       const bank = data.bank_transfer || {};
