@@ -614,14 +614,286 @@ footer {
     font-size: 2.25rem;
   }
 }
+/* =========================================================
+   RESPONSIVE NAVIGATION
+   Tablet → Mobile → Extra Small Mobile
+   ========================================================= */
 
-@media (max-width: 640px) {
-  .nav-inner {
-    padding: 12px 16px;
-  }
-  .nav-links {
-    gap: 14px;
-  }
+/* ---------- Tablet ---------- */
+@media (max-width: 900px) {
+
+    .nav-inner {
+        max-width: 100%;
+        padding: 14px 20px;
+        gap: 12px;
+    }
+
+    .nav-links {
+        gap: 20px;
+    }
+
+    .nav-links a {
+        font-size: 12px;
+        letter-spacing: 0.4px;
+    }
+
+    .nav-icons {
+        gap: 10px;
+    }
+}
+
+
+/* ---------- Small Tablet / Large Mobile ---------- */
+@media (max-width: 700px) {
+
+    .site-nav + * {
+        padding-top: 64px;
+    }
+
+    .nav-inner {
+        padding: 13px 16px;
+        gap: 8px;
+    }
+
+    .logo {
+        font-size: 18px;
+        white-space: nowrap;
+    }
+
+    .nav-links {
+        gap: 14px;
+    }
+
+    .nav-links a {
+        font-size: 11px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+    }
+
+    .nav-icons {
+        gap: 6px;
+    }
+
+    .icon-btn {
+        padding: 5px;
+    }
+
+    .icon-btn.cart {
+        width: 22px;
+        height: 22px;
+    }
+
+    .cart-bubble {
+        top: -7px;
+        right: -7px;
+        min-width: 18px;
+        height: 18px;
+        font-size: 10px;
+        padding: 0 4px;
+    }
+}
+
+
+/* ---------- Mobile ---------- */
+@media (max-width: 600px) {
+
+    .site-nav + * {
+        padding-top: 60px;
+    }
+
+    .site-nav {
+        width: 100%;
+    }
+
+    .nav-inner {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        gap: 8px;
+    }
+
+    .logo {
+        font-size: 17px;
+        flex-shrink: 0;
+    }
+
+    .nav-links {
+        gap: 10px;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .nav-links li {
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .nav-links a {
+        font-size: 10px;
+        letter-spacing: 0;
+        padding: 5px 0;
+        white-space: nowrap;
+    }
+
+    .nav-icons {
+        flex-shrink: 0;
+        gap: 4px;
+    }
+
+    .icon-btn {
+        padding: 4px;
+    }
+
+    .icon-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-btn.cart {
+        width: 21px;
+        height: 21px;
+    }
+}
+
+
+/* ---------- Standard Phone ---------- */
+@media (max-width: 480px) {
+
+    .site-nav + * {
+        padding-top: 58px;
+    }
+
+    .nav-inner {
+        padding: 11px 12px;
+        gap: 6px;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+
+    .nav-links {
+        gap: 7px;
+    }
+
+    .nav-links a {
+        font-size: 9px;
+        font-weight: 600;
+    }
+
+    .nav-icons {
+        gap: 2px;
+    }
+
+    .icon-btn svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .cart-bubble {
+        top: -6px;
+        right: -6px;
+        min-width: 17px;
+        height: 17px;
+        font-size: 9px;
+    }
+}
+
+
+/* ---------- Small Phone ---------- */
+@media (max-width: 380px) {
+
+    .site-nav + * {
+        padding-top: 55px;
+    }
+
+    .nav-inner {
+        padding: 10px 9px;
+        gap: 5px;
+    }
+
+    .logo {
+        font-size: 15px;
+    }
+
+    .nav-links {
+        gap: 5px;
+    }
+
+    .nav-links a {
+        font-size: 8px;
+    }
+
+    .icon-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .icon-btn.cart {
+        width: 19px;
+        height: 19px;
+    }
+
+    .cart-bubble {
+        top: -6px;
+        right: -6px;
+        min-width: 16px;
+        height: 16px;
+        font-size: 8px;
+        padding: 0 3px;
+    }
+}
+
+
+/* ---------- Extremely Small Screens ---------- */
+@media (max-width: 320px) {
+
+    .site-nav + * {
+        padding-top: 52px;
+    }
+
+    .nav-inner {
+        padding: 9px 7px;
+        gap: 3px;
+    }
+
+    .logo {
+        font-size: 14px;
+    }
+
+    .nav-links {
+        gap: 4px;
+    }
+
+    .nav-links a {
+        font-size: 7px;
+    }
+
+    .nav-icons {
+        gap: 1px;
+    }
+
+    .icon-btn {
+        padding: 3px;
+    }
+
+    .icon-btn svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .icon-btn.cart {
+        width: 18px;
+        height: 18px;
+    }
+
+    .cart-bubble {
+        top: -5px;
+        right: -5px;
+        min-width: 15px;
+        height: 15px;
+        font-size: 7px;
+    }
 }
 
 /* ===== Cart page ===== */
