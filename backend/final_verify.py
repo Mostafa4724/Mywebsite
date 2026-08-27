@@ -4,17 +4,15 @@ status update. Uses product 14 (SaleTest2) which has an active sale window
 import json
 import urllib.request
 import urllib.error
-import re
 import os
 import pathlib
-
-
+import re
 
 
 def get_config(key, path, default=None):
-    """يقرأ ثابت من ملف إعدادات بأي صيغة: JSON / ENV / JS / PY / INI / YAML."""
-    if os.getenv(key):
-        return os.getenv(key)
+    env_value = os.getenv(key)
+    if env_value:
+        return env_value.rstrip("/")
 
     p = pathlib.Path(path)
     if not p.is_absolute():
@@ -22,21 +20,22 @@ def get_config(key, path, default=None):
 
     try:
         text = p.read_text(encoding="utf-8")
-    except FileNotFoundError:
+    except (FileNotFoundError, OSError):
         return default
 
-    m = re.search(
-        rf'["\']?\b{re.escape(key)}\b["\']?\s*[:=]\s*["\']?([^"\',;\r\n}}]+)',
-        text,
-    )
+    pattern = (r'(?:export\s+)?(?:const|let|var)\s+' + re.escape(key) +
+               r'\s*=\s*["\']([^"\']+)["\']|' +
+               r'["\']' + re.escape(key) + r'["\']\s*:\s*["\']([^"\']+)["\']|' +
+               r'(?:^|[\n\r])\s*' + re.escape(key) + r'\s*=\s*([^\s#;]+)')
+    m = re.search(pattern, text, flags=re.I)
     if not m:
         return default
 
-    value = m.group(1).strip()
-    value = re.split(r'\s+//|\s+#', value)[0].strip()  # شيل التعليقات في آخر السطر
-    return value or default
+    value = next((g for g in m.groups() if g is not None), default)
+    return str(value).strip().rstrip("/") if value else default
 
-API = get_config("API", "../config.js", "http://127.0.0.1:5000").rstrip("/")
+
+API = get_config("API", "../config.js", "http://127.0.0.1:5000")
 
 
 def req(path, method="GET", body=None):

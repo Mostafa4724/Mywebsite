@@ -46,7 +46,7 @@
   function getImageUrl(product) {
     if (product.image) {
       return (
-        API_BASE +
+        API +
         "/uploads/products/" +
         encodeURIComponent(product.image)
       );
@@ -247,7 +247,7 @@
 
   async function loadCategories() {
     try {
-      const response = await fetch(API_BASE + "/categories");
+      const response = await fetch(API + "/categories");
       if (!response.ok) return;
 
       const data = await response.json();
@@ -270,7 +270,7 @@
     }
 
     try {
-      const response = await fetch(API_BASE + "/products");
+      const response = await fetch(API + "/products");
 
       if (!response.ok) {
         throw new Error(
@@ -324,7 +324,7 @@
 
     try {
       const response = await fetch(
-        API_BASE +
+        API +
           "/admin/products/" +
           product.id,
         {
@@ -404,7 +404,7 @@
     categories.forEach((cat) => {
       const row = document.createElement("div"); row.className = "admin-category-row";
       if (cat.image_url) {
-        const img = document.createElement("img"); img.className="admin-category-thumb"; img.src=API_BASE+cat.image_url; img.alt=cat.name;
+        const img = document.createElement("img"); img.className="admin-category-thumb"; img.src=API+cat.image_url; img.alt=cat.name;
         row.appendChild(img);
       } else {
         const spacer=document.createElement("div"); spacer.className="admin-category-thumb"; row.appendChild(spacer);
@@ -417,7 +417,7 @@
   }
 
   async function refreshCategoryManagementList() {
-    const response=await fetch(API_BASE+"/categories",{cache:"no-store"});
+    const response=await fetch(API+"/categories",{cache:"no-store"});
     const data=await response.json();
     if(!response.ok || !data.success) throw new Error(data.message || "Could not load categories.");
     categoriesById={}; (data.categories||[]).forEach(c=>categoriesById[String(c.id)]=c.name);
@@ -454,7 +454,7 @@
     const formData=new FormData(); formData.append("name",name); formData.append("image",file);
     const button=document.getElementById("adminSaveCategory"); button.disabled=true; button.textContent="Creating...";
     try{
-      const response=await fetch(API_BASE+"/categories",{method:"POST",headers:{Authorization:"Bearer "+token},body:formData});
+      const response=await fetch(API+"/categories",{method:"POST",headers:{Authorization:"Bearer "+token},body:formData});
       const data=await response.json();
       if(!response.ok || !data.success) throw new Error(data.message || "Could not create category.");
       await refreshCategoryManagementList();
@@ -469,7 +469,7 @@
     if(!window.confirm('Are you sure you want to delete "'+name+'"?')) return;
     const token=getToken(); if(!token){window.alert("Your admin session has expired. Please log in again.");return;}
     try{
-      const response=await fetch(API_BASE+"/categories/"+encodeURIComponent(id),{method:"DELETE",headers:{Authorization:"Bearer "+token}});
+      const response=await fetch(API+"/categories/"+encodeURIComponent(id),{method:"DELETE",headers:{Authorization:"Bearer "+token}});
       const data=await response.json(); if(!response.ok || !data.success) throw new Error(data.message || "Could not delete category.");
       await refreshCategoryManagementList(); await loadProducts();
       window.dispatchEvent(new StorageEvent("storage",{key:"categoryListChanged"}));

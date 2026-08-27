@@ -1,9 +1,6 @@
 (function () {
   "use strict";
-
-  // const API_BASE = "http://127.0.0.1:5000";
-
-  const orderId =
+const orderId =
     new URLSearchParams(
       window.location.search
     ).get("id");
@@ -509,15 +506,15 @@
     // If the API ever returns the path instead of just the filename,
     // normalize it instead of creating /uploads/products/uploads/...
     if (imagePath.indexOf("/uploads/products/") === 0) {
-      return API_BASE + imagePath;
+      return API + imagePath;
     }
 
     if (imagePath.indexOf("uploads/products/") === 0) {
-      return API_BASE + "/" + imagePath;
+      return API + "/" + imagePath;
     }
 
     return (
-      API_BASE +
+      API +
       "/uploads/products/" +
       encodeURIComponent(imagePath)
     );
@@ -531,7 +528,7 @@
     try {
 
       var response = await fetch(
-        API_BASE + "/products",
+        API + "/products",
         {
           headers: {
             "Accept": "application/json"
@@ -1250,7 +1247,7 @@
 
       const response =
         await fetch(
-          API_BASE +
+          API +
           "/orders/" +
           orderData.id +
           "/status",
@@ -1492,7 +1489,7 @@
       }
 
       const response = await fetch(
-        API_BASE + "/orders/" + orderData.id + "/payment",
+        API + "/orders/" + orderData.id + "/payment",
         {
           method: "PUT",
           headers: {
@@ -1812,7 +1809,7 @@
 
       const response =
         await fetch(
-          API_BASE +
+          API +
           "/orders/" +
           orderId,
           {

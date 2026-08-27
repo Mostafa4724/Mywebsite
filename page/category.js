@@ -1,4 +1,4 @@
-// SHOP_API_BASE is provided globally by /script.js (loaded first).
+// API is provided globally by /script.js (loaded first).
 const catGrid = document.getElementById("catGrid");
 const categorySearch = document.getElementById("categorySearch");
 const categorySearchEmpty = document.getElementById("category-search-empty");
@@ -31,7 +31,7 @@ function renderCategories(categories) {
     card.href = "catagory-species.html?category=" + cat.id;
     card.setAttribute("aria-label", cat.name);
     card.dataset.name = cat.name;
-    const categoryImage = cat.image_url ? (SHOP_API_BASE + cat.image_url) : "https://picsum.photos/seed/" + encodeURIComponent(cat.name) + "/600/400.jpg";
+    const categoryImage = cat.image_url ? (API + cat.image_url) : "https://picsum.photos/seed/" + encodeURIComponent(cat.name) + "/600/400.jpg";
     card.innerHTML = '<div class="cat-item__img"><span class="cat-item__num">' + String(index + 1).padStart(2, "0") + '</span><img src="' + categoryImage + '" alt="' + cat.name + '" loading="lazy" /><div class="cat-item__icon-wrap">' + categoryEmoji(index) + '</div></div>' +
       '<div class="cat-item__body"><h3 class="cat-item__name">' + cat.name + '</h3><p class="cat-item__desc">Browse all products in ' + cat.name + '.</p><div class="cat-item__footer"><span class="cat-item__count">' + (cat.product_count || 0) + ' items</span><span class="cat-item__arrow">↗</span></div></div>';
     catGrid.appendChild(card);
@@ -43,7 +43,7 @@ function renderCategories(categories) {
 async function loadCategories() {
   if (!catGrid) return;
   try {
-    const response = await fetch(SHOP_API_BASE + "/categories");
+    const response = await fetch(API + "/categories");
     const data = await response.json();
     if (!data.success) {
       allCategories = [];

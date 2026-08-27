@@ -3,7 +3,7 @@ function isStorefrontProductVisible(product) {
   return String(product && product.status || "draft").toLowerCase() === "published";
 }
 
-// SHOP_API_BASE is provided globally by /script.js (loaded first).
+// API is provided globally by /script.js (loaded first).
 const params = new URLSearchParams(window.location.search);
 const categoryId = params.get("category");
 
@@ -38,7 +38,7 @@ async function loadCategoryProducts() {
 
   try {
     var catRes = await fetch(
-      SHOP_API_BASE + "/categories/" + categoryId
+      API + "/categories/" + categoryId
     );
 
     var catData = await catRes.json();
@@ -62,7 +62,7 @@ async function loadCategoryProducts() {
     }
 
     var prodUrl =
-      SHOP_API_BASE +
+      API +
       "/products" +
       (categoryId
         ? "?category_id=" + encodeURIComponent(categoryId)

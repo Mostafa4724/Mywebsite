@@ -1,9 +1,6 @@
 (function () {
   "use strict";
-
-  var API_BASE = "http://127.0.0.1:5000";
-
-  var order = null;
+var order = null;
   var productsById = {};
   var isLoading = true;
   var loadError = null;
@@ -147,16 +144,16 @@
     }
 
     if (imagePath.startsWith("/uploads/")) {
-      return API_BASE + imagePath;
+      return API + imagePath;
     }
 
     if (imagePath.startsWith("uploads/")) {
-      return API_BASE + "/" + imagePath;
+      return API + "/" + imagePath;
     }
 
     // Same URL construction used by buildProductCard() in script.js.
     return (
-      API_BASE +
+      API +
       "/uploads/products/" +
       imagePath
     );
@@ -167,7 +164,7 @@
 
     try {
       var response = await fetch(
-        API_BASE + "/products"
+        API + "/products"
       );
 
       if (!response.ok) {
@@ -854,7 +851,7 @@
 
       var response =
         await fetch(
-          API_BASE +
+          API +
           "/orders/" +
           encodeURIComponent(
             orderIdStr
@@ -962,7 +959,7 @@
 
       var response =
         await fetch(
-          API_BASE +
+          API +
           "/orders/" +
           order.id,
           {

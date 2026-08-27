@@ -3,10 +3,7 @@
 // =================================================================
 (function () {
   "use strict";
-
-  // const API_BASE = "http://127.0.0.1:5000";
-
-  const ordersTableBody =
+const ordersTableBody =
     document.getElementById(
       "ordersTableBody"
     );
@@ -414,7 +411,7 @@
 
       const response =
         await fetch(
-          API_BASE +
+          API +
             "/orders",
           {
             headers: {
@@ -440,7 +437,7 @@
 
       ordersTableBody.innerHTML =
         '<tr><td colspan="7" style="text-align:center;padding:40px;color:#ef4444;">Failed to load orders. Is the server running at ' +
-        API_BASE +
+        API +
         "?</td></tr>";
     }
 

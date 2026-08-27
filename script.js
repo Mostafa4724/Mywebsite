@@ -128,7 +128,7 @@ function buildProductCard(product, index) {
   const imageUrls = imageNames.map(name =>
     /^https?:\/\//i.test(String(name))
       ? String(name)
-      : `${SHOP_API_BASE}/uploads/products/${encodeURIComponent(name)}`
+      : `${API}/uploads/products/${encodeURIComponent(name)}`
   );
   if (!imageUrls.length) imageUrls.push("https://picsum.photos/300/250?random=" + product.id);
 
@@ -544,7 +544,7 @@ async function fetchProductById(productId) {
   }
 
   try {
-    const response = await fetch(`${SHOP_API_BASE}/products/${productId}`);
+    const response = await fetch(`${API}/products/${productId}`);
     if (!response.ok) return null;
     const data = await response.json();
     if (!data.success) return null;
@@ -559,7 +559,7 @@ async function fetchProductById(productId) {
 async function fetchAllProducts() {
   if (_allProductsCache) return _allProductsCache;
   try {
-    const response = await fetch(`${SHOP_API_BASE}/products`);
+    const response = await fetch(`${API}/products`);
     const data = await response.json();
     if (!data.success) return [];
     _allProductsCache = data.products;
@@ -631,7 +631,7 @@ async function normalizeCartItems(cart) {
 
     if (currentProduct) {
       let currentPrice = Number(currentProduct.sale_active ? currentProduct.sale_price : currentProduct.price) || 0;
-      let currentImage = currentProduct.image ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}` : item.image;
+      let currentImage = currentProduct.image ? `${API}/uploads/products/${currentProduct.image}` : item.image;
       if (item.variant_id && Array.isArray(currentProduct.variants)) {
         const variant = currentProduct.variants.find(v => Number(v.id) === Number(item.variant_id));
         const size = variant && Array.isArray(variant.sizes)
@@ -639,7 +639,7 @@ async function normalizeCartItems(cart) {
           : null;
         if (variant && size) {
           currentPrice = getVariantCartPrice(variant, size);
-          currentImage = variant.image ? `${SHOP_API_BASE}/uploads/products/${variant.image}` : currentImage;
+          currentImage = variant.image ? `${API}/uploads/products/${variant.image}` : currentImage;
           item.color = variant.color;
           item.variant_image = currentImage;
           item.tax_rate = Number(currentProduct.tax_rate ?? 8);
@@ -666,7 +666,7 @@ function buildCartItemState(item, currentProduct) {
     ? (currentProduct.sale_active ? Number(currentProduct.sale_price) : Number(currentProduct.price || 0))
     : Number(item.price || 0);
   let productImage = currentProduct && currentProduct.image
-    ? `${SHOP_API_BASE}/uploads/products/${currentProduct.image}`
+    ? `${API}/uploads/products/${currentProduct.image}`
     : item.image;
   const taxRate = currentProduct ? Number(currentProduct.tax_rate ?? 8) : Number(item.tax_rate ?? 8);
   let color = item.color || null;
@@ -679,7 +679,7 @@ function buildCartItemState(item, currentProduct) {
       return { available:false, name:productName, price:productPrice, image:productImage, status:"out", currentProduct };
     }
     productPrice = getVariantCartPrice(variant, sizeObj);
-    productImage = variant.image ? `${SHOP_API_BASE}/uploads/products/${variant.image}` : productImage;
+    productImage = variant.image ? `${API}/uploads/products/${variant.image}` : productImage;
     color = variant.color;
     size = sizeObj.size;
   }
@@ -1123,7 +1123,7 @@ async function handleBuyNow() {
 
   const image =
     product.image && product.image !== ""
-      ? `${SHOP_API_BASE}/uploads/products/${product.image}`
+      ? `${API}/uploads/products/${product.image}`
       : "https://picsum.photos/500/400?random=" + product.id;
 
   // Store a dedicated Buy-Now payload. This does NOT touch the user's cart,
@@ -1351,7 +1351,7 @@ async function placeOrder(extraData) {
   }
 
   try {
-    const response = await fetch(`${SHOP_API_BASE}/orders`, {
+    const response = await fetch(`${API}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + (sessionStorage.getItem("token") || "") },
       body: JSON.stringify({

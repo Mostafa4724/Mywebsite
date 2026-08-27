@@ -1676,11 +1676,11 @@ function getProductImage(image) {
     }
 
     if (image.startsWith("/")) {
-        return API_BASE + image;
+        return API + image;
     }
 
     return (
-        API_BASE +
+        API +
         "/uploads/products/" +
         encodeURIComponent(image)
     );
@@ -1890,7 +1890,7 @@ async function loadDashboardData() {
 
     const data =
         await apiFetch(
-            API_BASE +
+            API +
             "/admin/dashboard"
         );
 
@@ -1928,7 +1928,7 @@ async function loadOrders() {
 
         const data =
             await apiFetch(
-                API_BASE +
+                API +
                 "/orders"
             );
 

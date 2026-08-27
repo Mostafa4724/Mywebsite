@@ -5,9 +5,7 @@
 
 (function () {
   "use strict";
-
-  // const API_BASE = "http://127.0.0.1:5000";
-  const REFRESH_INTERVAL = 3000;
+const REFRESH_INTERVAL = 3000;
 
 
   // ================================================================
@@ -94,7 +92,7 @@
 
 
     const response = await fetch(
-        API_BASE + "/orders",
+        API + "/orders",
         {
             method: "GET",
             headers: headers,
@@ -195,7 +193,7 @@
     if (!bubble) return;
     try {
       const token = sessionStorage.getItem("token");
-      const response = await fetch(API_BASE + "/products", {
+      const response = await fetch(API + "/products", {
         cache: "no-store",
         headers: token ? { Authorization: "Bearer " + token } : {}
       });

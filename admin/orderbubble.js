@@ -5,10 +5,7 @@
 // =================================================================
 (function () {
   "use strict";
-
-  var API_BASE = "http://127.0.0.1:5000";
-
-  function isOrdersPage() {
+function isOrdersPage() {
     var path = window.location.pathname.toLowerCase();
 
     return (
@@ -68,7 +65,7 @@
       }
 
       var response = await fetch(
-        API_BASE + "/orders",
+        API + "/orders",
         {
           method: "GET",
           headers: headers,

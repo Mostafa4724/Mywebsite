@@ -1,6 +1,5 @@
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("id");
-//const API = "http://127.0.0.1:5000";
 
 let loadedProduct = null;
 let selectedVariant = null;
@@ -8,12 +7,6 @@ let selectedSize = null;
 let galleryImages = [];
 let galleryIndex = 0;
 
-function imageUrl(name) {
- 
-  if (!name) return "https://picsum.photos/500/400?random=" + productId;
-  if (/^https?:\/\//i.test(String(name))) return String(name);
-  return `${API}/uploads/products/${encodeURIComponent(name)}`;
-}
 
 function renderGallery() {
   const image = document.getElementById("product-image");

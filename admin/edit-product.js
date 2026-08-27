@@ -90,9 +90,9 @@ window.selectedFile = null;
     if (/^https?:\/\//i.test(value) || value.startsWith("data:")) return value;
     let url;
     if (value.startsWith("/uploads/products/")) {
-      url = API_BASE + value;
+      url = API + value;
     } else {
-      url = API_BASE + "/uploads/products/" + encodeURIComponent(value);
+      url = API + "/uploads/products/" + encodeURIComponent(value);
     }
     return url + "?v=" + Date.now();
   }
@@ -239,7 +239,7 @@ window.selectedFile = null;
   }
 
   async function loadCategories(selectedId) {
-    const response = await fetch(API_BASE + "/categories");
+    const response = await fetch(API + "/categories");
     const data = await responseJson(response);
     categorySelect.innerHTML = '<option value="" disabled>Select category</option>';
     data.categories.forEach((cat) => {
@@ -412,7 +412,7 @@ window.selectedFile = null;
       return;
     }
     try {
-      const response = await fetch(`${API_BASE}/products/${productId}`);
+      const response = await fetch(`${API}/products/${productId}`);
       const data = await responseJson(response);
       await loadCategories(data.product.category_id);
       fillForm(data.product);
@@ -513,7 +513,7 @@ window.selectedFile = null;
     });
 
     body.append("_method", "PUT");
-    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
+    const response = await fetch(`${API}/admin/products/${productId}`, {
       method: "POST",
       headers: authHeaders(),
       body: body,
@@ -529,7 +529,7 @@ window.selectedFile = null;
   }
 
   async function deleteProduct() {
-    const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
+    const response = await fetch(`${API}/admin/products/${productId}`, {
       method: "DELETE",
       headers: authHeaders(),
     });

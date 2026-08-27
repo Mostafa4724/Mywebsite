@@ -162,7 +162,7 @@
     }
 
     try {
-      const response = await fetch(`${API_BASE}/admin/dashboard`, {
+      const response = await fetch(`${API}/admin/dashboard`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

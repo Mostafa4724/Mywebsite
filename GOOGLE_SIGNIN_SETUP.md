@@ -6,8 +6,8 @@ This project now includes the official Google Identity Services button on `page/
 
 In Google Cloud, create/configure an OAuth 2.0 **Web application** client. Add the exact frontend origins you use, for example:
 
-- `http://127.0.0.1:5501`
-- `http://localhost:5501`
+- `https://YOUR-DOMAIN.com`
+- `https://YOUR-DOMAIN.com`
 
 If you use port 5500 too, add that origin as well.
 

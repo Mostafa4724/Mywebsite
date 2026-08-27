@@ -1,8 +1,6 @@
 (() => {
   "use strict";
-
-  // const API_BASE = "http://127.0.0.1:5000";
-  const container = document.getElementById("ordersContainer");
+const container = document.getElementById("ordersContainer");
 
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, ch => ({
@@ -102,7 +100,7 @@
     show('<div class="orders-loading">Loading your orders...</div>');
 
     try {
-      const response = await fetch(API_BASE + "/orders", {
+      const response = await fetch(API + "/orders", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

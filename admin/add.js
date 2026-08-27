@@ -233,7 +233,7 @@
   async function loadCategories() {
     if (!categorySelect) return;
     try {
-      const response = await fetch(API_BASE + "/categories");
+      const response = await fetch(API + "/categories");
       const data = await readJson(response);
       if (!data.success) return;
 
@@ -311,7 +311,7 @@
     saveCategoryBtn.textContent = "Saving...";
 
     try {
-      const response = await fetch(API_BASE + "/categories", {
+      const response = await fetch(API + "/categories", {
         method: "POST",
         headers: getAuthHeaders(true),
         body: JSON.stringify({ name: name }),
@@ -1141,7 +1141,7 @@
     setBusy(true, "Saving...");
 
     try {
-      const response = await fetch(API_BASE + "/admin/products", {
+      const response = await fetch(API + "/admin/products", {
         method: "POST",
         headers: getAuthHeaders(false), // no Content-Type — FormData sets it
         body: buildFormData(statusOverride),
@@ -1185,7 +1185,7 @@
     } catch (err) {
       console.error("Fetch error:", err);
       showToast(
-        "Cannot reach the server at " + API_BASE + ". Make sure Flask is running."
+        "Cannot reach the server at " + API + ". Make sure Flask is running."
       );
     } finally {
       setBusy(false, "");

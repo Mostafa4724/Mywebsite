@@ -10,7 +10,7 @@
     avatar.textContent = (fallback.charAt(0) || "A").toUpperCase();
     if (!token) return;
     try {
-      const response = await fetch(API_BASE + "/me", { headers: { Authorization: "Bearer " + token } });
+      const response = await fetch(API + "/me", { headers: { Authorization: "Bearer " + token } });
       const data = await response.json();
       const user = data.user || data;
       const username = String(user?.username || user?.name || fallback).trim();
