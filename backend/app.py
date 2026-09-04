@@ -17,6 +17,7 @@ from werkzeug.security import generate_password_hash
 from products import products_bp
 from orders import orders_bp
 from auth import auth_bp
+from account import account_bp
 from categories import categories_bp
 
 from database import db
@@ -47,7 +48,12 @@ app = Flask(__name__)
 
 app.config.from_object(Config)
 
-CORS(app)
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+CORS(app, origins=allowed_origins or [], supports_credentials=False)
 
 
 # ============================================================
@@ -125,6 +131,31 @@ def ensure_schema_compatibility():
 
 
 jwt = JWTManager(app)
+
+
+# ============================================================
+# JWT error responses
+# ============================================================
+
+@jwt.unauthorized_loader
+def jwt_missing(reason):
+    return jsonify(success=False, message="Authentication required."), 401
+
+
+@jwt.invalid_token_loader
+def jwt_invalid(reason):
+    return jsonify(success=False, message="Invalid authentication token."), 401
+
+
+@jwt.expired_token_loader
+def jwt_expired(jwt_header, jwt_payload):
+    return jsonify(success=False, message="Authentication token expired."), 401
+
+
+@jwt.revoked_token_loader
+def jwt_revoked(jwt_header, jwt_payload):
+    return jsonify(success=False, message="Authentication token revoked."), 401
+
 
 
 # ============================================================
@@ -358,6 +389,7 @@ def debug_products():
 # ============================================================
 
 app.register_blueprint(auth_bp)
+app.register_blueprint(account_bp)
 app.register_blueprint(products_bp)
 app.register_blueprint(orders_bp)
 app.register_blueprint(categories_bp)
@@ -410,6 +442,13 @@ def migrate():
             "users",
             "google_sub",
             "VARCHAR(255)",
+        )
+
+        _ensure_column(
+            conn,
+            "users",
+            "token_version",
+            "INTEGER NOT NULL DEFAULT 0",
         )
 
         # ----------------------------------------------------
@@ -784,190 +823,6 @@ with app.app_context():
     db.create_all()
 
     migrate()
-
-
-# ============================================================
-# Login
-# ============================================================
-
-@app.route("/login", methods=["POST"])
-def login():
-
-    data = request.get_json(silent=True) or {}
-
-    email = (
-        data.get("email") or ""
-    ).strip().lower()
-
-    password = data.get("password") or ""
-
-    if not email or not password:
-
-        return jsonify(
-            success=False,
-            message="Email and password are required",
-        ), 400
-
-    user = User.query.filter(
-        db.func.lower(User.email) == email
-    ).first()
-
-    if user is None or not user.check_password(password):
-
-        return jsonify(
-            success=False,
-            message="Invalid email or password",
-        ), 401
-
-    token = create_access_token(
-        identity=str(user.id)
-    )
-
-    return jsonify(
-        success=True,
-        token=token,
-        user={
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-        },
-    )
-
-
-# ============================================================
-# Current User
-# ============================================================
-
-@app.route("/me", methods=["GET"])
-@jwt_required()
-def me():
-
-    identity = get_jwt_identity()
-
-    user = User.query.get(int(identity))
-
-    if user is None:
-
-        return jsonify(
-            success=False,
-            message="User not found",
-        ), 404
-
-    return jsonify(
-        success=True,
-        user={
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-        },
-    )
-
-
-# ============================================================
-# Register
-# ============================================================
-
-@app.route("/register", methods=["POST"])
-def register():
-
-    data = request.get_json(silent=True) or {}
-
-    username = (
-        data.get("username") or ""
-    ).strip()
-
-    email = (
-        data.get("email") or ""
-    ).strip().lower()
-
-    password = data.get("password") or ""
-
-    # --------------------------------------------------------
-    # Validation
-    # --------------------------------------------------------
-
-    if not username or not email or not password:
-
-        return jsonify(
-            success=False,
-            message=(
-                "Username, email and password are required"
-            ),
-        ), 400
-
-    if len(password) < 8:
-
-        return jsonify(
-            success=False,
-            message=(
-                "Password must be at least 8 characters"
-            ),
-        ), 400
-
-    # --------------------------------------------------------
-    # Duplicate email
-    # --------------------------------------------------------
-
-    existing_email = User.query.filter(
-        db.func.lower(User.email) == email
-    ).first()
-
-    if existing_email:
-
-        return jsonify(
-            success=False,
-            message="Email is already registered",
-        ), 409
-
-    # --------------------------------------------------------
-    # Duplicate username
-    # --------------------------------------------------------
-
-    existing_username = User.query.filter_by(
-        username=username
-    ).first()
-
-    if existing_username:
-
-        return jsonify(
-            success=False,
-            message="Username is already registered",
-        ), 409
-
-    # --------------------------------------------------------
-    # Create user
-    # --------------------------------------------------------
-
-    user = User(
-        username=username,
-        email=email,
-        password=generate_password_hash(password),
-        role="user",
-    )
-
-    db.session.add(user)
-    db.session.commit()
-
-    # --------------------------------------------------------
-    # JWT
-    # --------------------------------------------------------
-
-    token = create_access_token(
-        identity=str(user.id)
-    )
-
-    return jsonify(
-        success=True,
-        token=token,
-        user={
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-        },
-    ), 201
 
 
 # ============================================================

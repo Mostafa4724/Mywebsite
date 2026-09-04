@@ -83,8 +83,7 @@ form.addEventListener("submit", async (event) => {
     }
 
     showMessage("Success! Redirecting...", "success");
-    sessionStorage.setItem("token", data.token);
-    sessionStorage.setItem("auth_user", JSON.stringify(data.user));
+    Auth.setSession(data);
 
     // Brief pause so the user sees the success message
     setTimeout(() => {
@@ -154,8 +153,7 @@ async function handleGoogleCredentialResponse(response) {
       return;
     }
 
-    sessionStorage.setItem("token", data.token);
-    sessionStorage.setItem("auth_user", JSON.stringify(data.user));
+    Auth.setSession(data);
 
     if (data.user.role === "admin") {
       window.location.href = "../admin/dashboard.html";
@@ -222,5 +220,3 @@ async function initializeGoogleSignIn() {
 
 initializeGoogleSignIn();
 
-const forgotPasswordLink=document.getElementById("forgotPasswordLink");
-forgotPasswordLink?.addEventListener("click",async()=>{const email=(document.getElementById("email")?.value||"").trim();if(!email){showMessage("Enter your email first.","error");return;}try{const r=await fetch(`${API}/forgot-password`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})});const d=await r.json();showMessage(d.message||"Check your email.",r.ok?"success":"error")}catch(e){showMessage("Could not connect to the server.","error")}});

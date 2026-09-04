@@ -4,3 +4,5 @@ Flask-CORS
 Flask-JWT-Extended
 Werkzeug
 google-auth
+
+requests

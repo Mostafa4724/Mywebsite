@@ -171,8 +171,7 @@
       const data = await response.json().catch(() => ({}));
 
       if (response.status === 401 || response.status === 403) {
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("user");
+        Auth.clear();
         showError(data.message || "Admin access is required.");
         setTimeout(() => {
           window.location.href = "/page/login.html";
@@ -202,7 +201,7 @@
   }
 
   document.getElementById("adminLogout")?.addEventListener("click", () => {
-    sessionStorage.removeItem("token");
+    Auth.clear();
     sessionStorage.removeItem("user");
   });
 

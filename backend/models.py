@@ -48,12 +48,24 @@ class User(db.Model):
         default="user"
     )
 
+    # Incremented whenever the password changes. Tokens issued before the
+    # increment become invalid without maintaining a server-side blacklist.
+    token_version = db.Column(
+        db.Integer,
+        nullable=False,
+        default=0
+    )
+
     def check_password(self, password):
 
         return check_password_hash(
             self.password,
             password
         )
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+        self.token_version = int(self.token_version or 0) + 1
 
     def to_dict(self):
 
@@ -96,6 +108,26 @@ def _product_images(product):
         result.insert(0, product.image)
     return result[:5]
 
+
+
+class PasswordResetToken(db.Model):
+    __tablename__ = "password_reset_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+    token_hash = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship("User", backref=db.backref(
+        "password_reset_tokens", lazy=True, cascade="all, delete-orphan"
+    ))
 
 
 class Category(db.Model):

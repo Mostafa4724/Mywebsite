@@ -2,7 +2,7 @@
 // This prevents User A's cart from appearing when User B logs into the
 // same browser. The backend remains the security authority for orders.
 function getCurrentAccountId() {
-    const token = sessionStorage.getItem("token");
+    const token = (window.Auth && Auth.getToken()) || sessionStorage.getItem("token");
   if (!token) return null;
 
   try {
@@ -31,7 +31,7 @@ function getCart() {
   const key = getCartStorageKey();
   if (!key) return [];
   try {
-    return JSON.parse(sessionStorage.getItem(key)) || [];
+    return JSON.parse(localStorage.getItem(key)) || [];
   } catch {
     return [];
   }
@@ -41,7 +41,7 @@ function getCart() {
 function saveCart(cart) {
   const key = getCartStorageKey();
   if (key) {
-    sessionStorage.setItem(key, JSON.stringify(cart));
+    localStorage.setItem(key, JSON.stringify(cart));
   }
   updateCartBubble();
   scheduleBackInStockCheck();
@@ -1578,8 +1578,7 @@ if (typeof setupPromoCode === "function") {
       });
 
       if (!response.ok) {
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("auth_user");
+        Auth.clear();
         if (!isAddProductPage) {
           window.location.href = "/page/login.html";
         }
