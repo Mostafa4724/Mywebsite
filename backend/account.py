@@ -9,6 +9,7 @@ from database import db
 from mailer import send_password_reset_email
 from models import PasswordResetToken, User
 from security import current_user, user_required
+from auth import _env_int
 
 
 account_bp = Blueprint("account", __name__)
@@ -23,7 +24,7 @@ def _now():
 
 
 def _password_ok(password):
-    minimum = int(os.getenv("MIN_PASSWORD_LENGTH", "8"))
+    minimum = _env_int("MIN_PASSWORD_LENGTH", 8, minimum=8)
     return isinstance(password, str) and len(password) >= minimum
 
 
@@ -57,7 +58,7 @@ def forgot_password():
         PasswordResetToken.user_id == user.id,
         PasswordResetToken.created_at >= hour_ago
     ).count()
-    if recent_count >= int(os.getenv("PASSWORD_RESET_MAX_PER_HOUR", "5")):
+    if recent_count >= _env_int("PASSWORD_RESET_MAX_PER_HOUR", 5, minimum=1):
         return jsonify(success=True, message=RESET_MESSAGE)
 
     # New request invalidates all older links for this account.
@@ -71,7 +72,7 @@ def forgot_password():
         user_id=user.id,
         token_hash=_hash_token(raw_token),
         expires_at=_now() + timedelta(
-            minutes=int(os.getenv("PASSWORD_RESET_MINUTES", "30"))
+            minutes=_env_int("PASSWORD_RESET_MINUTES", 30, minimum=1)
         )
     )
     db.session.add(reset)

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your email - Your Shop</title>
+  <link rel="stylesheet" href="login.css">
+  <link rel="stylesheet" href="../stylle.css">
+  <style>
+    .verification-page { max-width: 430px; margin: 60px auto; padding: 28px; border-radius: 16px; }
+    .verification-choices { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:24px 0; }
+    .verification-choice { font-size:24px; font-weight:700; padding:18px 10px; border:1px solid #ddd; border-radius:12px; background:#fff; cursor:pointer; }
+    .verification-choice:disabled { opacity:.6; cursor:wait; }
+    #verificationMessage { min-height:24px; }
+    .verification-note { color:#666; line-height:1.5; }
+  </style>
+  <script src="../Config.js"></script>
+  <script src="../auth.js"></script>
+</head>
+<body>
+  <main class="auth-box verification-page">
+    <h1>Verify your email</h1>
+    <p class="verification-note">We sent a verification number to your email. Click the matching number below.</p>
+    <div id="verificationChoices" class="verification-choices"></div>
+    <p id="verificationMessage" role="alert"></p>
+    <button type="button" id="backToRegister">Back to registration</button>
+  </main>
+  <script src="register-verification.js?v=20260905-verify3"></script>
+</body>
+</html>

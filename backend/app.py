@@ -2,7 +2,7 @@ import os
 import sqlite3
 import json
 
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request, redirect
 from flask_cors import CORS
 
 from flask_jwt_extended import (
@@ -188,6 +188,25 @@ def home():
         "success": True,
         "message": "Shopping Server Running",
     })
+
+
+@app.route("/verify", methods=["GET"])
+def verify_page():
+    """Server route for the registration email-verification page.
+
+    The frontend is normally served by Live Server on port 5500, so this
+    backend route forwards the browser there while preserving the pending
+    verification query string. This makes /verify the single navigation
+    endpoint used after a successful registration request.
+    """
+    frontend_base = os.getenv("FRONTEND_BASE_URL", "http://127.0.0.1:5500").rstrip("/")
+    query = request.query_string.decode("utf-8")
+    target = f"{frontend_base}/page/verify.html"
+    if query:
+        target += f"?{query}"
+    return redirect(target, code=302)
+
+
 
 
 

@@ -10,7 +10,19 @@ const submitButton = document.getElementById("submitButton");
 const loginTab = document.getElementById("loginTab");
 const registerTab = document.getElementById("registerTab");
 
+let registrationSubmitting = false;
+const REGISTRATION_STATE_KEY = "pending_registration_verification";
+
 let mode = "login";
+
+// verify.html is a sibling of login.html, so navigate to it directly.
+// Only the id travels in the URL — verify.html fetches the current numbers
+// from the server, so a stale link can never show outdated choices.
+function verifyPageUrl(verificationId) {
+  const params = new URLSearchParams();
+  params.set("verification_id", String(verificationId));
+  return `verify.html?${params.toString()}`;
+}
 
 function setMode(next) {
   mode = next;
@@ -40,18 +52,54 @@ function setMode(next) {
 }
 
 // Initialize tab state on load
-loginTab.classList.add("active");
+const initialParams = new URLSearchParams(window.location.search);
+if (initialParams.get("mode") === "register") {
+  setMode("register");
+} else {
+  loginTab.classList.add("active");
+}
+
+// If registration verification is pending, always return to verify.html.
+function restorePendingVerification() {
+  try {
+    const raw = localStorage.getItem(REGISTRATION_STATE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (!state || !state.verification_id || !Array.isArray(state.choices) || state.choices.length !== 3) {
+      localStorage.removeItem(REGISTRATION_STATE_KEY);
+      return;
+    }
+    if (Date.now() - Number(state.saved_at || 0) > 15 * 60 * 1000) {
+      localStorage.removeItem(REGISTRATION_STATE_KEY);
+      return;
+    }
+    window.location.replace(verifyPageUrl(state.verification_id));
+  } catch (_) {
+    try { localStorage.removeItem(REGISTRATION_STATE_KEY); } catch (_) {}
+  }
+}
+restorePendingVerification();
 
 loginTab.addEventListener("click", () => setMode("login"));
 registerTab.addEventListener("click", () => setMode("register"));
+
 
 function showMessage(text, type) {
   message.textContent = text;
   message.className = "visible " + type;
 }
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function startAuthentication(event) {
+  // Registration/login is intentionally handled only by JavaScript.
+  // The submit button is type=button as an extra guard against the browser
+  // performing a native form navigation/reload.
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  if (registrationSubmitting) return;
+  registrationSubmitting = true;
 
   // --- Button Loading State Design ---
   submitButton.classList.add("loading");
@@ -75,7 +123,41 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    // A non-JSON body (500 page, proxy error) must not be swallowed as
+    // "could not connect" — surface the real status instead.
+    const data = await response.json().catch(() => ({}));
+
+    if (mode === "register") {
+      if (!response.ok || !data.success || !data.verification_id || !Array.isArray(data.choices)) {
+        showMessage(
+          data.message || `Could not start account verification (HTTP ${response.status}).`,
+          "error"
+        );
+        return;
+      }
+
+      let choices = data.choices;
+      if (typeof choices === "string") {
+        try { choices = JSON.parse(choices); } catch (_) { choices = []; }
+      }
+
+      if (!Array.isArray(choices) || choices.length !== 3 || !data.verification_id) {
+        showMessage("The server returned invalid verification information.", "error");
+        return;
+      }
+
+      // Save the pending verification BEFORE navigating. verify.html can then
+      // restore the exact request even if the browser reloads that page.
+      localStorage.setItem(REGISTRATION_STATE_KEY, JSON.stringify({
+        verification_id: data.verification_id,
+        choices: choices.map(String),
+        saved_at: Date.now()
+      }));
+
+      showMessage("Check your email. Opening the verification page...", "success");
+      window.location.assign(verifyPageUrl(data.verification_id));
+      return;
+    }
 
     if (!response.ok || !data.success || !data.token) {
       showMessage(data.message || "Authentication failed.", "error");
@@ -85,7 +167,6 @@ form.addEventListener("submit", async (event) => {
     showMessage("Success! Redirecting...", "success");
     Auth.setSession(data);
 
-    // Brief pause so the user sees the success message
     setTimeout(() => {
       if (data.user.role === "admin") {
         window.location.href = "../admin/dashboard.html";
@@ -100,7 +181,18 @@ form.addEventListener("submit", async (event) => {
     // --- Remove Button Loading State Design ---
     submitButton.classList.remove("loading");
     submitButton.disabled = false;
+    registrationSubmitting = false;
   }
+}
+
+// Never allow a native form submission to reload this page.
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  startAuthentication(event);
+});
+submitButton.addEventListener("click", (event) => {
+  startAuthentication(event);
 });
 
 // ===== Password Toggle =====
@@ -219,4 +311,3 @@ async function initializeGoogleSignIn() {
 }
 
 initializeGoogleSignIn();
-

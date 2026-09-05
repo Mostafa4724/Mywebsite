@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="login.css" />
     
 
-    <script src="../config.js"></script>
+    <script src="../Config.js"></script>
 <script src="../auth.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
@@ -95,6 +95,24 @@
         outline: none;
         color: #0066cc;
       }
+
+      .verification-choices {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 24px 0;
+      }
+      .verification-choice {
+        font-size: 24px;
+        font-weight: 700;
+        padding: 18px 10px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        background: #fff;
+        cursor: pointer;
+      }
+      .verification-choice:disabled { opacity: .6; cursor: wait; }
+      #verificationMessage { min-height: 24px; }
     </style>
       <link rel="stylesheet" href="../stylle.css" />
 </head>
@@ -105,6 +123,8 @@
         <button type="button" id="loginTab">Login</button>
         <button type="button" id="registerTab">Create account</button>
       </div>
+
+
 
       <form id="authForm">
         <div id="registerFields">
@@ -165,7 +185,7 @@
           </button>
         </div>
 
-        <button id="submitButton" type="submit">Login</button>
+        <button id="submitButton" type="button">Login</button>
         <p id="authMessage" role="alert"></p>
         <p class="forgot-password">
           <a id="forgotPasswordLink" href="forgot-password.html">Forgot your password?</a>
@@ -176,6 +196,6 @@
       <div id="googleSignIn"></div>
       <p id="googleHelp" class="google-help"></p>
     </main>
-<script src="login.js"></script>
+<script src="login.js?v=20260905-server-choices"></script>
 </body>
 </html>

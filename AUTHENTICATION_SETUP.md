@@ -83,3 +83,8 @@ The shopping cart is also stored in account-specific `localStorage` keys. `buy_n
 ## Password reset
 
 Reset tokens are stored only as SHA-256 hashes, expire after 30 minutes, are single-use, and a new reset request invalidates older reset links for the same account. Requests are rate-limited per account and use the same public response for existing and non-existing emails.
+
+
+## Registration verification route
+
+The registration button sends the browser to the Flask `/verify` route after the server creates a pending email verification. The route forwards to the frontend `page/verify.html` while preserving `verification_id` and the three choices.

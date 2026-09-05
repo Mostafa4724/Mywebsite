@@ -130,6 +130,21 @@ class PasswordResetToken(db.Model):
     ))
 
 
+class RegistrationVerification(db.Model):
+    __tablename__ = "registration_verifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(150), nullable=False, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    code_hash = db.Column(db.String(64), nullable=False)
+    choices_json = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    verified_at = db.Column(db.DateTime, nullable=True)
+
+
+
 class Category(db.Model):
 
     __tablename__ = "categories"

@@ -6,3 +6,5 @@ Werkzeug
 google-auth
 
 requests
+
+python-dotenv
