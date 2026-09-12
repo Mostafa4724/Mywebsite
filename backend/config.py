@@ -5,7 +5,9 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / ".env")
+# override=True matters for restarts: the replacement process inherits the
+# old environment, so without it a freshly saved .env would be ignored.
+load_dotenv(BASE_DIR / ".env", override=True)
 
 DATABASE_PATH = os.path.join(BASE_DIR, "database", "shopping.db")
 

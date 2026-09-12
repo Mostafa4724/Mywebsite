@@ -19,6 +19,8 @@ from orders import orders_bp
 from auth import auth_bp
 from account import account_bp
 from categories import categories_bp
+from settings_admin import settings_bp
+from onboarding import onboarding_bp
 
 from database import db
 from models import User, Product, ProductVariant, VariantSize
@@ -412,6 +414,8 @@ app.register_blueprint(account_bp)
 app.register_blueprint(products_bp)
 app.register_blueprint(orders_bp)
 app.register_blueprint(categories_bp)
+app.register_blueprint(settings_bp)
+app.register_blueprint(onboarding_bp)
 
 
 # ============================================================
@@ -850,8 +854,11 @@ with app.app_context():
 
 if __name__ == "__main__":
 
+    # The reloader is what lets the admin settings page restart the server
+    # cleanly after writing .env. Set AUTO_RELOAD=0 to turn it off.
     app.run(
         host="0.0.0.0",
         port=5000,
         debug=False,
+        use_reloader=os.getenv("AUTO_RELOAD", "1") != "0",
     )

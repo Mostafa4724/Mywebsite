@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Account - Admin Panel</title>
+    <link rel="stylesheet" href="../stylle.css" />
+    <link rel="stylesheet" href="settings.css" />
+    <link rel="stylesheet" href="account-security.css" />
+  </head>
+  <body class="admin-body">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+        </div>
+        <span>Admin Panel</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-link" data-section="overview">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg
+          >Overview
+        </a>
+        <a href="orders.html" class="sidebar-link" data-section="orders">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg
+          >Orders<span class="sidebar-badge" id="orderBubble" hidden></span>
+        </a>
+        <a href="admin_product.html" class="sidebar-link" data-section="products">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /></svg
+          >Products
+        </a>
+        <a href="admin-analytics.html" class="sidebar-link" data-section="analytics">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" /></svg
+          >Analytics
+        </a>
+        <a href="account-security.html" class="sidebar-link active" data-section="security">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg
+          >Your Account
+        </a>
+        <a href="email-setup.html" class="sidebar-link" data-section="email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-10 6L2 7" /></svg
+          >Email Setup
+        </a>
+        <a href="settings.html" class="sidebar-link" data-section="settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.35.4.65.73.85H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg
+          >Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="../page/login.html" class="sidebar-logout" id="adminLogout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg
+          >Log Out
+        </a>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div class="topbar-title"><h2>Your Account</h2></div>
+        <div class="topbar-right">
+          <div class="admin-user-chip">
+            <div class="admin-user-avatar">A</div>
+            <span class="admin-user-name">Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="settings-banner" id="banner" hidden></div>
+
+        <div class="acc-danger" id="dangerBox" hidden>
+          <div class="acc-danger-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <div>
+            <h3>Your shop is not secure yet</h3>
+            <p id="dangerText"></p>
+            <p class="acc-danger-why">
+              Every copy of this shop is delivered with the same starting
+              login. Until you change it, anyone who has seen another copy
+              can sign in here as you — read your customers' details, change
+              your prices, and take your orders. It takes one minute to fix
+              and you only do it once.
+            </p>
+          </div>
+        </div>
+
+        <div class="acc-safe" id="safeBox" hidden>
+          <strong>Your login is your own.</strong>
+          The credentials the shop was delivered with no longer work.
+        </div>
+
+        <div class="settings-loading" id="loading">Loading...</div>
+
+        <form id="accountForm" hidden autocomplete="off">
+          <section class="acc-card">
+            <h3>How you sign in</h3>
+            <p class="acc-card-note">
+              This is the account that opens the admin panel. Customers who
+              register on the shop never get here — only this account does.
+            </p>
+
+            <div class="acc-grid">
+              <div class="settings-field" data-key="username">
+                <label for="username">Your name</label>
+                <input type="text" id="username" placeholder="ahmed" autocomplete="off" />
+                <div class="hint">Shown in the corner of the panel.</div>
+                <div class="error-text" hidden></div>
+              </div>
+
+              <div class="settings-field" data-key="email">
+                <label for="email">Your login email</label>
+                <input type="text" id="email" placeholder="ahmed@gmail.com" autocomplete="off" />
+                <div class="hint">
+                  What you type in the login page. Password resets go here too.
+                </div>
+                <div class="error-text" hidden></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="acc-card">
+            <h3>Change your password</h3>
+            <p class="acc-card-note" id="pwNote"></p>
+
+            <div class="acc-grid">
+              <div class="settings-field acc-wide" data-key="current_password">
+                <label for="currentPassword">
+                  Current password<span class="req">*</span>
+                </label>
+                <div class="settings-input-row">
+                  <input type="password" id="currentPassword"
+                         placeholder="Admin@1234" autocomplete="off" />
+                  <button type="button" class="settings-mini" data-toggle="currentPassword">Show</button>
+                </div>
+                <div class="hint" id="currentHint">
+                  The password you were given when the shop was delivered.
+                </div>
+                <div class="error-text" hidden></div>
+              </div>
+
+              <div class="settings-field" data-key="new_password">
+                <label for="newPassword">New password</label>
+                <div class="settings-input-row">
+                  <input type="password" id="newPassword"
+                         placeholder="Ahmed@1234" autocomplete="new-password" />
+                  <button type="button" class="settings-mini" data-toggle="newPassword">Show</button>
+                </div>
+                <div class="acc-strength" id="strength" hidden>
+                  <div class="acc-strength-bar"><span id="strengthFill"></span></div>
+                  <span class="acc-strength-label" id="strengthLabel"></span>
+                </div>
+                <div class="hint" id="newHint"></div>
+                <div class="error-text" hidden></div>
+              </div>
+
+              <div class="settings-field" data-key="confirm_password">
+                <label for="confirmPassword">Type it again</label>
+                <div class="settings-input-row">
+                  <input type="password" id="confirmPassword"
+                         placeholder="Ahmed@1234" autocomplete="new-password" />
+                  <button type="button" class="settings-mini" data-toggle="confirmPassword">Show</button>
+                </div>
+                <div class="hint">
+                  Leave both boxes empty to keep your current password.
+                </div>
+                <div class="error-text" hidden></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="acc-warning" id="logoutWarning" hidden>
+            Changing your password signs out every other device. This browser
+            stays signed in.
+          </div>
+
+          <div class="settings-actions">
+            <button type="submit" class="settings-btn primary" id="saveBtn">
+              Save my new login
+            </button>
+            <button type="button" class="settings-btn ghost" id="resetBtn">
+              Discard changes
+            </button>
+            <span class="settings-status" id="status"></span>
+          </div>
+        </form>
+
+        <div class="acc-next" id="nextStep" hidden>
+          <strong>Next:</strong> set up sending email so customers can verify
+          their address and reset their password.
+          <a href="email-setup.html">Go to Email Setup</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="../Config.js"></script>
+    <script src="admin-common.js"></script>
+    <script src="account-security.js"></script>
+  </body>
+</html>
