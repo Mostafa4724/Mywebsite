@@ -1,5 +1,6 @@
 import hashlib
 import os
+import re
 import secrets
 from datetime import datetime, timedelta
 
@@ -172,3 +173,135 @@ def change_password():
     # Keep the device that made the change signed in with a fresh token pair.
     from auth import _tokens_for
     return jsonify(success=True, message="Password changed successfully.", **_tokens_for(user))
+
+
+# ============================================================
+# /me -- customer profile (view + edit own name and email)
+# ============================================================
+#
+# Deliberately separate from /admin/account:
+#   * /admin/account is for the shop owner and enforces "not the shipped
+#     default email/password" rules.
+#   * /me is for any signed-in user, admin or customer, editing their own
+#     display name and login email. It bumps token_version on an email
+#     change so old sessions on other devices are invalidated.
+
+_USERNAME_RE = re.compile(r"[A-Za-z0-9_.\-]+")
+_EMAIL_RE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+
+
+@account_bp.get("/me")
+@user_required
+def me_get():
+    """Return the signed-in user's own profile, including join date."""
+    user = current_user()
+    if user is None:
+        return jsonify(success=False, message="Session is no longer valid."), 401
+
+    payload = user.to_dict()
+    # to_dict() intentionally omits fields not always safe for admin lists;
+    # created_at is fine to expose on the /me route because the caller *is*
+    # the user. Fall back gracefully when the column doesn't exist yet on
+    # an older shopping.db that predates the timestamp.
+    created_at = getattr(user, "created_at", None)
+    if created_at is not None:
+        try:
+            payload["created_at"] = created_at.isoformat()
+        except AttributeError:
+            payload["created_at"] = str(created_at)
+
+    return jsonify(success=True, user=payload)
+
+
+@account_bp.post("/me")
+@user_required
+def me_update():
+    """Update the signed-in user's own display name and login email.
+
+    Password changes go through /change-password so the required-current-
+    password check stays a single code path.
+    """
+    user = current_user()
+    if user is None:
+        return jsonify(success=False, message="Session is no longer valid."), 401
+
+    data = request.get_json(silent=True) or {}
+    new_username = (data.get("username") or "").strip()
+    new_email = (data.get("email") or "").strip()
+
+    if not new_username or not new_email:
+        return jsonify(
+            success=False,
+            message="Name and email are both required.",
+        ), 400
+
+    changed = []
+
+    if new_username != user.username:
+        if len(new_username) < 2 or len(new_username) > 60:
+            return jsonify(
+                success=False,
+                message="Name must be between 2 and 60 characters.",
+            ), 400
+        if not _USERNAME_RE.fullmatch(new_username):
+            return jsonify(
+                success=False,
+                message="Name may only contain letters, numbers, dot, dash and underscore.",
+            ), 400
+        # A duplicate name isn't a login collision (email is what people
+        # sign in with) but the User model has unique=True on username, so
+        # the commit would fail -- catch it up front with a friendly note.
+        clash = User.query.filter(
+            db.func.lower(User.username) == new_username.lower(),
+            User.id != user.id,
+        ).first()
+        if clash:
+            return jsonify(
+                success=False,
+                message="That name is already in use. Try another.",
+            ), 400
+        user.username = new_username
+        changed.append("username")
+
+    if new_email.lower() != (user.email or "").lower():
+        if not _EMAIL_RE.fullmatch(new_email):
+            return jsonify(
+                success=False,
+                message="Enter a valid email address.",
+            ), 400
+        clash = User.query.filter(
+            db.func.lower(User.email) == new_email.lower(),
+            User.id != user.id,
+        ).first()
+        if clash:
+            return jsonify(
+                success=False,
+                message="An account already uses that email address.",
+            ), 400
+        user.email = new_email
+        # Changing the login email invalidates every other session for this
+        # account -- the token they were issued was tied to the old address.
+        user.token_version = int(user.token_version or 0) + 1
+        changed.append("email")
+
+    if not changed:
+        return jsonify(success=True, message="Nothing to change.", user=user.to_dict())
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify(
+            success=False,
+            message="Could not save the changes.",
+        ), 500
+
+    # Return a fresh token pair so THIS browser stays signed in even though
+    # token_version was bumped for the email change.
+    from auth import _tokens_for
+    return jsonify(
+        success=True,
+        message="Profile updated.",
+        changed=changed,
+        **_tokens_for(user),
+    )

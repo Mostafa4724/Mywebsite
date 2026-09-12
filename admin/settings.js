@@ -14,9 +14,9 @@
   const groupsBox = document.getElementById("groups");
   const statusText = document.getElementById("status");
   const saveBtn = document.getElementById("saveBtn");
-  const saveOnlyBtn = document.getElementById("saveOnlyBtn");
+  const saveOnlyBtn = document.getElementById("saveOnlyBtn"); // optional -- may be null after redesign
   const reloadBtn = document.getElementById("reloadBtn");
-  const envPathLabel = document.getElementById("envPath");
+  const envPathLabel = document.getElementById("envPath");     // optional
 
   const testModal = document.getElementById("testModal");
   const testRecipient = document.getElementById("testRecipient");
@@ -54,7 +54,9 @@
   }
 
   function busy(state) {
-    [saveBtn, saveOnlyBtn, reloadBtn].forEach(b => (b.disabled = state));
+    [saveBtn, saveOnlyBtn, reloadBtn]
+      .filter(Boolean)
+      .forEach(b => (b.disabled = state));
   }
 
   async function api(path, options) {
@@ -298,7 +300,7 @@
       MASK = data.mask || MASK;
       bootId = data.boot_id || bootId;
       schema = data.groups || [];
-      envPathLabel.textContent = data.env_path || ".env";
+      if (envPathLabel) envPathLabel.textContent = data.env_path || ".env";
 
       render(schema);
       loading.hidden = true;
@@ -394,9 +396,12 @@
       busy(false);
       setStatus("");
       showBanner(
-        "Saved to .env. Restart the server for the changes to take effect.",
+        "Saved. Your changes are live on the shop right away.",
         "success"
       );
+      // Bust the store-info cache other tabs are holding, so the next page
+      // any customer navigates to fetches the new shop name/logo/contact.
+      try { sessionStorage.removeItem("store_info_cache_v1"); } catch (_) {}
       await load();
       return;
     }
@@ -513,10 +518,14 @@
 
   form.addEventListener("submit", event => {
     event.preventDefault();
-    save(true);
+    // Shop-identity changes take effect immediately (the backend re-reads
+    // os.getenv on each request), so no restart is needed. The restart
+    // path is kept in save() only for backwards compatibility with older
+    // form layouts that still expose a "Save & restart" button.
+    save(false);
   });
 
-  saveOnlyBtn.addEventListener("click", () => save(false));
+  if (saveOnlyBtn) saveOnlyBtn.addEventListener("click", () => save(false));
   reloadBtn.addEventListener("click", () => load());
 
   const menuToggle = document.getElementById("menuToggle");

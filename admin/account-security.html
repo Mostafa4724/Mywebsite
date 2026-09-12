@@ -160,8 +160,14 @@
                   Current password<span class="req">*</span>
                 </label>
                 <div class="settings-input-row">
+                  <!-- autocomplete="new-password" (not "current-password")
+                       is deliberate: it tells the browser this box is not
+                       for its saved-password suggestions, which otherwise
+                       drop the admin's email into the field. -->
                   <input type="password" id="currentPassword"
-                         placeholder="Admin@1234" autocomplete="off" />
+                         placeholder="Your current password"
+                         autocomplete="new-password"
+                         name="admin-current-password" />
                   <button type="button" class="settings-mini" data-toggle="currentPassword">Show</button>
                 </div>
                 <div class="hint" id="currentHint">
@@ -174,7 +180,9 @@
                 <label for="newPassword">New password</label>
                 <div class="settings-input-row">
                   <input type="password" id="newPassword"
-                         placeholder="Ahmed@1234" autocomplete="new-password" />
+                         placeholder="At least 8 characters"
+                         autocomplete="new-password"
+                         name="admin-new-password" />
                   <button type="button" class="settings-mini" data-toggle="newPassword">Show</button>
                 </div>
                 <div class="acc-strength" id="strength" hidden>
@@ -189,11 +197,13 @@
                 <label for="confirmPassword">Type it again</label>
                 <div class="settings-input-row">
                   <input type="password" id="confirmPassword"
-                         placeholder="Ahmed@1234" autocomplete="new-password" />
+                         placeholder="Type the new password again"
+                         autocomplete="new-password"
+                         name="admin-confirm-password" />
                   <button type="button" class="settings-mini" data-toggle="confirmPassword">Show</button>
                 </div>
                 <div class="hint">
-                  Leave both boxes empty to keep your current password.
+                  Leave all three boxes empty to keep your current password.
                 </div>
                 <div class="error-text" hidden></div>
               </div>

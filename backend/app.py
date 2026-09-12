@@ -364,6 +364,41 @@ def payment_settings():
 
 
 # ============================================================
+# Public store identity
+# ============================================================
+
+@app.route("/public/store-info", methods=["GET"])
+def public_store_info():
+    """Read-only shop identity for public pages (nav, footer, Contact Us).
+
+    Deliberately unauthenticated and deliberately minimal: only fields the
+    shop already publishes on its own website. Never returns secrets, SMTP
+    credentials, bank details, or anything from the developer-only groups
+    in settings_admin.py.
+
+    CORS is open on this endpoint specifically (Access-Control-Allow-Origin: *)
+    because the data is public and the storefront may be served from any
+    origin during development (Live Server, file://, custom domain). This
+    keeps the endpoint working even when the operator hasn't yet listed
+    their frontend URL in CORS_ORIGINS.
+    """
+    response = jsonify({
+        "success": True,
+        "store": {
+            "name":    os.environ.get("STORE_NAME", "Your Shop"),
+            "email":   os.environ.get("STORE_EMAIL", ""),
+            "phone":   os.environ.get("STORE_PHONE", ""),
+            "address": os.environ.get("STORE_ADDRESS", ""),
+            "website": os.environ.get("STORE_WEBSITE", ""),
+            "logo":    os.environ.get("STORE_LOGO_URL", ""),
+        },
+    })
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+# ============================================================
 # Product Uploads
 # ============================================================
 

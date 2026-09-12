@@ -70,6 +70,32 @@ body {
   letter-spacing: 0.3px;
   color: #ffffff;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1;
+}
+
+/* Image logo: fills the nav height cleanly, keeps its own aspect ratio.
+   The shop uploads any width/height and we scale it to a 36px cap so a
+   very tall or very wide logo can never blow out the nav. */
+.nav-logo-img {
+  display: block;
+  height: 36px;
+  max-height: 36px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+/* Text fallback only when no logo image is set. Same weight/colour as
+   the old inline "Logo Here." wording. */
+.nav-logo-text {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.3px;
+  color: inherit;
 }
 
 .nav-links {

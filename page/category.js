@@ -28,12 +28,21 @@ function renderCategories(categories) {
     const delay = Math.min((index % 8) + 1, 8);
     const card = document.createElement("a");
     card.className = "cat-item reveal reveal-d" + delay;
-    card.href = "catagory-species.html?category=" + cat.id;
+    card.href = "catagory-species.html?category=" + encodeURIComponent(cat.id);
     card.setAttribute("aria-label", cat.name);
     card.dataset.name = cat.name;
+    // Admin-supplied fields (name, image_url) must be escaped before
+    // being interpolated into HTML. setAttribute/dataset above set them
+    // as attributes so those are already safe; only the innerHTML use
+    // below needs escaping.
+    const esc = (v) => String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const safeName = esc(cat.name);
     const categoryImage = cat.image_url ? (API + cat.image_url) : "https://picsum.photos/seed/" + encodeURIComponent(cat.name) + "/600/400.jpg";
-    card.innerHTML = '<div class="cat-item__img"><span class="cat-item__num">' + String(index + 1).padStart(2, "0") + '</span><img src="' + categoryImage + '" alt="' + cat.name + '" loading="lazy" /><div class="cat-item__icon-wrap">' + categoryEmoji(index) + '</div></div>' +
-      '<div class="cat-item__body"><h3 class="cat-item__name">' + cat.name + '</h3><p class="cat-item__desc">Browse all products in ' + cat.name + '.</p><div class="cat-item__footer"><span class="cat-item__count">' + (cat.product_count || 0) + ' items</span><span class="cat-item__arrow">↗</span></div></div>';
+    const safeImage = esc(categoryImage);
+    card.innerHTML = '<div class="cat-item__img"><span class="cat-item__num">' + String(index + 1).padStart(2, "0") + '</span><img src="' + safeImage + '" alt="' + safeName + '" loading="lazy" /><div class="cat-item__icon-wrap">' + categoryEmoji(index) + '</div></div>' +
+      '<div class="cat-item__body"><h3 class="cat-item__name">' + safeName + '</h3><p class="cat-item__desc">Browse all products in ' + safeName + '.</p><div class="cat-item__footer"><span class="cat-item__count">' + (cat.product_count || 0) + ' items</span><span class="cat-item__arrow">↗</span></div></div>';
     catGrid.appendChild(card);
   });
   initReveal();

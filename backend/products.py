@@ -1,6 +1,7 @@
 
 import json
 import os
+import re
 import uuid
 import hashlib
 from datetime import datetime
@@ -11,7 +12,7 @@ from werkzeug.utils import secure_filename
 
 from database import db
 from models import Product, Category, Review, ProductVariant, VariantSize
-from security import admin_required
+from security import admin_required, current_user_optional
 from sales import parse_store_datetime, as_store_iso, sale_is_active, current_price
 
 products_bp = Blueprint("products", __name__)
@@ -19,6 +20,37 @@ products_bp = Blueprint("products", __name__)
 ALLOWED_IMAGE_TYPES = {"png", "jpg", "jpeg", "webp"}
 MAX_PRODUCT_IMAGES = 5
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+
+# Strips every < ... > tag and neutralises the leftover angle brackets.
+# Cheap, no external deps, and enough to defuse the stored-XSS payloads
+# that would otherwise reach the reviews endpoint. Real HTML escaping
+# still happens on the client (see escapeHtml in page/product.js) as
+# defence in depth.
+_TAG_RE = re.compile(r"<[^>]*>")
+
+def _sanitise_user_text(raw, *, max_length):
+    """Return a plain-text version of `raw` safe to render into HTML.
+
+    - Drops every HTML tag (script, iframe, svg/onload, style, etc.)
+    - Replaces any surviving < and > with their entities
+    - Collapses runs of whitespace, so an attacker can't hide junk in
+      newlines that the frontend renders as-is inside a <p>
+    - Caps length to keep the response payload sane
+    """
+    if raw is None:
+        return ""
+    text = str(raw)
+    text = _TAG_RE.sub("", text)
+    text = text.replace("<", "&lt;").replace(">", "&gt;")
+    # Preserve single line breaks (users legitimately write multi-line
+    # reviews), but collapse runs of blank lines and trim edges.
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = text.strip()
+    if len(text) > max_length:
+        text = text[:max_length].rstrip()
+    return text
 
 
 def _parse_bool(value):
@@ -330,8 +362,20 @@ def _validate_sale(data, price, current=None):
     return True, sale_price, (start, end)
 
 
-def _serialize_product(product):
+def _serialize_product(product, *, include_cost=False):
+    """Turn a Product row into the JSON shape the frontend expects.
+
+    `include_cost` defaults to False so any public endpoint that forgets
+    to pass it still doesn't leak wholesale-cost data. Admin endpoints
+    (add, edit, admin list) explicitly pass True.
+    """
     data = product.to_dict()
+
+    # Strip internal-only fields for the public path. Doing it here means
+    # every caller of _serialize_product gets the same guarantee -- no
+    # need to remember to blacklist fields at every route.
+    if not include_cost:
+        data.pop("cost", None)
 
     # category_id is the authoritative relationship. The legacy `category`
     # text is kept for compatibility, but API consumers should always receive
@@ -353,22 +397,64 @@ def _serialize_product(product):
     return data
 
 
+# Anything not in this set is treated as an internal state (draft, scheduled,
+# archived) and hidden from anonymous callers. Kept as a set so future
+# statuses -- e.g. "featured" or "sold_out" -- can be added without touching
+# route code.
+_PUBLIC_STATUSES = {"published", "active", "live", "in_stock", ""}
+
+
+def _is_publicly_visible(product):
+    """A product is public when its status isn't one of the internal ones."""
+    status = str(product.status or "").strip().lower()
+    return status in _PUBLIC_STATUSES
+
+
 @products_bp.route("/products", methods=["GET"])
 def get_products():
+    """Public catalogue.
+
+    Admins get every product (draft, scheduled, published) with cost data.
+    Everyone else gets only published rows and no cost/margin numbers.
+    The same route serves both so the admin panel doesn't need a separate
+    endpoint just to see its own drafts.
+    """
+    caller = current_user_optional()
+    is_admin = caller is not None and getattr(caller, "role", None) == "admin"
+
     category_id = request.args.get("category_id", type=int)
     query = Product.query
     if category_id:
         query = query.filter(Product.category_id == category_id)
     products = query.all()
-    return jsonify({"success": True, "products": [_serialize_product(p) for p in products]})
+
+    if not is_admin:
+        products = [p for p in products if _is_publicly_visible(p)]
+
+    return jsonify({
+        "success": True,
+        "products": [_serialize_product(p, include_cost=is_admin) for p in products],
+    })
 
 
 @products_bp.route("/products/<int:id>", methods=["GET"])
 def get_product(id):
+    """Product detail. Same admin-vs-public rules as the list endpoint."""
+    caller = current_user_optional()
+    is_admin = caller is not None and getattr(caller, "role", None) == "admin"
+
     product = Product.query.get(id)
     if product is None:
         return jsonify({"success": False, "message": "Product not found"}), 404
-    return jsonify({"success": True, "product": _serialize_product(product)})
+
+    # Non-admins can't fetch a draft even by guessing its id.
+    if not is_admin and not _is_publicly_visible(product):
+        return jsonify({"success": False, "message": "Product not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "product": _serialize_product(product, include_cost=is_admin),
+    })
 
 
 @products_bp.route("/admin/products", methods=["POST"])
@@ -444,7 +530,7 @@ def add_product():
         db.session.rollback()
         raise
 
-    return jsonify(success=True, message="Product added", product=_serialize_product(product)), 201
+    return jsonify(success=True, message="Product added", product=_serialize_product(product, include_cost=True)), 201
 
 
 @products_bp.route("/admin/products/<int:id>", methods=["PUT", "POST"])
@@ -519,7 +605,7 @@ def edit_product(id):
         db.session.rollback()
         raise
 
-    return jsonify(success=True, message="Product updated", product=_serialize_product(product))
+    return jsonify(success=True, message="Product updated", product=_serialize_product(product, include_cost=True))
 
 
 @products_bp.route("/admin/products/<int:id>", methods=["DELETE"])
@@ -535,21 +621,50 @@ def delete_product(id):
 
 @products_bp.route("/products/<int:id>/reviews", methods=["POST"])
 def add_review(id):
+    """Post a review for a product.
+
+    Deliberately not requiring auth (the storefront lets guests review),
+    but every field the caller supplies is sanitised before hitting the
+    database. `_sanitise_user_text` strips HTML tags and neutralises
+    surviving angle brackets, so the stored-XSS chain (review comment ->
+    innerHTML -> steal localStorage token) is broken at the write step.
+
+    The frontend also escapes reviews on render (page/product.js), so
+    even historical rows written before this patch are rendered safely.
+    """
     product = Product.query.get(id)
     if product is None:
         return jsonify(success=False, message="Product not found"), 404
+
     data = request.get_json(silent=True) or {}
+
     try:
         rating = int(data["rating"])
     except (KeyError, TypeError, ValueError):
         return jsonify(success=False, message="Rating must be an integer."), 400
     if rating < 1 or rating > 5:
         return jsonify(success=False, message="Rating must be between 1 and 5."), 400
+
+    # Prefer the signed-in user's real username over anything the client
+    # sends. When there's no session, fall back to the submitted value.
+    caller = current_user_optional()
+    if caller is not None and getattr(caller, "username", None):
+        username = caller.username
+    else:
+        username = _sanitise_user_text(data.get("username", ""), max_length=60) or "Anonymous"
+
+    comment = _sanitise_user_text(data.get("comment", ""), max_length=2000)
+    if not comment:
+        return jsonify(
+            success=False,
+            message="Please write a short comment for your review.",
+        ), 400
+
     review = Review(
         product_id=id,
-        username=data.get("username", "Anonymous"),
+        username=username,
         rating=rating,
-        comment=data.get("comment", ""),
+        comment=comment,
     )
     db.session.add(review)
     db.session.commit()
@@ -558,5 +673,22 @@ def add_review(id):
 
 @products_bp.route("/products/<int:id>/reviews", methods=["GET"])
 def get_reviews(id):
-    reviews = Review.query.filter_by(product_id=id).order_by(Review.created_at.desc()).all()
-    return jsonify(success=True, reviews=[review.to_dict() for review in reviews])
+    """Return reviews for a product.
+
+    Applies the same sanitiser used on write, so any legacy rows written
+    before this endpoint learned to strip HTML are cleaned up on the way
+    out. That protects clients that render reviews without escaping.
+    """
+    reviews = (
+        Review.query
+        .filter_by(product_id=id)
+        .order_by(Review.created_at.desc())
+        .all()
+    )
+    payload = []
+    for review in reviews:
+        row = review.to_dict()
+        row["username"] = _sanitise_user_text(row.get("username", ""), max_length=60) or "Anonymous"
+        row["comment"] = _sanitise_user_text(row.get("comment", ""), max_length=2000)
+        payload.append(row)
+    return jsonify(success=True, reviews=payload)

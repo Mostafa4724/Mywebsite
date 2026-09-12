@@ -97,9 +97,11 @@
         <div class="settings-banner" id="banner" hidden></div>
 
         <p class="settings-intro">
-          These values are written to the <code id="envPath">.env</code> file on
-          the server. Saving rewrites that file and restarts the backend, so the
-          site is unreachable for a couple of seconds.
+          These settings control how your shop looks and identifies itself:
+          the name and logo shown in the navigation, the contact details on
+          your Contact Us page, the bank account customers see at checkout,
+          and the optional Google sign-in and SMS integrations. Changes
+          take effect right away -- no restart needed.
         </p>
 
         <div class="settings-loading" id="loading">Loading current settings...</div>
@@ -109,10 +111,7 @@
 
           <div class="settings-actions" id="actions">
             <button type="submit" class="settings-btn primary" id="saveBtn">
-              Save &amp; restart server
-            </button>
-            <button type="button" class="settings-btn" id="saveOnlyBtn">
-              Save without restarting
+              Save changes
             </button>
             <button type="button" class="settings-btn ghost" id="reloadBtn">
               Discard changes

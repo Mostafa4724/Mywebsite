@@ -474,8 +474,27 @@ async function loadReviews() {
 
     let total = 0;
 
-    data.reviews.forEach(review => {
+    // Escape every user-supplied field before it lands in innerHTML.
+    // The backend also sanitises on write and on read, but this is the
+    // last line of defence -- if any raw HTML ever reaches the client
+    // (legacy row, MITM, misconfigured proxy), it renders as text, not
+    // as executable markup.
+    const escapeHtml = (value) => String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 
+    // Preserve line breaks the reviewer typed, since the sanitiser keeps
+    // them but our <p> would otherwise collapse them.
+    const escapeHtmlWithBreaks = (value) => escapeHtml(value).replace(/\n/g, "<br>");
+
+    // Build the whole list HTML once and assign it -- repeated `+=`
+    // reparses the growing string every iteration, which is both slow
+    // and, more importantly, would let a half-injected tag on iteration
+    // N corrupt iteration N+1.
+    list.innerHTML = data.reviews.map(review => {
         total += review.rating;
 
         const starsMarkup = Array.from({ length: 5 }, (_, index) => {
@@ -483,23 +502,20 @@ async function loadReviews() {
             return `<span class="star ${filled ? "filled" : "empty"}">${filled ? "★" : "☆"}</span>`;
         }).join("");
 
-        list.innerHTML += `
-
+        return `
         <div class="review-card">
 
             <div class="review-header">
-                <h4 class="reviewer-name">${review.username}</h4>
-                <span class="review-date">${review.created_at}</span>
+                <h4 class="reviewer-name">${escapeHtml(review.username)}</h4>
+                <span class="review-date">${escapeHtml(review.created_at)}</span>
             </div>
 
             <div class="review-stars">${starsMarkup}</div>
-            <p class="review-text">${review.comment}</p>
+            <p class="review-text">${escapeHtmlWithBreaks(review.comment)}</p>
 
         </div>
-
         `;
-
-    });
+    }).join("");
 
     const average = data.reviews.length
         ? total / data.reviews.length

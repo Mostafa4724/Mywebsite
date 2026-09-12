@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Account - Website</title>
+  <link rel="stylesheet" href="../stylle.css" />
+  <link rel="stylesheet" href="orders-nav.css" />
+  <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+
+  <!-- Nav is injected by user-shell.js. This placeholder is what it swaps out. -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="home.html" class="logo"><span class="nav-logo-text" data-store="name">Your Shop</span></a>
+    </div>
+  </nav>
+
+  <main class="profile-page">
+    <div class="profile-container">
+
+      <!-- Left: menu -->
+      <aside class="profile-sidebar" aria-label="Account sections">
+        <div class="profile-header">
+          <div class="profile-avatar" id="profileAvatar" aria-hidden="true">?</div>
+          <div class="profile-header-text">
+            <span class="profile-header-name" id="profileHeaderName">Loading...</span>
+            <span class="profile-header-email" id="profileHeaderEmail"></span>
+          </div>
+        </div>
+
+        <nav class="profile-menu" role="tablist" aria-label="Account sections">
+          <button type="button" class="profile-menu-item active" data-tab="overview" role="tab" aria-selected="true">
+            <span class="profile-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"></path>
+              </svg>
+            </span>
+            Profile
+          </button>
+
+          <button type="button" class="profile-menu-item" data-tab="orders" role="tab" aria-selected="false">
+            <span class="profile-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </span>
+            My Orders
+          </button>
+
+          <button type="button" class="profile-menu-item" data-tab="password" role="tab" aria-selected="false">
+            <span class="profile-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            Change Password
+          </button>
+
+          <button type="button" class="profile-menu-item" data-tab="support" role="tab" aria-selected="false">
+            <span class="profile-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            Contact Shop
+          </button>
+
+          <button type="button" class="profile-menu-item danger" id="logoutBtn">
+            <span class="profile-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </span>
+            Log Out
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Right: content -->
+      <section class="profile-main">
+
+        <div class="profile-banner" id="profileBanner" hidden></div>
+
+        <!-- Overview tab -->
+        <div class="profile-tab" data-tab-panel="overview">
+          <h1>My Profile</h1>
+          <p class="profile-lead">
+            Update your name and email. Your email is used to sign in and to
+            receive password-reset links, so make sure it's one you can read.
+          </p>
+
+          <form id="profileForm" class="profile-form" autocomplete="off">
+            <label for="pfUsername">Display name</label>
+            <input type="text" id="pfUsername" placeholder="Your name"
+                   autocomplete="off" required />
+
+            <label for="pfEmail">Email address</label>
+            <input type="email" id="pfEmail" placeholder="you@example.com"
+                   autocomplete="off" required />
+
+            <div class="profile-actions">
+              <button type="submit" class="profile-btn primary" id="pfSaveBtn">
+                Save changes
+              </button>
+              <button type="button" class="profile-btn ghost" id="pfResetBtn">
+                Discard
+              </button>
+              <span class="profile-status" id="pfStatus"></span>
+            </div>
+          </form>
+
+          <div class="profile-info-grid">
+            <div class="profile-info-card">
+              <span class="profile-info-label">Member since</span>
+              <span class="profile-info-value" id="pfJoined">-</span>
+            </div>
+            <div class="profile-info-card">
+              <span class="profile-info-label">Account type</span>
+              <span class="profile-info-value" id="pfRole">Customer</span>
+            </div>
+            <div class="profile-info-card">
+              <span class="profile-info-label">Orders placed</span>
+              <span class="profile-info-value" id="pfOrderCount">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Orders tab -->
+        <div class="profile-tab" data-tab-panel="orders" hidden>
+          <h1>My Orders</h1>
+          <p class="profile-lead">
+            Every order you've placed, most recent first.
+          </p>
+          <div id="pfOrdersList" class="profile-orders-list">
+            <p class="profile-empty">Loading your orders...</p>
+          </div>
+          <p class="profile-hint">
+            Want the full order details? <a href="orders.html">Open the orders page</a>.
+          </p>
+        </div>
+
+        <!-- Change password tab -->
+        <div class="profile-tab" data-tab-panel="password" hidden>
+          <h1>Change Password</h1>
+          <p class="profile-lead">
+            Pick something only you know. Changing your password signs you
+            out of every other device -- this tab stays signed in.
+          </p>
+
+          <form id="pfPasswordForm" class="profile-form" autocomplete="off">
+            <label for="pfCurrent">Current password</label>
+            <input type="password" id="pfCurrent"
+                   autocomplete="new-password"
+                   placeholder="Your current password" required />
+
+            <label for="pfNew">New password</label>
+            <input type="password" id="pfNew"
+                   autocomplete="new-password"
+                   placeholder="At least 8 characters" minlength="8" required />
+
+            <label for="pfConfirm">Type it again</label>
+            <input type="password" id="pfConfirm"
+                   autocomplete="new-password"
+                   placeholder="Type the new password again" minlength="8" required />
+
+            <div class="profile-actions">
+              <button type="submit" class="profile-btn primary" id="pfPwSaveBtn">
+                Change password
+              </button>
+              <span class="profile-status" id="pfPwStatus"></span>
+            </div>
+          </form>
+        </div>
+
+        <!-- Contact/support tab -->
+        <div class="profile-tab" data-tab-panel="support" hidden>
+          <h1>Contact the shop</h1>
+          <p class="profile-lead">
+            Reach out to us directly with any question about your account,
+            an order you've placed, or a product you're interested in.
+          </p>
+
+          <div class="profile-contact-grid">
+            <div class="profile-contact-card">
+              <span class="profile-info-label">Email</span>
+              <a href="mailto:" data-store="email" class="profile-info-value">Not set yet</a>
+            </div>
+            <div class="profile-contact-card">
+              <span class="profile-info-label">Phone / WhatsApp</span>
+              <a href="tel:" data-store="phone" class="profile-info-value">Not set yet</a>
+            </div>
+            <div class="profile-contact-card">
+              <span class="profile-info-label">Address</span>
+              <span data-store="address" class="profile-info-value">Not set yet</span>
+            </div>
+          </div>
+
+          <p class="profile-hint">
+            Or use the <a href="Contact.html">contact form</a> to send us a message.
+          </p>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <footer class="user-site-footer">
+    <div class="user-site-footer__inner">
+      <p>&copy; 2026 <span data-store="name">Your Shop</span>. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script src="../Config.js"></script>
+  <script src="../auth.js"></script>
+  <script src="store-info.js"></script>
+  <script src="user-shell.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>

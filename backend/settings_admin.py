@@ -1,13 +1,25 @@
 """Admin-only editor for the .env file, plus a controlled server restart.
 
-Everything the site reads from the environment is declared once in
-SETTINGS_SCHEMA below. The admin page renders itself from that schema, so
-adding a new setting means adding one dict here and nothing else.
+Two audiences share this file:
+
+    * DEVELOPER  -- installs the shop on the customer's server, edits .env
+                    by hand for security keys, JWT settings, CORS, rate
+                    limits, default handover credentials, etc.
+    * CUSTOMER   -- the shop owner. Only ever touches settings through the
+                    admin panel in the browser. Must never see or send
+                    developer-only fields.
+
+Every schema group carries `restricted: True` when it is developer-only.
+The GET response strips those groups out entirely, and the POST handler
+silently drops any restricted key the browser tries to submit. This way a
+customer who pokes at the network tab still cannot rewrite SECRET_KEY.
 
 Endpoints (all require an admin JWT):
 
-    GET  /admin/settings              schema + current values (secrets masked)
+    GET  /admin/settings              schema + current values (secrets masked,
+                                      developer-only groups removed)
     POST /admin/settings              validate, write .env, optionally restart
+                                      (developer-only keys are ignored server-side)
     POST /admin/settings/test-email   send a test email with the given SMTP values
     POST /admin/settings/restart      restart the server without saving
 
@@ -58,14 +70,27 @@ MASK = "********"
 # Schema
 # ============================================================
 #
-# type:     text | password | number | email | url | textarea | select
-# secret:   value is masked on read and only written when actually changed
-# required: save is refused when empty
-# restart:  changing it only takes effect after a restart (informational)
+# Group-level:
+#   restricted: True    developer-only. Hidden from GET, ignored in POST.
+#                       Set on infrastructure/security groups so a customer
+#                       with admin login can't rewrite SECRET_KEY through
+#                       the browser.
+#
+# Field-level:
+#   type:     text | password | number | email | url | textarea | select
+#   secret:   value is masked on read and only written when actually changed
+#   required: save is refused when empty
+#   restart:  changing it only takes effect after a restart (informational)
 
 SETTINGS_SCHEMA = [
+    # -----------------------------------------------------------------
+    # DEVELOPER-ONLY GROUPS. Kept in the schema so `config.validate()`
+    # and mailer.py still resolve the same keys, but never sent to the
+    # browser and never accepted from it.
+    # -----------------------------------------------------------------
     {
         "group": "Security keys",
+        "restricted": True,
         "note": "Long random values. Changing them signs every user out, "
                 "including you.",
         "fields": [
@@ -86,6 +111,7 @@ SETTINGS_SCHEMA = [
     },
     {
         "group": "Site addresses",
+        "restricted": True,
         "note": "Where the frontend lives and which origins may call the API.",
         "fields": [
             {"key": "FRONTEND_BASE_URL", "label": "Frontend base URL", "type": "url",
@@ -100,31 +126,9 @@ SETTINGS_SCHEMA = [
         ],
     },
     {
-        "group": "Email (SMTP)",
-        "note": "Used for registration verification and password resets. "
-                "For Gmail this must be a 16-character App Password, not your "
-                "normal password.",
-        "fields": [
-            {"key": "EMAIL_HOST", "label": "SMTP host", "type": "text",
-             "default": "smtp.gmail.com", "required": True},
-            {"key": "EMAIL_PORT", "label": "SMTP port", "type": "number",
-             "default": "587", "min": 1, "max": 65535,
-             "help": "587 for STARTTLS, which is what the mailer uses."},
-            # Deliberately not type "email": SendGrid's username is the
-            # literal word "apikey", Resend's is "resend", and Brevo issues
-            # an SMTP login that is not an address either.
-            {"key": "EMAIL_USERNAME", "label": "SMTP username", "type": "text",
-             "required": True,
-             "help": "Often the mailbox address, but some services issue a "
-                     "separate login. Use whatever their dashboard shows."},
-            {"key": "EMAIL_PASSWORD", "label": "SMTP password / app password",
-             "type": "password", "secret": True, "required": True},
-            {"key": "EMAIL_FROM", "label": "From address", "type": "email",
-             "help": "Leave empty to send as the SMTP username."},
-        ],
-    },
-    {
         "group": "Registration & verification",
+        "restricted": True,
+        "note": "Rate limits protecting the mailer from abuse.",
         "fields": [
             {"key": "REGISTRATION_VERIFICATION_MINUTES",
              "label": "Verification code lifetime (minutes)", "type": "number",
@@ -144,16 +148,63 @@ SETTINGS_SCHEMA = [
              "default": "5", "min": 1, "max": 50},
         ],
     },
+
+    # -----------------------------------------------------------------
+    # CUSTOMER-EDITABLE GROUPS. These appear in the admin Settings page.
+    # -----------------------------------------------------------------
     {
-        "group": "Store identity",
-        "note": "Shown in email headers and footers.",
+        "group": "Email (SMTP)",
+        "note": "Used for registration verification and password resets. "
+                "For Gmail this must be a 16-character App Password, not your "
+                "normal password.",
         "fields": [
-            {"key": "STORE_NAME", "label": "Store name", "type": "text",
-             "default": "Your Shop", "required": True},
-            {"key": "STORE_EMAIL", "label": "Contact email", "type": "email"},
-            {"key": "STORE_PHONE", "label": "Contact phone", "type": "text"},
-            {"key": "STORE_WEBSITE", "label": "Public website", "type": "url"},
-            {"key": "STORE_LOGO_URL", "label": "Logo URL", "type": "url"},
+            {"key": "EMAIL_HOST", "label": "SMTP host", "type": "text",
+             "default": "smtp.gmail.com", "required": True,
+             "placeholder": "smtp.gmail.com"},
+            {"key": "EMAIL_PORT", "label": "SMTP port", "type": "number",
+             "default": "587", "min": 1, "max": 65535,
+             "help": "587 for STARTTLS, which is what the mailer uses."},
+            # Deliberately not type "email": SendGrid's username is the
+            # literal word "apikey", Resend's is "resend", and Brevo issues
+            # an SMTP login that is not an address either.
+            {"key": "EMAIL_USERNAME", "label": "SMTP username", "type": "text",
+             "required": True,
+             "placeholder": "you@gmail.com",
+             "help": "Often the mailbox address, but some services issue a "
+                     "separate login. Use whatever their dashboard shows."},
+            {"key": "EMAIL_PASSWORD", "label": "SMTP password / app password",
+             "type": "password", "secret": True, "required": True,
+             "placeholder": "16-character app password"},
+            {"key": "EMAIL_FROM", "label": "From address", "type": "email",
+             "placeholder": "shop@yourdomain.com",
+             "help": "Leave empty to send as the SMTP username."},
+        ],
+    },
+    {
+        "group": "Shop identity",
+        "note": "These appear across the whole site: nav (as logo image or "
+                "as text fallback), page titles, footer, and email headers.",
+        "fields": [
+            {"key": "STORE_NAME", "label": "Shop name", "type": "text",
+             "default": "Your Shop", "required": True,
+             "placeholder": "e.g. Ahmed's Electronics",
+             "help": "Shown in page titles ('Home - <name>'), the footer, "
+                     "email subjects, and as the nav label when no logo is set."},
+            {"key": "STORE_EMAIL", "label": "Contact email", "type": "email",
+             "placeholder": "hello@yourshop.com",
+             "help": "Appears on the Contact Us page and at the bottom of emails."},
+            {"key": "STORE_PHONE", "label": "Contact phone / WhatsApp", "type": "text",
+             "placeholder": "+20 100 000 0000",
+             "help": "Appears on the Contact Us page."},
+            {"key": "STORE_ADDRESS", "label": "Shop address", "type": "text",
+             "placeholder": "12 Tahrir Street, Cairo, Egypt",
+             "help": "Appears on the Contact Us page."},
+            {"key": "STORE_WEBSITE", "label": "Public website URL", "type": "url",
+             "placeholder": "https://www.yourshop.com"},
+            {"key": "STORE_LOGO_URL", "label": "Logo image URL", "type": "url",
+             "placeholder": "https://cdn.example.com/logo.png",
+             "help": "When set, the nav shows the logo image only. When empty, "
+                     "the nav shows the shop name as text."},
         ],
     },
     {
@@ -161,6 +212,7 @@ SETTINGS_SCHEMA = [
         "fields": [
             {"key": "GOOGLE_CLIENT_ID", "label": "Google OAuth client ID",
              "type": "text",
+             "placeholder": "1234567890-xxxxxx.apps.googleusercontent.com",
              "help": "Leave empty to hide the Google button on the login page."},
         ],
     },
@@ -168,35 +220,51 @@ SETTINGS_SCHEMA = [
         "group": "Bank transfer details",
         "note": "Shown to customers on the checkout page.",
         "fields": [
-            {"key": "BANK_NAME", "label": "Bank name", "type": "text"},
-            {"key": "BANK_ACCOUNT_NAME", "label": "Account holder", "type": "text"},
+            {"key": "BANK_NAME", "label": "Bank name", "type": "text",
+             "placeholder": "e.g. Bank Misr"},
+            {"key": "BANK_ACCOUNT_NAME", "label": "Account holder", "type": "text",
+             "placeholder": "Name printed on the account"},
             {"key": "BANK_ACCOUNT_NUMBER", "label": "Account number / IBAN",
-             "type": "password", "secret": True},
+             "type": "password", "secret": True,
+             "placeholder": "EG00 0000 0000 0000 0000 0000 000"},
             {"key": "BANK_ROUTING_NUMBER", "label": "Routing / SWIFT code",
-             "type": "password", "secret": True},
+             "type": "password", "secret": True,
+             "placeholder": "SWIFT / routing code"},
         ],
     },
     {
         "group": "SMS (Twilio, optional)",
         "fields": [
-            {"key": "TWILIO_ACCOUNT_SID", "label": "Account SID", "type": "text"},
+            {"key": "TWILIO_ACCOUNT_SID", "label": "Account SID", "type": "text",
+             "placeholder": "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
             {"key": "TWILIO_AUTH_TOKEN", "label": "Auth token", "type": "password",
-             "secret": True},
+             "secret": True,
+             "placeholder": "32-character token"},
             {"key": "TWILIO_FROM_NUMBER", "label": "From number", "type": "text",
+             "placeholder": "+201234567890",
              "help": "E.164 format, for example +201234567890."},
         ],
     },
 ]
 
 
-def _all_fields():
+def _all_fields(include_restricted=True):
     for group in SETTINGS_SCHEMA:
+        if not include_restricted and group.get("restricted"):
+            continue
         for field in group["fields"]:
             yield field
 
 
-FIELDS_BY_KEY = {field["key"]: field for field in _all_fields()}
+# Every field, restricted or not -- validate() and _restart still need them.
+FIELDS_BY_KEY = {field["key"]: field for field in _all_fields(include_restricted=True)}
 MANAGED_KEYS = list(FIELDS_BY_KEY)
+
+# Only the customer-editable ones. POST /admin/settings will silently drop
+# any key not in this set, so a malicious payload can't rewrite SECRET_KEY.
+CUSTOMER_EDITABLE_KEYS = {
+    field["key"] for field in _all_fields(include_restricted=False)
+}
 
 
 # ============================================================
@@ -371,7 +439,11 @@ def validate(values):
 
 
 def merge_submitted(submitted):
-    """Combine posted values with the stored ones, keeping masked secrets."""
+    """Combine posted values with the stored ones, keeping masked secrets.
+
+    Any key not in CUSTOMER_EDITABLE_KEYS is ignored -- the customer cannot
+    write to developer-only settings even by hand-crafting a request.
+    """
     stored = read_env_file()
     merged = {}
     for key, field in FIELDS_BY_KEY.items():
@@ -380,6 +452,11 @@ def merge_submitted(submitted):
         # check on a key it never showed. Fall back to the stored value, then
         # to the declared default -- which is what the form displays anyway.
         fallback = stored.get(key) or field.get("default", "")
+
+        # Developer-only keys are never rewritten from the browser. Ever.
+        if key not in CUSTOMER_EDITABLE_KEYS:
+            merged[key] = fallback
+            continue
 
         if key not in submitted:
             merged[key] = fallback
@@ -439,10 +516,14 @@ def restart_supported():
 @settings_bp.get("/admin/settings")
 @admin_required
 def get_settings():
+    """Return only the groups the customer is allowed to edit."""
     stored = read_env_file()
     groups = []
 
     for group in SETTINGS_SCHEMA:
+        # Developer-only groups never leave the server.
+        if group.get("restricted"):
+            continue
         fields = []
         for field in group["fields"]:
             key = field["key"]
@@ -475,12 +556,16 @@ def get_settings():
 @settings_bp.post("/admin/settings")
 @admin_required
 def save_settings():
+    """Accept only customer-editable keys; drop the rest silently."""
     from dotenv import load_dotenv
 
     data = request.get_json(silent=True) or {}
     submitted = data.get("values") or {}
     if not isinstance(submitted, dict):
         return jsonify(success=False, message="Invalid payload."), 400
+
+    # Filter to customer-editable keys BEFORE merging or validating.
+    submitted = {k: v for k, v in submitted.items() if k in CUSTOMER_EDITABLE_KEYS}
 
     merged = merge_submitted(submitted)
     errors = validate(merged)
@@ -491,12 +576,8 @@ def save_settings():
             errors=errors,
         ), 400
 
-    secrets_changed = any(
-        FIELDS_BY_KEY[key].get("secret")
-        and str(submitted.get(key, MASK)).strip() not in (MASK, "")
-        for key in ("SECRET_KEY", "JWT_SECRET_KEY")
-        if key in submitted
-    )
+    # Only customer-editable secrets can be affected by this endpoint now.
+    secrets_changed = False
 
     try:
         write_env_file(merged)
@@ -511,7 +592,9 @@ def save_settings():
     # os.getenv at request time picks them up even before the restart lands.
     load_dotenv(ENV_PATH, override=True)
 
-    should_restart = bool(data.get("restart", True))
+    # Shop identity fields don't need a restart -- os.getenv is re-read on
+    # every request. Only expose the restart option if the caller asked for it.
+    should_restart = bool(data.get("restart", False))
     if should_restart:
         schedule_restart(1.0)
 

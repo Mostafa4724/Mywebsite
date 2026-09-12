@@ -122,6 +122,18 @@ function getDisplayPrice(product) {
 // category cards look and behave identically to the home cards.
 // Returns: { html, image, displayPrice, onSale, outOfStock }
 function buildProductCard(product, index) {
+  // Every product string interpolated into HTML below must go through
+  // these helpers. Admin-supplied fields (title, badge) are lower risk
+  // than customer reviews but not zero risk: a shop staff account could
+  // still push a payload, and a compromised admin session shouldn't be
+  // able to XSS every visitor. Escape unconditionally.
+  const esc = (v) => String(v == null ? "" : v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
   const imageNames = Array.isArray(product.images) && product.images.length
     ? product.images.slice(0, 5)
     : (product.image ? [product.image] : []);
@@ -141,19 +153,22 @@ function buildProductCard(product, index) {
   const stockStatus = (product.stock_status || "in").toLowerCase();
   const outOfStock = stockStatus === "out";
 
+  const safeTitle = esc(product.title);
+  const safeBadge = esc(product.sale_badge || "Sale");
+  const safeBadgeColor = esc(product.sale_badge_color || "#dc2626");
+
   const priceHTML =
     '<div class="price-row"><p class="price">$' + displayPrice.toFixed(2) + "</p>" +
     (saleActive && salePrice > 0 ? '<p class="original-price">$' + originalPrice.toFixed(2) + "</p>" : "") +
     "</div>";
   const saleHTML = saleActive && salePrice > 0
     ? '<div class="sale-info"><span class="sale-chip" style="background:' +
-      (product.sale_badge_color || "#dc2626") + ';">' +
-      (product.sale_badge || "Sale") + '</span><span class="sale-discount">Save ' +
+      safeBadgeColor + ';">' + safeBadge + '</span><span class="sale-discount">Save ' +
       discountPercent + "%</span></div>"
     : "";
 
   const imageHTML = imageUrls.map((url, i) =>
-    `<img class="product-card-img${i === 0 ? " active" : ""}" src="${url}" alt="${product.title}" loading="lazy" style="position:absolute;inset:0;opacity:${i === 0 ? "1" : "0"};transition:opacity .65s ease,transform .65s ease;">`
+    `<img class="product-card-img${i === 0 ? " active" : ""}" src="${esc(url)}" alt="${safeTitle}" loading="lazy" style="position:absolute;inset:0;opacity:${i === 0 ? "1" : "0"};transition:opacity .65s ease,transform .65s ease;">`
   ).join("");
 
   return {
@@ -162,15 +177,15 @@ function buildProductCard(product, index) {
     onSale: saleActive && salePrice > 0,
     outOfStock,
     html:
-      '<div class="product-card" data-name="' + product.title + '" data-price="' + displayPrice +
-      '" data-images="' + imageUrls.join("|") + '">' +
-      '<a href="product.html?id=' + product.id + '" class="product-card-link">' +
+      '<div class="product-card" data-name="' + safeTitle + '" data-price="' + displayPrice +
+      '" data-images="' + esc(imageUrls.join("|")) + '">' +
+      '<a href="product.html?id=' + encodeURIComponent(product.id) + '" class="product-card-link">' +
       '<div class="product-card-image-wrap" style="position:relative;height:200px;overflow:hidden">' +
       imageHTML + "</div>" +
-      "<h3>" + product.title + "</h3>" +
+      "<h3>" + safeTitle + "</h3>" +
       priceHTML + saleHTML + "</a>" +
-      '<button class="add-to-cart-btn" data-id="' + product.id + '" data-name="' +
-      product.title + '" data-price="' + displayPrice + '" data-image="' + imageUrls[0] + '"' +
+      '<button class="add-to-cart-btn" data-id="' + esc(product.id) + '" data-name="' +
+      safeTitle + '" data-price="' + displayPrice + '" data-image="' + esc(imageUrls[0]) + '"' +
       (outOfStock ? " disabled" : "") + ">" + (outOfStock ? " Sold Out" : " Add To Cart") + "</button>" +
       "</div>",
   };

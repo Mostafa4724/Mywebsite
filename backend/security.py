@@ -31,6 +31,23 @@ def current_user():
     return user
 
 
+def current_user_optional():
+    """Return the signed-in user if a valid JWT is present, or None.
+
+    Never raises. Useful on endpoints that serve both anonymous and
+    authenticated callers with slightly different data -- e.g. /products
+    filtering out drafts for anonymous callers but returning them to
+    admins so the same route powers the storefront and the admin panel.
+    """
+    try:
+        verify_jwt_in_request(optional=True)
+    except Exception:
+        # A malformed or expired token isn't an error at this layer:
+        # the caller just isn't signed in.
+        return None
+    return current_user()
+
+
 def user_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
